@@ -1,5 +1,6 @@
 Pillow
 graphcat
+nbsphinx
 numpy
 scikit-image
 sphinx_rtd_theme
