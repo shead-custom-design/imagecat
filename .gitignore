@@ -1,0 +1,9 @@
+*.egg-info
+*.pyc
+.ipynb_checkpoints
+.cover
+.coverage
+artwork/backup
+dist
+docs/_build
+
