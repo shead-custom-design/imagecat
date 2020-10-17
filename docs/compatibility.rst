@@ -1,6 +1,6 @@
 .. _compatibility:
 
-.. image:: ../artwork/imagecat.png
+.. image:: ../artwork/logo.png
   :width: 200px
   :align: right
 

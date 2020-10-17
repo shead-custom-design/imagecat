@@ -1,6 +1,6 @@
 # Welcome!
 
-<img src="artwork/imagecat.png" width="300" style="float:right"/>
+<img src="artwork/logo.png" width="300" style="float:right"/>
 
 Welcome to Imagecat ... the lightweight, flexible Python toolkit for interactive procedural image processing.
 

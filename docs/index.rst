@@ -1,4 +1,4 @@
-.. image:: ../artwork/imagecat.png
+.. image:: ../artwork/logo.png
   :width: 300px
   :align: right
 
