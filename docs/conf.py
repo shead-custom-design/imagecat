@@ -54,7 +54,7 @@ extensions = [
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "graphcat": ("https://graphcat.readthedocs.io", None),
+    "graphcat": ("https://graphcat.readthedocs.io/en/stable", None),
     }
 
 # Add any paths that contain templates here, relative to this directory.
