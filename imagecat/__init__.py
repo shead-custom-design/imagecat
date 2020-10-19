@@ -22,6 +22,8 @@ import fnmatch
 import logging
 
 import PIL.Image
+import PIL.ImageDraw
+import PIL.ImageFont
 import graphcat
 import numpy
 import skimage.color
@@ -34,6 +36,19 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
 
 ################################################################################################
 # Helper functions
+
+def set_operation(graph, name, fn, **parameters):
+    """Simplify setting-up tasks with parameters.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+    name: hashable object, required
+    """
+    graph.set_task(name, fn)
+    for pname, pvalue in parameters.items():
+        graph.set_parameter(name, pname, f"{name}/{pname}", pvalue)
+
 
 def match_planes(planes, patterns):
     for plane in planes:
@@ -52,32 +67,50 @@ def require_input(name, inputs, input, *, index=0, type=None, default=None):
         if default is not None:
             return default
         raise RuntimeError(f"Task {name} missing required input {input!r} index {index}.")
-    if type is not None and not isinstance(inputs[input][index], type):
-        raise RuntimeError(f"Task {name} required input {input!r} index {index} is not a {type}.")
-    return inputs[input][index]
+
+    value = inputs[input][index]
+    if type is not None:
+        value = type(value)
+    return value
 
 
-def require_images(name, inputs, *, input=0, index=0):
-    return dict(require_input(name, inputs, input=input, index=index, type=dict))
+def require_images(name, inputs, input, *, index=0):
+    return dict(require_input(name, inputs, input, index=index, type=dict))
 
 
 ################################################################################################
 # Task functions
 
 
-def constant(name, inputs):
-    plane = require_input(name, inputs, "plane", type=str, default="C")
-    size = require_input(name, inputs, "size", type=tuple)
-    value = require_input(name, inputs, "value", type=numpy.ndarray, default=numpy.ones(3, dtype=float))
-    log.info(f"Task {name} generating constant plane {plane} size {size} value {value}")
+def composite(name, inputs):
+    foregrounds = require_images(name, inputs, "foreground", index=0)
+    backgrounds = require_images(name, inputs, "background", index=0)
+    masks = require_images(name, inputs, "mask", index=0)
 
-    images = {}
-    images[plane] = numpy.empty((size[1], size[0], len(value)))
-    images[plane][:,:] = value
-    return images
+    foreground = foregrounds["C"]
+    background = backgrounds["C"]
+    alpha = masks["A"]
+    one_minus_alpha = 1 - alpha
+
+    merged = {}
+    merged["C"] = foreground * alpha + background * one_minus_alpha
+    return merged
 
 
 def file(name, inputs):
+    """Load a file into memory.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["path"][0]: Required. Filesystem path of the file to be loaded.
+    """
+    path = require_input(name, inputs, "path", type=str)
+
     path = inputs["path"][0]
     image = PIL.Image.open(path)
     log.info(f"Task {name} loaded {path} {image.mode} {image.size[0]}x{image.size[1]}")
@@ -94,7 +127,20 @@ def file(name, inputs):
 
 
 def gaussian(name, inputs):
-    images = require_images(name, inputs)
+    """Blur images using a Gaussian kernel.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :[0][0]: Required. Image collection containing images to be blurred.
+        :["patterns"][0]: Optional. :any:`str` used to control which images are blurred.  Default: '*', which blurs all images.
+        :["sigma"][0]: Required. Width of the gaussian kernel in pixels.
+    """
+    images = require_images(name, inputs, "image")
     patterns = require_input(name, inputs, "planes", type=str, default="*")
     sigma = require_input(name, inputs, "sigma", type=float)
     for plane in match_planes(images.keys(), patterns):
@@ -113,6 +159,17 @@ def merge(name, inputs):
     return merged
 
 
+def offset(name, inputs):
+    images = require_images(name, inputs, "image", index=0)
+    offset = require_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
+    patterns = require_input(name, inputs, "planes", index=0, type=str, default="*")
+
+    for plane in match_planes(images.keys(), patterns):
+        log.info(f"Task {name} offset {offset} plane {plane}")
+        images[plane] = numpy.roll(images[plane], shift=offset, axis=(1, 0))
+    return images
+
+
 def rgb2gray(name, inputs):
     images = require_images(name, inputs)
     patterns = require_input(name, inputs, "planes", type=str, default="*")
@@ -123,7 +180,7 @@ def rgb2gray(name, inputs):
 
 
 def scale(name, inputs):
-    images = require_images(name, inputs)
+    images = require_images(name, inputs, "images", index=0)
     patterns = require_input(name, inputs, "planes", type=str, default="*")
     order = require_input(name, inputs, "order", type=int, default=3)
     scale = require_input(name, inputs, "scale", type=tuple)
@@ -131,4 +188,40 @@ def scale(name, inputs):
         log.info(f"Task {name} resizing plane {plane} scale {scale} order {order}")
         images[plane] = skimage.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
     return images
+
+
+def solid(name, inputs):
+    plane = require_input(name, inputs, "plane", type=str, default="C")
+    size = require_input(name, inputs, "size")
+    value = require_input(name, inputs, "value", default=numpy.ones(3, dtype=float))
+    log.info(f"Task {name} generating solid plane {plane} size {size} value {value}")
+
+    images = {}
+    images[plane] = numpy.full((size[1], size[0], len(value)), value, dtype=float)
+    return images
+
+
+def text(name, inputs):
+    fontindex = require_input(name, inputs, "fontindex", type=int, default=0)
+    fontname = require_input(name, inputs, "fontname", type=str, default="Helvetica")
+    fontsize = require_input(name, inputs, "fontsize", type=int, default=32)
+    plane = require_input(name, inputs, "plane", type=str, default="A")
+    position = require_input(name, inputs, "position", default=None)
+    size = require_input(name, inputs, "size")
+    text = require_input(name, inputs, "text", type=str, default="Text!")
+
+    if position is None:
+        position = (size[0] / 2, size[1] / 2)
+
+    log.info(f"Task {name} generating text fontindex {fontindex} fontname {fontname} fontsize {fontsize} plane {plane} position {position} size {size}")
+
+    image = PIL.Image.new("F", size, 0)
+    font = PIL.ImageFont.truetype(fontname, fontsize, fontindex)
+    draw = PIL.ImageDraw.Draw(image)
+    draw.text(position, text, font=font, fill=1, anchor="ms")
+
+    images = {}
+    images[plane] = numpy.array(image)[:,:,None]
+    return images
+
 
