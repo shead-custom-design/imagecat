@@ -40,7 +40,7 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
 # Helper functions
 
 
-def set_operation(graph, name, fn, **parameters):
+def add_operation(graph, name, fn, **parameters):
     """Simplify setting-up tasks with parameters.
 
     Virtually all non-trivial Imagecat operations have parameters that affect
@@ -51,7 +51,7 @@ def set_operation(graph, name, fn, **parameters):
     ----------
     graph: :class:`graphcat.Graph`, required
         The Graphcat graph where the new task will be created.
-    name: hashable object, required
+    name: :class:`str`, required
         The name of the new task.
     fn: callable, required
         The Imagecat operation to use for the new task.
@@ -60,10 +60,18 @@ def set_operation(graph, name, fn, **parameters):
         task and linked with the main task.  Each parameter name
         is created by concatenating `name` with the keyword name,
         separated by a slash "/".
+
+    Returns
+    -------
+    name: :class:`str`
+        Name of the newly-created operation, which may be different than `name`.
     """
-    graph.set_task(name, fn)
+    name = util.unique_name(graph, name)
+    graph.add_task(name, fn)
     for pname, pvalue in parameters.items():
-        graph.set_parameter(name, pname, f"{name}/{pname}", pvalue)
+        ptname = util.unique_name(graph, f"{name}/{pname}")
+        graph.set_parameter(name, pname, ptname, pvalue)
+    return name
 
 
 ################################################################################################

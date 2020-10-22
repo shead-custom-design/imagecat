@@ -16,6 +16,7 @@
 """Helpers for implementing Imagecat operations.
 """
 
+import itertools
 import fnmatch
 
 import numpy
@@ -172,3 +173,19 @@ def transform(source, target_shape, *, rotation=None, translation=None):
     # Transform the image.
     return skimage.transform.warp(source, matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0)
 
+
+def unique_name(graph, name):
+    """Return `name`, modified to be unique within `graph`.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        The graph where `name` will be used.
+    name: :class:`str`, required
+        Task name to be adjusted.
+    """
+    if name not in graph:
+        return name
+    for index in itertools.count(start=1):
+        if f"{name}{index}" not in graph:
+            return f"{name}{index}"
