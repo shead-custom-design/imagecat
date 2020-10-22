@@ -160,12 +160,32 @@ def gaussian(name, inputs):
 
 
 def merge(name, inputs):
+    """Merge multiple :ref:`image collections<image-collections>` into one.
+
+    Inputs are merged in order, sorted by input name.  Images with duplicate
+    names will overwrite earlier images.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :[...][...]: :class:`dict`, optional. :ref:`Image collections<image-collections>` to be merged.
+
+    Returns
+    -------
+    images: :class:`dict`
+        New :ref:`image collection<image-collections>` containing the union of all input images.
+    """
     merged = {}
     for input in sorted(inputs.keys()):
-        if isinstance(input, int):
-            images = util.require_images(name, inputs, input=input)
-            log.info(f"Task {name} merging input {input} planes {list(images.keys())}")
-            merged.update(images)
+        for index in range(len(inputs[input])):
+            images = inputs[input][index]
+            if isinstance(images, dict):
+                log.info(f"Task {name} merging input {input} index {index} planes {list(images.keys())}")
+                merged.update(images)
     return merged
 
 
