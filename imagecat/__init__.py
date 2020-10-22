@@ -115,7 +115,7 @@ def delete(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :["image"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be delete.
+        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be delete.
         :["planes"][0]: :class:`str`, optional. Controls which image planes are deleted.  Default: '*', which deletes all images.
 
     Returns
@@ -123,7 +123,7 @@ def delete(name, inputs):
     images: :class:`dict`
         A copy of the input :ref:`image collection<image-collections>` with some image planes deleted.
     """
-    images = util.require_images(name, inputs, "image")
+    images = util.require_images(name, inputs, "images")
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
 
     remove = set(util.match_planes(images.keys(), patterns))
@@ -175,7 +175,7 @@ def gaussian(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :["image"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing images to be blurred.
+        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing images to be blurred.
         :["planes"][0]: :class:`str`, optional. Controls which image planes are blurred.  Default: '*', which blurs all images.
         :["sigma"][0]: number, required. Width of the gaussian kernel in pixels.
 
@@ -184,7 +184,7 @@ def gaussian(name, inputs):
     images: :class:`dict`
         A copy of the input :ref:`image collection<image-collections>` with some image planes blurred.
     """
-    images = util.require_images(name, inputs, "image")
+    images = util.require_images(name, inputs, "images")
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
     sigma = util.required_input(name, inputs, "sigma", type=float)
     for plane in util.match_planes(images.keys(), patterns):
@@ -224,7 +224,7 @@ def merge(name, inputs):
 
 
 def offset(name, inputs):
-    images = util.require_images(name, inputs, "image", index=0)
+    images = util.require_images(name, inputs, "images", index=0)
     offset = util.optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
     patterns = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
