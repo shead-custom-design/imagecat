@@ -115,7 +115,7 @@ def delete(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be delete.
+        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be deleted.
         :["planes"][0]: :class:`str`, optional. Controls which image planes are deleted.  Default: '*', which deletes all images.
 
     Returns
@@ -232,6 +232,31 @@ def offset(name, inputs):
         log.info(f"Task {name} offset {offset} plane {plane}")
         images[plane] = numpy.roll(images[plane], shift=offset, axis=(1, 0))
     return images
+
+
+def rename(name, inputs):
+    """Rename image planes within an :ref:`image collection<image-collections>`.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be renamed.
+        :["changes"][0]: :class:`dict`, optional. Maps existing names to new names.  Default: {}, which does nothing.
+
+    Returns
+    -------
+    images: :class:`dict`
+        A copy of the input :ref:`image collection<image-collections>` with some image planes renamed.
+    """
+    images = util.require_images(name, inputs, "images")
+    changes = util.optional_input(name, inputs, "changes", type=dict, default={})
+
+    renamed = {changes.get(key, key): value for key, value in images.items()}
+    return renamed
 
 
 def rgb2gray(name, inputs):
