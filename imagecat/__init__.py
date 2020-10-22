@@ -260,7 +260,7 @@ def rename(name, inputs):
 
 
 def rgb2gray(name, inputs):
-    images = util.require_images(name, inputs)
+    images = util.require_images(name, inputs, "images", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
     for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} rgb2gray plane {plane}")
