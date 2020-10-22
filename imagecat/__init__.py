@@ -97,6 +97,32 @@ def composite(name, inputs):
     return merged
 
 
+def delete(name, inputs):
+    """Delete image planes from an :ref:`image collection<image-collections>`.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["image"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be delete.
+        :["planes"][0]: :class:`str`, optional. Controls which image planes are deleted.  Default: '*', which deletes all images.
+
+    Returns
+    -------
+    images: :class:`dict`
+        A copy of the input :ref:`image collection<image-collections>` with some image planes deleted.
+    """
+    images = util.require_images(name, inputs, "image")
+    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+
+    remove = set(util.match_planes(images.keys(), patterns))
+    remaining = {key: value for key, value in images.items() if key not in remove}
+    return remaining
+
+
 def file(name, inputs):
     """Load a file into memory.
 
