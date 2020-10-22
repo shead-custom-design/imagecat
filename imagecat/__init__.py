@@ -242,7 +242,7 @@ def scale(name, inputs):
     scale = util.required_input(name, inputs, "scale", type=tuple)
     for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} resizing plane {plane} scale {scale} order {order}")
-        images[plane] = skimage.util.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
+        images[plane] = skimage.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
     return images
 
 
