@@ -58,38 +58,86 @@ def match_planes(planes, patterns):
                 break
 
 
-def require_input(name, inputs, input, *, index=0, type=None, default=None):
-    if input not in inputs:
-        if default is not None:
-            return default
-        raise RuntimeError(f"Task {name} missing required input {input!r}.")
-    if len(inputs[input]) <= index:
-        if default is not None:
-            return default
-        raise RuntimeError(f"Task {name} missing required input {input!r} index {index}.")
+def optional_input(name, inputs, input, *, index=0, type=None, default=None):
+    value = default
+    if input in inputs and 0 <= index and index < len(inputs[input]):
+        value = inputs[input][index]
+    if type is not None:
+        value = type(value)
+    return value
 
-    value = inputs[input][index]
+
+def required_input(name, inputs, input, *, index=0, type=None):
+    if input in inputs and 0 <= index and index < len(inputs[input]):
+        value = inputs[input][index]
+    else:
+        raise RuntimeError(f"Task {name} missing required input {input!r} index {index}.")
     if type is not None:
         value = type(value)
     return value
 
 
 def require_images(name, inputs, input, *, index=0):
-    return dict(require_input(name, inputs, input, index=index, type=dict))
+    return dict(required_input(name, inputs, input, index=index, type=dict))
 
+
+
+def transform(source, target_shape, *, rotation=None, translation=None):
+    sy, sx = source.shape[:2]
+    ty, tx = target_shape[:2]
+
+    # Start with an identity matrix.
+    matrix = skimage.transform.AffineTransform(matrix=numpy.identity(3))
+
+    # Optionally rotate the image around its center.
+    if rotation is not None:
+        offset = skimage.transform.AffineTransform(translation=(-sx / 2, -sy / 2))
+        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+        # Positive rotation is counter-clockwise in my book.
+        rotation = skimage.transform.AffineTransform(rotation=numpy.radians(-rotation))
+        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(rotation.params, matrix.params))
+
+        offset = skimage.transform.AffineTransform(translation=(sx / 2, sy / 2))
+        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+    # Center the result.
+    offset = skimage.transform.AffineTransform(translation=((tx - sx) / 2, (ty - sy) / 2))
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+    # Optionally transform the image relative to the target.
+    if translation is not None:
+        # +Y is up in my book.
+        offset = skimage.transform.AffineTransform(translation=(translation[0] * tx, -translation[1] * ty))
+        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+    # Transform the image.
+    return skimage.transform.warp(source, matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0)
 
 ################################################################################################
 # Task functions
 
 
 def composite(name, inputs):
-    foregrounds = require_images(name, inputs, "foreground", index=0)
+    bgplane = optional_input(name, inputs, "bgplane", index=0, type=str, default="C")
     backgrounds = require_images(name, inputs, "background", index=0)
+    fgplane = optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
+    foregrounds = require_images(name, inputs, "foreground", index=0)
+    maskplane = optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
     masks = require_images(name, inputs, "mask", index=0)
+    rotation = optional_input(name, inputs, "rotation", index=0, type=float, default=None)
+    translation = optional_input(name, inputs, "translation", index=0, default=None)
 
-    foreground = foregrounds["C"]
-    background = backgrounds["C"]
-    alpha = masks["A"]
+    foreground = foregrounds[fgplane]
+    background = backgrounds[bgplane]
+    mask = masks[maskplane]
+
+    log.info(f"Task {name} comp foreground {fgplane} over background {bgplane} with mask {maskplane} rotation {rotation} translation {translation}")
+
+    foreground = transform(foreground, background.shape, rotation=rotation, translation=translation)
+    mask = transform(mask, background.shape, rotation=rotation, translation=translation)
+
+    alpha = mask
     one_minus_alpha = 1 - alpha
 
     merged = {}
@@ -109,7 +157,7 @@ def file(name, inputs):
 
         :["path"][0]: Required. Filesystem path of the file to be loaded.
     """
-    path = require_input(name, inputs, "path", type=str)
+    path = required_input(name, inputs, "path", type=str)
 
     path = inputs["path"][0]
     image = PIL.Image.open(path)
@@ -141,8 +189,8 @@ def gaussian(name, inputs):
         :["sigma"][0]: Required. Width of the gaussian kernel in pixels.
     """
     images = require_images(name, inputs, "image")
-    patterns = require_input(name, inputs, "planes", type=str, default="*")
-    sigma = require_input(name, inputs, "sigma", type=float)
+    patterns = optional_input(name, inputs, "planes", type=str, default="*")
+    sigma = required_input(name, inputs, "sigma", type=float)
     for plane in match_planes(images.keys(), patterns):
         log.info(f"Task {name} gaussian blurring plane {plane} sigma {sigma}")
         images[plane] = numpy.atleast_3d(skimage.filters.gaussian(images[plane], sigma=sigma, multichannel=True, preserve_range=True))
@@ -161,8 +209,8 @@ def merge(name, inputs):
 
 def offset(name, inputs):
     images = require_images(name, inputs, "image", index=0)
-    offset = require_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
-    patterns = require_input(name, inputs, "planes", index=0, type=str, default="*")
+    offset = optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
+    patterns = optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
     for plane in match_planes(images.keys(), patterns):
         log.info(f"Task {name} offset {offset} plane {plane}")
@@ -172,7 +220,7 @@ def offset(name, inputs):
 
 def rgb2gray(name, inputs):
     images = require_images(name, inputs)
-    patterns = require_input(name, inputs, "planes", type=str, default="*")
+    patterns = optional_input(name, inputs, "planes", type=str, default="*")
     for plane in match_planes(images.keys(), patterns):
         log.info(f"Task {name} rgb2gray plane {plane}")
         images[plane] = numpy.atleast_3d(skimage.color.rgb2gray(images[plane]))
@@ -181,9 +229,9 @@ def rgb2gray(name, inputs):
 
 def scale(name, inputs):
     images = require_images(name, inputs, "images", index=0)
-    patterns = require_input(name, inputs, "planes", type=str, default="*")
-    order = require_input(name, inputs, "order", type=int, default=3)
-    scale = require_input(name, inputs, "scale", type=tuple)
+    patterns = optional_input(name, inputs, "planes", type=str, default="*")
+    order = optional_input(name, inputs, "order", type=int, default=3)
+    scale = required_input(name, inputs, "scale", type=tuple)
     for plane in match_planes(images.keys(), patterns):
         log.info(f"Task {name} resizing plane {plane} scale {scale} order {order}")
         images[plane] = skimage.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
@@ -191,9 +239,9 @@ def scale(name, inputs):
 
 
 def solid(name, inputs):
-    plane = require_input(name, inputs, "plane", type=str, default="C")
-    size = require_input(name, inputs, "size")
-    value = require_input(name, inputs, "value", default=numpy.ones(3, dtype=float))
+    plane = optional_input(name, inputs, "plane", type=str, default="C")
+    size = required_input(name, inputs, "size")
+    value = optional_input(name, inputs, "value", default=numpy.ones(3, dtype=float))
     log.info(f"Task {name} generating solid plane {plane} size {size} value {value}")
 
     images = {}
@@ -202,26 +250,27 @@ def solid(name, inputs):
 
 
 def text(name, inputs):
-    fontindex = require_input(name, inputs, "fontindex", type=int, default=0)
-    fontname = require_input(name, inputs, "fontname", type=str, default="Helvetica")
-    fontsize = require_input(name, inputs, "fontsize", type=int, default=32)
-    plane = require_input(name, inputs, "plane", type=str, default="A")
-    position = require_input(name, inputs, "position", default=None)
-    size = require_input(name, inputs, "size")
-    text = require_input(name, inputs, "text", type=str, default="Text!")
+    anchor = optional_input(name, inputs, "anchor", type=str, default="mm")
+    fontindex = optional_input(name, inputs, "fontindex", type=int, default=0)
+    fontname = optional_input(name, inputs, "fontname", type=str, default="Helvetica")
+    fontsize = optional_input(name, inputs, "fontsize", type=int, default=32)
+    plane = optional_input(name, inputs, "plane", type=str, default="A")
+    position = optional_input(name, inputs, "position", default=None)
+    size = required_input(name, inputs, "size")
+    text = optional_input(name, inputs, "text", type=str, default="Text!")
 
     if position is None:
         position = (size[0] / 2, size[1] / 2)
 
-    log.info(f"Task {name} generating text fontindex {fontindex} fontname {fontname} fontsize {fontsize} plane {plane} position {position} size {size}")
+    log.info(f"Task {name} generating text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} plane {plane} position {position} size {size}")
 
-    image = PIL.Image.new("F", size, 0)
+    image = PIL.Image.new("L", size, 0)
     font = PIL.ImageFont.truetype(fontname, fontsize, fontindex)
     draw = PIL.ImageDraw.Draw(image)
-    draw.text(position, text, font=font, fill=1, anchor="ms")
+    draw.text(position, text, font=font, fill=255, anchor=anchor)
 
     images = {}
-    images[plane] = numpy.array(image)[:,:,None]
+    images[plane] = numpy.array(image)[:,:,None] / 255.0
     return images
 
 
