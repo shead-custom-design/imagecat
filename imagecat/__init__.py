@@ -29,6 +29,8 @@ import numpy
 import skimage.color
 import skimage.filters
 
+import imagecat.util as util
+
 log = logging.getLogger(__name__)
 
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
@@ -37,96 +39,46 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
 ################################################################################################
 # Helper functions
 
+
 def set_operation(graph, name, fn, **parameters):
     """Simplify setting-up tasks with parameters.
+
+    Virtually all non-trivial Imagecat operations have parameters that affect
+    their operation.  Because individually creating parameter tasks and linking
+    them with the main task is tiresome and verbose, use this function instead.
 
     Parameters
     ----------
     graph: :class:`graphcat.Graph`, required
+        The Graphcat graph where the new task will be created.
     name: hashable object, required
+        The name of the new task.
+    fn: callable, required
+        The Imagecat operation to use for the new task.
+    parameters: additional keyword arguments, optional
+        Each extra keyword argument will be turned into a parameter
+        task and linked with the main task.  Each parameter name
+        is created by concatenating `name` with the keyword name,
+        separated by a slash "/".
     """
     graph.set_task(name, fn)
     for pname, pvalue in parameters.items():
         graph.set_parameter(name, pname, f"{name}/{pname}", pvalue)
 
 
-def match_planes(planes, patterns):
-    for plane in planes:
-        for pattern in patterns.split():
-            if fnmatch.fnmatchcase(plane, pattern):
-                yield plane
-                break
-
-
-def optional_input(name, inputs, input, *, index=0, type=None, default=None):
-    value = default
-    if input in inputs and 0 <= index and index < len(inputs[input]):
-        value = inputs[input][index]
-    if type is not None:
-        value = type(value)
-    return value
-
-
-def required_input(name, inputs, input, *, index=0, type=None):
-    if input in inputs and 0 <= index and index < len(inputs[input]):
-        value = inputs[input][index]
-    else:
-        raise RuntimeError(f"Task {name} missing required input {input!r} index {index}.")
-    if type is not None:
-        value = type(value)
-    return value
-
-
-def require_images(name, inputs, input, *, index=0):
-    return dict(required_input(name, inputs, input, index=index, type=dict))
-
-
-
-def transform(source, target_shape, *, rotation=None, translation=None):
-    sy, sx = source.shape[:2]
-    ty, tx = target_shape[:2]
-
-    # Start with an identity matrix.
-    matrix = skimage.transform.AffineTransform(matrix=numpy.identity(3))
-
-    # Optionally rotate the image around its center.
-    if rotation is not None:
-        offset = skimage.transform.AffineTransform(translation=(-sx / 2, -sy / 2))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-        # Positive rotation is counter-clockwise in my book.
-        rotation = skimage.transform.AffineTransform(rotation=numpy.radians(-rotation))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(rotation.params, matrix.params))
-
-        offset = skimage.transform.AffineTransform(translation=(sx / 2, sy / 2))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-    # Center the result.
-    offset = skimage.transform.AffineTransform(translation=((tx - sx) / 2, (ty - sy) / 2))
-    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-    # Optionally transform the image relative to the target.
-    if translation is not None:
-        # +Y is up in my book.
-        offset = skimage.transform.AffineTransform(translation=(translation[0] * tx, -translation[1] * ty))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-    # Transform the image.
-    return skimage.transform.warp(source, matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0)
-
 ################################################################################################
 # Task functions
 
 
 def composite(name, inputs):
-    bgplane = optional_input(name, inputs, "bgplane", index=0, type=str, default="C")
-    backgrounds = require_images(name, inputs, "background", index=0)
-    fgplane = optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
-    foregrounds = require_images(name, inputs, "foreground", index=0)
-    maskplane = optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
-    masks = require_images(name, inputs, "mask", index=0)
-    rotation = optional_input(name, inputs, "rotation", index=0, type=float, default=None)
-    translation = optional_input(name, inputs, "translation", index=0, default=None)
+    bgplane = util.optional_input(name, inputs, "bgplane", index=0, type=str, default="C")
+    backgrounds = util.require_images(name, inputs, "background", index=0)
+    fgplane = util.optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
+    foregrounds = util.require_images(name, inputs, "foreground", index=0)
+    maskplane = util.optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
+    masks = util.require_images(name, inputs, "mask", index=0)
+    rotation = util.optional_input(name, inputs, "rotation", index=0, type=float, default=None)
+    translation = util.optional_input(name, inputs, "translation", index=0, default=None)
 
     foreground = foregrounds[fgplane]
     background = backgrounds[bgplane]
@@ -134,8 +86,8 @@ def composite(name, inputs):
 
     log.info(f"Task {name} comp foreground {fgplane} over background {bgplane} with mask {maskplane} rotation {rotation} translation {translation}")
 
-    foreground = transform(foreground, background.shape, rotation=rotation, translation=translation)
-    mask = transform(mask, background.shape, rotation=rotation, translation=translation)
+    foreground = util.transform(foreground, background.shape, rotation=rotation, translation=translation)
+    mask = util.transform(mask, background.shape, rotation=rotation, translation=translation)
 
     alpha = mask
     one_minus_alpha = 1 - alpha
@@ -152,12 +104,17 @@ def file(name, inputs):
     ----------
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
+    inputs: :class:`dict`, required
+        Inputs for this function, including:
 
-        :["path"][0]: Required. Filesystem path of the file to be loaded.
+        :["path"][0]: :class:`str`, required. Filesystem path of the file to be loaded.
+
+    Returns
+    -------
+    images: :class:`dict`
+        :ref:`Image collection <image-collections>` containing image planes loaded from the file.
     """
-    path = required_input(name, inputs, "path", type=str)
+    path = util.required_input(name, inputs, "path", type=str)
 
     path = inputs["path"][0]
     image = PIL.Image.open(path)
@@ -184,14 +141,19 @@ def gaussian(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :[0][0]: Required. Image collection containing images to be blurred.
-        :["patterns"][0]: Optional. :any:`str` used to control which images are blurred.  Default: '*', which blurs all images.
-        :["sigma"][0]: Required. Width of the gaussian kernel in pixels.
+        :["image"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing images to be blurred.
+        :["planes"][0]: :class:`str`, optional. Controls which image planes are blurred.  Default: '*', which blurs all images.
+        :["sigma"][0]: number, required. Width of the gaussian kernel in pixels.
+
+    Returns
+    -------
+    images: :class:`dict`
+        A copy of the input :ref:`image collection<image-collections>` with some image planes blurred.
     """
-    images = require_images(name, inputs, "image")
-    patterns = optional_input(name, inputs, "planes", type=str, default="*")
-    sigma = required_input(name, inputs, "sigma", type=float)
-    for plane in match_planes(images.keys(), patterns):
+    images = util.require_images(name, inputs, "image")
+    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    sigma = util.required_input(name, inputs, "sigma", type=float)
+    for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} gaussian blurring plane {plane} sigma {sigma}")
         images[plane] = numpy.atleast_3d(skimage.filters.gaussian(images[plane], sigma=sigma, multichannel=True, preserve_range=True))
     return images
@@ -201,47 +163,47 @@ def merge(name, inputs):
     merged = {}
     for input in sorted(inputs.keys()):
         if isinstance(input, int):
-            images = require_images(name, inputs, input=input)
+            images = util.require_images(name, inputs, input=input)
             log.info(f"Task {name} merging input {input} planes {list(images.keys())}")
             merged.update(images)
     return merged
 
 
 def offset(name, inputs):
-    images = require_images(name, inputs, "image", index=0)
-    offset = optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
-    patterns = optional_input(name, inputs, "planes", index=0, type=str, default="*")
+    images = util.require_images(name, inputs, "image", index=0)
+    offset = util.optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
+    patterns = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
-    for plane in match_planes(images.keys(), patterns):
+    for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} offset {offset} plane {plane}")
         images[plane] = numpy.roll(images[plane], shift=offset, axis=(1, 0))
     return images
 
 
 def rgb2gray(name, inputs):
-    images = require_images(name, inputs)
-    patterns = optional_input(name, inputs, "planes", type=str, default="*")
-    for plane in match_planes(images.keys(), patterns):
+    images = util.require_images(name, inputs)
+    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} rgb2gray plane {plane}")
         images[plane] = numpy.atleast_3d(skimage.color.rgb2gray(images[plane]))
     return images
 
 
 def scale(name, inputs):
-    images = require_images(name, inputs, "images", index=0)
-    patterns = optional_input(name, inputs, "planes", type=str, default="*")
-    order = optional_input(name, inputs, "order", type=int, default=3)
-    scale = required_input(name, inputs, "scale", type=tuple)
-    for plane in match_planes(images.keys(), patterns):
+    images = util.require_images(name, inputs, "images", index=0)
+    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    order = util.optional_input(name, inputs, "order", type=int, default=3)
+    scale = util.required_input(name, inputs, "scale", type=tuple)
+    for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} resizing plane {plane} scale {scale} order {order}")
-        images[plane] = skimage.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
+        images[plane] = skimage.util.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
     return images
 
 
 def solid(name, inputs):
-    plane = optional_input(name, inputs, "plane", type=str, default="C")
-    size = required_input(name, inputs, "size")
-    value = optional_input(name, inputs, "value", default=numpy.ones(3, dtype=float))
+    plane = util.optional_input(name, inputs, "plane", type=str, default="C")
+    size = util.required_input(name, inputs, "size")
+    value = util.optional_input(name, inputs, "value", default=numpy.ones(3, dtype=float))
     log.info(f"Task {name} generating solid plane {plane} size {size} value {value}")
 
     images = {}
@@ -250,14 +212,14 @@ def solid(name, inputs):
 
 
 def text(name, inputs):
-    anchor = optional_input(name, inputs, "anchor", type=str, default="mm")
-    fontindex = optional_input(name, inputs, "fontindex", type=int, default=0)
-    fontname = optional_input(name, inputs, "fontname", type=str, default="Helvetica")
-    fontsize = optional_input(name, inputs, "fontsize", type=int, default=32)
-    plane = optional_input(name, inputs, "plane", type=str, default="A")
-    position = optional_input(name, inputs, "position", default=None)
-    size = required_input(name, inputs, "size")
-    text = optional_input(name, inputs, "text", type=str, default="Text!")
+    anchor = util.optional_input(name, inputs, "anchor", type=str, default="mm")
+    fontindex = util.optional_input(name, inputs, "fontindex", type=int, default=0)
+    fontname = util.optional_input(name, inputs, "fontname", type=str, default="Helvetica")
+    fontsize = util.optional_input(name, inputs, "fontsize", type=int, default=32)
+    plane = util.optional_input(name, inputs, "plane", type=str, default="A")
+    position = util.optional_input(name, inputs, "position", default=None)
+    size = util.required_input(name, inputs, "size")
+    text = util.optional_input(name, inputs, "text", type=str, default="Text!")
 
     if position is None:
         position = (size[0] / 2, size[1] / 2)

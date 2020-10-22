@@ -17,6 +17,7 @@ Documentation
    dependencies.rst
    compatibility.rst
    contributing.rst
+   design.rst
    release-notes.rst
    reference.rst
    support.rst

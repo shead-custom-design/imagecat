@@ -12,3 +12,4 @@ Contents:
 
    imagecat.rst
    imagecat.notebook.rst
+   imagecat.util.rst
