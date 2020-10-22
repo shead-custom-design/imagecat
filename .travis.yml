@@ -11,5 +11,5 @@ after_script:
     - coveralls
 inotifications:
     webhooks:
-        - https://imagecat.zulipchat.com/api/v1/external/travis?api_key=J7wPfwZyYWhTUL4Ha6cRk6kwDeqd2Vqv&stream=repo&topic=builds
+        - https://imagecat.zulipchat.com/api/v1/external/travis?api_key=EqUUovnOE5SbnslatW8bkhbzKesYesB6&stream=repo&topic=builds
 
