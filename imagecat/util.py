@@ -117,7 +117,7 @@ def required_input(name, inputs, input, *, index=0, type=None):
     return value
 
 
-def require_images(name, inputs, input, *, index=0):
+def required_images(name, inputs, input, *, index=0):
     return dict(required_input(name, inputs, input, index=index, type=dict))
 
 

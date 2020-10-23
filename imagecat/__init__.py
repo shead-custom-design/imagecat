@@ -80,11 +80,11 @@ def add_operation(graph, name, fn, **parameters):
 
 def composite(name, inputs):
     bgplane = util.optional_input(name, inputs, "bgplane", index=0, type=str, default="C")
-    backgrounds = util.require_images(name, inputs, "background", index=0)
+    backgrounds = util.required_images(name, inputs, "background", index=0)
     fgplane = util.optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
-    foregrounds = util.require_images(name, inputs, "foreground", index=0)
+    foregrounds = util.required_images(name, inputs, "foreground", index=0)
     maskplane = util.optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
-    masks = util.require_images(name, inputs, "mask", index=0)
+    masks = util.required_images(name, inputs, "mask", index=0)
     rotation = util.optional_input(name, inputs, "rotation", index=0, type=float, default=None)
     translation = util.optional_input(name, inputs, "translation", index=0, default=None)
 
@@ -123,7 +123,7 @@ def delete(name, inputs):
     images: :class:`dict`
         A copy of the input :ref:`image collection<image-collections>` with some image planes deleted.
     """
-    images = util.require_images(name, inputs, "images")
+    images = util.required_images(name, inputs, "images", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
 
     remove = set(util.match_planes(images.keys(), patterns))
@@ -184,7 +184,7 @@ def gaussian(name, inputs):
     images: :class:`dict`
         A copy of the input :ref:`image collection<image-collections>` with some image planes blurred.
     """
-    images = util.require_images(name, inputs, "images")
+    images = util.required_images(name, inputs, "images", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
     sigma = util.required_input(name, inputs, "sigma", type=float)
     for plane in util.match_planes(images.keys(), patterns):
@@ -224,7 +224,7 @@ def merge(name, inputs):
 
 
 def offset(name, inputs):
-    images = util.require_images(name, inputs, "images", index=0)
+    images = util.required_images(name, inputs, "images", index=0)
     offset = util.optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
     patterns = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
@@ -252,7 +252,7 @@ def rename(name, inputs):
     images: :class:`dict`
         A copy of the input :ref:`image collection<image-collections>` with some image planes renamed.
     """
-    images = util.require_images(name, inputs, "images")
+    images = util.required_images(name, inputs, "images")
     changes = util.optional_input(name, inputs, "changes", type=dict, default={})
 
     renamed = {changes.get(key, key): value for key, value in images.items()}
@@ -260,7 +260,7 @@ def rename(name, inputs):
 
 
 def rgb2gray(name, inputs):
-    images = util.require_images(name, inputs, "images", index=0)
+    images = util.required_images(name, inputs, "images", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
     for plane in util.match_planes(images.keys(), patterns):
         log.info(f"Task {name} rgb2gray plane {plane}")
@@ -269,7 +269,7 @@ def rgb2gray(name, inputs):
 
 
 def scale(name, inputs):
-    images = util.require_images(name, inputs, "images", index=0)
+    images = util.required_images(name, inputs, "images", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
     order = util.optional_input(name, inputs, "order", type=int, default=3)
     scale = util.required_input(name, inputs, "scale", type=tuple)
