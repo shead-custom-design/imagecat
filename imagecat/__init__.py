@@ -26,7 +26,6 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import graphcat
 import numpy
-import skimage.color
 import skimage.filters
 
 import imagecat.io as io
@@ -85,20 +84,21 @@ def composite(name, inputs):
     fgplane = util.optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
     foreground = util.require_plane(name, inputs, "foreground", index=0, plane=fgplane)
     maskplane = util.optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
-    mask = util.require_plane(name, inputs, "mask", index=0, plane=maskplane, channels=1, dtype=float)
+    mask = util.require_plane(name, inputs, "mask", index=0, plane=maskplane, channels=1)
     rotation = util.optional_input(name, inputs, "rotation", index=0, type=float, default=None)
     translation = util.optional_input(name, inputs, "translation", index=0, default=None)
 
-    log.info(f"Task {name} comp foreground {fgplane} {foreground.shape} over background {bgplane} {background.shape} with mask {maskplane} {mask.shape}  rotation {rotation} translation {translation}")
+    transformed_foreground = util.transform(foreground, background.shape, rotation=rotation, translation=translation)
+    transformed_mask = util.transform(mask, background.shape, rotation=rotation, translation=translation)
 
-    foreground = util.transform(foreground, background.shape, rotation=rotation, translation=translation)
-    mask = util.transform(mask, background.shape, rotation=rotation, translation=translation)
-
-    alpha = mask
+    alpha = transformed_mask
     one_minus_alpha = 1 - alpha
 
     merged = {}
-    merged["C"] = foreground * alpha + background * one_minus_alpha
+    merged["C"] = transformed_foreground * alpha + background * one_minus_alpha
+
+    log.info(f"Task {name} comp {util.plane_repr(fgplane, foreground)} over {util.plane_repr(bgplane, background)} mask {util.plane_repr(maskplane, mask)} rotation {rotation} translation {translation} result {util.image_repr(merged)}")
+
     return merged
 
 
@@ -128,39 +128,6 @@ def delete(name, inputs):
     return remaining
 
 
-def load(name, inputs):
-    """Load a file into memory.
-
-    Parameters
-    ----------
-    name: hashable object, required
-        Name of the task executing this function.
-    inputs: :class:`dict`, required
-        Inputs for this function, including:
-
-        :["path"][0]: :class:`str`, required. Filesystem path of the file to be loaded.
-
-    Returns
-    -------
-    image: :class:`dict`
-        :ref:`Image <images>` containing image planes loaded from the file.
-    """
-    path = util.require_input(name, inputs, "path", type=str)
-
-    pil_image = PIL.Image.open(path)
-    log.info(f"Task {name} loaded {path} mode {pil_image.mode} {pil_image.size[0]}x{pil_image.size[1]}")
-
-    image = {}
-    if pil_image.mode == "L":
-        image["C"] = numpy.array(pil_image) / 255.0
-    if pil_image.mode == "RGB":
-        image["C"] = numpy.array(pil_image) / 255.0
-    if pil_image.mode == "RGBA":
-        image["C"] = numpy.array(pil_image)[:,:,0:3] / 255.0
-        image["A"] = numpy.array(pil_image)[:,:,3:4] / 255.0
-    return image
-
-
 def gaussian(name, inputs):
     """Blur image using a Gaussian kernel.
 
@@ -181,11 +148,45 @@ def gaussian(name, inputs):
         A copy of the input :ref:`image<images>` with some or all planes blurred.
     """
     image = util.require_image(name, inputs, "image", index=0)
-    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
     sigma = util.require_input(name, inputs, "sigma", type=float)
-    for plane in util.match_planes(image.keys(), patterns):
-        log.info(f"Task {name} gaussian blurring plane {plane} sigma {sigma}")
-        image[plane] = numpy.atleast_3d(skimage.filters.gaussian(image[plane], sigma=sigma, multichannel=True, preserve_range=True))
+    for plane in util.match_planes(image.keys(), planes):
+        image[plane] = numpy.atleast_3d(skimage.filters.gaussian(image[plane], sigma=sigma, multichannel=True, preserve_range=True).astype(image[plane].dtype))
+    log.info(f"Task {name} gaussian {planes} {sigma} result {util.image_repr(image)}")
+    return image
+
+
+def load(name, inputs):
+    """Load a file into memory.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :class:`dict`, required
+        Inputs for this function, including:
+
+        :["path"][0]: :class:`str`, required. Filesystem path of the file to be loaded.
+
+    Returns
+    -------
+    image: :class:`dict`
+        :ref:`Image <images>` containing image planes loaded from the file.
+    """
+    path = util.require_input(name, inputs, "path", type=str)
+
+    pil_image = PIL.Image.open(path)
+
+    image = {}
+    if pil_image.mode == "L":
+        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+    if pil_image.mode == "RGB":
+        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+    if pil_image.mode == "RGBA":
+        image["C"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0
+        image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
+
+    log.info(f"Task {name} load {path} result {util.image_repr(image)}")
     return image
 
 
@@ -222,11 +223,12 @@ def merge(name, inputs):
 def offset(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
     offset = util.optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
-    patterns = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
+    planes = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
-    for plane in util.match_planes(image.keys(), patterns):
-        log.info(f"Task {name} offset {offset} plane {plane}")
+    for plane in util.match_planes(image.keys(), planes):
         image[plane] = numpy.roll(image[plane], shift=offset, axis=(1, 0))
+
+    log.info(f"Task {name} offset {offset} {planes} result {util.image_repr(image)}")
     return image
 
 
@@ -257,12 +259,12 @@ def rename(name, inputs):
 
 def rgb2gray(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
-    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
     weights = util.optional_input(name, inputs, "weights", type=util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
-    for plane in util.match_planes(image.keys(), patterns):
-        if util.is_plane(image[plane], channels=3, dtype=float):
-            log.info(f"Task {name} rgb2gray plane {plane} weights {weights}")
+    for plane in util.match_planes(image.keys(), planes):
+        if util.is_plane(image[plane], channels=3):
             image[plane] = numpy.dot(image[plane], weights)[:,:,None]
+    log.info(f"Task {name} rgb2gray {planes} {weights} result {util.image_repr(image)}")
     return image
 
 
@@ -305,12 +307,12 @@ def solid(name, inputs):
     plane = util.optional_input(name, inputs, "plane", type=str, default="C")
     size = util.require_input(name, inputs, "size")
     value = util.optional_input(name, inputs, "value", type=numpy.array, default=[1, 1, 1])
-    log.info(f"Task {name} generating solid plane {plane} size {size} value {value}")
 
     image = {
-        plane: numpy.full((size[1], size[0], len(value)), value, dtype=float),
+        plane: numpy.full((size[1], size[0], len(value)), value, dtype=numpy.float16),
     }
 
+    log.info(f"Task {name} solid {plane} {size} {value} result {util.image_repr(image)}")
     return image
 
 
@@ -327,16 +329,17 @@ def text(name, inputs):
     if position is None:
         position = (size[0] / 2, size[1] / 2)
 
-    log.info(f"Task {name} generating text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} plane {plane} position {position} size {size}")
-
     image = PIL.Image.new("L", size, 0)
     font = PIL.ImageFont.truetype(fontname, fontsize, fontindex)
     draw = PIL.ImageDraw.Draw(image)
     draw.text(position, text, font=font, fill=255, anchor=anchor)
 
     image = {
-        plane: numpy.array(image)[:,:,None] / 255.0,
+        plane: numpy.array(image, dtype=numpy.float16)[:,:,None] / 255.0,
     }
+
+    log.info(f"Task {name} text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} plane {plane} position {position} size {size} result {util.image_repr(image)}")
+
     return image
 
 

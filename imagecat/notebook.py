@@ -22,30 +22,27 @@ import PIL.Image
 import numpy
 import skimage
 
+import imagecat.util as util
 
-def display(images, planes=None, width=None, height=None):
+
+def display(image, planes="*", width=None, height=None):
     """Display :ref:`image<images>` inline in a Jupyter notebook.
 
     Parameters
     ----------
-    images: :class:`dict`, required
+    image: :class:`dict`, required
         :ref:`Image<images>` to be displayed.
-    planes: :class:`str` or list of :class:`str`, optional
-        Names of the images to display.  Use :any:`None` (the default) to display all images.
+    planes: :class:`str`, optional
+        Names of the image planes to display.  Use "*" (the default) to display all planes.
     width: :class:`str`, optional
         Optional HTML width for each image.
     height: :class:`str`, optional
         Optional HTML height for each image.
     """
-    if planes is None:
-        planes = sorted(images.keys())
-    if isinstance(planes, str):
-        planes = [planes]
-
     markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
-    for key in planes:
-        image = images[key]
-        pil_image = skimage.img_as_ubyte(image)
+    for name in sorted(util.match_planes(image.keys(), planes)):
+        plane = image[name]
+        pil_image = skimage.img_as_ubyte(plane)
         pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
         pil_image = PIL.Image.fromarray(pil_image)
         stream = io.BytesIO()
@@ -54,7 +51,7 @@ def display(images, planes=None, width=None, height=None):
 
         markup += f"<figure style='margin: 5px'>"
         markup += f"<image src='{uri}' style='width:{width}; height:{height}'/>"
-        markup += f"<figcaption>{key} <small>{image.shape[1]}&times;{image.shape[0]}&times;{image.shape[2]}</small></figcaption>"
+        markup += f"<figcaption>{name} <small>{plane.shape[1]}&times;{plane.shape[0]}&times;{plane.shape[2]} {plane.dtype}</small></figcaption>"
         markup += f"</figure>"
     markup += "</div>"
 

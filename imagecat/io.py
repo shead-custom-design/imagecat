@@ -19,6 +19,7 @@
 import logging
 import os
 
+import numpy
 import skimage
 
 log = logging.getLogger(__name__)
@@ -35,7 +36,17 @@ def openexr_saver(task, image, planes, path):
     except:
         return False
 
-    raise NotImplementedError()
+    shape = image[planes[0]].shape
+    header = OpenEXR.Header(shape[1], shape[0])
+    header["channels"] = {channel: Imath.Channel(Imath.PixelType(Imath.PixelType.HALF)) for channel in "RGB"}
+    writer = OpenEXR.OutputFile(path, header)
+    writer.writePixels({
+        "R": image[planes[0]][:,:,0].astype(numpy.float16).tobytes(),
+        "G": image[planes[0]][:,:,1].astype(numpy.float16).tobytes(),
+        "B": image[planes[0]][:,:,2].astype(numpy.float16).tobytes(),
+    })
+
+    return True
 
     return False
 

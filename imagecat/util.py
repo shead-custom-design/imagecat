@@ -23,13 +23,21 @@ import numpy
 import skimage.transform
 
 
-def array(shape, dtype=float):
+def array(shape, dtype=numpy.float16):
     def implementation(value):
         value = numpy.array(value, dtype=dtype)
         if value.shape != shape:
             raise ValueError(f"Expected array with shape {shape}, received {value.shape}.")
         return value
     return implementation
+
+
+def image_repr(image):
+    return " ".join([plane_repr(name, plane) for name, plane in image.items()])
+
+
+def plane_repr(name, plane):
+    return f"{name}({plane.shape[1]}x{plane.shape[0]}x{plane.shape[2]} {plane.dtype})"
 
 
 def match_planes(planes, patterns):
@@ -221,7 +229,7 @@ def transform(source, target_shape, *, rotation=None, translation=None):
         matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
     # Transform the image.
-    return skimage.transform.warp(source, matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0)
+    return skimage.transform.warp(skimage.img_as_float64(source), matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0).astype(numpy.float16)
 
 
 def unique_name(graph, name):
