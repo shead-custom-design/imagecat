@@ -18,22 +18,32 @@
 
 import logging
 import os
+import sys
 
 import numpy
 import skimage
+
+try:
+    import Imath
+    import OpenEXR
+except:
+    pass
+
+try:
+    import PIL.Image
+except:
+    pass
+
 
 log = logging.getLogger(__name__)
 
 
 def openexr_saver(task, image, planes, path):
-    extension = os.path.splitext(path)[1].lower()
-    if extension != ".exr":
+    if "OpenEXR" not in sys.modules:
         return False
 
-    try:
-        import Imath
-        import OpenEXR
-    except:
+    extension = os.path.splitext(path)[1].lower()
+    if extension != ".exr":
         return False
 
     shape = image[planes[0]].shape
@@ -48,13 +58,31 @@ def openexr_saver(task, image, planes, path):
 
     return True
 
-    return False
+
+def pil_loader(task, path, planes):
+    if "PIL.Image" not in sys.modules:
+        return None
+
+    if planes != "*":
+        raise NotImplementedError()
+
+    pil_image = PIL.Image.open(path)
+    log.debug(pil_image.info)
+
+    image = {}
+    if pil_image.mode == "L":
+        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+    if pil_image.mode == "RGB":
+        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+    if pil_image.mode == "RGBA":
+        image["C"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0
+        image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
+
+    return image
 
 
 def pil_saver(task, image, planes, path):
-    try:
-        import PIL.Image
-    except:
+    if "PIL.Image" not in sys.modules:
         return False
 
     if len(planes) == 1:
@@ -71,7 +99,12 @@ def pil_saver(task, image, planes, path):
     return False
 
 
+loaders = [
+    pil_loader,
+]
+
+
 savers = [
     openexr_saver,
     pil_saver,
-    ]
+]

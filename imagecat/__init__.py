@@ -121,9 +121,9 @@ def delete(name, inputs):
         A copy of the input :ref:`image<images>` with some image planes deleted.
     """
     image = util.require_image(name, inputs, "image", index=0)
-    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
 
-    remove = set(util.match_planes(image.keys(), patterns))
+    remove = set(util.match_planes(image.keys(), planes))
     remaining = {name: plane for name, plane in image.items() if name not in remove}
     return remaining
 
@@ -174,20 +174,14 @@ def load(name, inputs):
         :ref:`Image <images>` containing image planes loaded from the file.
     """
     path = util.require_input(name, inputs, "path", type=str)
+    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
+    for loader in io.loaders:
+        image = loader(name, path, planes)
+        if image is not None:
+            log.info(f"Task {name} load {path} result {util.image_repr(image)}")
+            return image
+    raise RuntimeError(f"Task {task} could not load {path} from disk.")
 
-    pil_image = PIL.Image.open(path)
-
-    image = {}
-    if pil_image.mode == "L":
-        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
-    if pil_image.mode == "RGB":
-        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
-    if pil_image.mode == "RGBA":
-        image["C"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0
-        image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
-
-    log.info(f"Task {name} load {path} result {util.image_repr(image)}")
-    return image
 
 
 def merge(name, inputs):
@@ -283,10 +277,8 @@ def save(name, inputs):
     """
     image = util.require_image(name, inputs, "image", index=0)
     path = util.require_input(name, inputs, "path", type=str)
-    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
-
-    planes = list(util.match_planes(image.keys(), patterns))
-
+    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
+    planes = list(util.match_planes(image.keys(), planes))
     for saver in io.savers:
         if saver(name, image, planes, path):
             return
