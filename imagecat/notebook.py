@@ -24,12 +24,12 @@ import skimage
 
 
 def display(images, planes=None, width=None, height=None):
-    """Display :ref:`image collections<image-collections>` inline in a Jupyter notebook.
+    """Display :ref:`image<images>` inline in a Jupyter notebook.
 
     Parameters
     ----------
     images: :class:`dict`, required
-        :ref:`Image collection<image-collections>` to be displayed.
+        :ref:`Image<images>` to be displayed.
     planes: :class:`str` or list of :class:`str`, optional
         Names of the images to display.  Use :any:`None` (the default) to display all images.
     width: :class:`str`, optional

@@ -5,7 +5,7 @@ python:
 install:
     - pip install behave coverage coveralls graphcat Pillow scikit-image
 script:
-    - coverage run --source imagecat -m behave
+    - coverage run --source imagecat -m behave --tags ~wip
     - coverage report
 after_script:
     - coveralls

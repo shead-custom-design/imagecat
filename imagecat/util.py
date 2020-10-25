@@ -23,6 +23,15 @@ import numpy
 import skimage.transform
 
 
+def array(shape, dtype=float):
+    def implementation(value):
+        value = numpy.array(value, dtype=dtype)
+        if value.shape != shape:
+            raise ValueError(f"Expected array with shape {shape}, received {value.shape}.")
+        return value
+    return implementation
+
+
 def match_planes(planes, patterns):
     """Match image planes against a pattern.
 
@@ -35,7 +44,7 @@ def match_planes(planes, patterns):
     Parameters
     ----------
     planes: sequence of :class:`str`, required
-        The :ref:`image collection<image-collections>` image names to be matched.
+        The :ref:`image<images>` plane names to be matched.
     pattern: :class:`str`, required
         Whitespace delimited collection of patterns to match against image names.
 
@@ -81,7 +90,7 @@ def optional_input(name, inputs, input, *, index=0, type=None, default=None):
     return value
 
 
-def required_input(name, inputs, input, *, index=0, type=None):
+def require_input(name, inputs, input, *, index=0, type=None):
     """Extract a required parameter from task inputs.
 
     Parameters
@@ -117,8 +126,49 @@ def required_input(name, inputs, input, *, index=0, type=None):
     return value
 
 
-def required_images(name, inputs, input, *, index=0):
-    return dict(required_input(name, inputs, input, index=index, type=dict))
+def is_plane(plane, channels=None, dtype=None):
+    if not isinstance(plane, numpy.ndarray):
+        return False
+    if plane.ndim != 3:
+        return False
+    if channels is not None and plane.shape[2] != channels:
+        return False
+    if dtype is not None and plane.dtype != dtype:
+        return False
+    return True
+
+
+def is_image(image):
+    if not isinstance(image, dict):
+        return False
+    planes = list(images.values())
+    for plane in planes:
+        if not is_plane(plane):
+            return False
+        # All planes must have the same resolution
+        if plane.shape[:2] != planes[0].shape[:2]:
+            return False
+    return True
+
+
+def require_plane(name, inputs, input, *, index=0, plane="C", channels=None, dtype=None):
+    image = require_input(name, inputs, input, index=index, type=dict)
+    if plane not in image:
+        raise RuntimeError(f"Task {name} input {input!r} index {index} missing plane {plane}.")
+    if not is_plane(image[plane], channels=channels, dtype=dtype):
+        raise RuntimeError(f"Task {name} input {input!r} index {index} plane {plane} is not an image plane with {channels} channels and dtype {dtype}.")
+    return image[plane]
+
+
+def require_image(name, inputs, input, *, index=0):
+    image = require_input(name, inputs, input, index=index, type=dict)
+    planes = list(image.items())
+    for name, plane in planes:
+        if not is_plane(plane):
+            raise ValueError(f"Task {name} input {input!r} index {index} {plane} is not an image plane.")
+        if plane.shape[:2] != planes[0][1].shape[:2]:
+            raise ValueError(f"Task {name} input {input!r} index {index} not all planes are the same resolution.")
+    return image
 
 
 def transform(source, target_shape, *, rotation=None, translation=None):

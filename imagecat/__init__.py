@@ -29,6 +29,7 @@ import numpy
 import skimage.color
 import skimage.filters
 
+import imagecat.io as io
 import imagecat.util as util
 
 log = logging.getLogger(__name__)
@@ -80,19 +81,15 @@ def add_operation(graph, name, fn, **parameters):
 
 def composite(name, inputs):
     bgplane = util.optional_input(name, inputs, "bgplane", index=0, type=str, default="C")
-    backgrounds = util.required_images(name, inputs, "background", index=0)
+    background = util.require_plane(name, inputs, "background", index=0, plane=bgplane)
     fgplane = util.optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
-    foregrounds = util.required_images(name, inputs, "foreground", index=0)
+    foreground = util.require_plane(name, inputs, "foreground", index=0, plane=fgplane)
     maskplane = util.optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
-    masks = util.required_images(name, inputs, "mask", index=0)
+    mask = util.require_plane(name, inputs, "mask", index=0, plane=maskplane, channels=1, dtype=float)
     rotation = util.optional_input(name, inputs, "rotation", index=0, type=float, default=None)
     translation = util.optional_input(name, inputs, "translation", index=0, default=None)
 
-    foreground = foregrounds[fgplane]
-    background = backgrounds[bgplane]
-    mask = masks[maskplane]
-
-    log.info(f"Task {name} comp foreground {fgplane} over background {bgplane} with mask {maskplane} rotation {rotation} translation {translation}")
+    log.info(f"Task {name} comp foreground {fgplane} {foreground.shape} over background {bgplane} {background.shape} with mask {maskplane} {mask.shape}  rotation {rotation} translation {translation}")
 
     foreground = util.transform(foreground, background.shape, rotation=rotation, translation=translation)
     mask = util.transform(mask, background.shape, rotation=rotation, translation=translation)
@@ -106,7 +103,7 @@ def composite(name, inputs):
 
 
 def delete(name, inputs):
-    """Delete image planes from an :ref:`image collection<image-collections>`.
+    """Delete image planes from an :ref:`image<images>`.
 
     Parameters
     ----------
@@ -115,23 +112,23 @@ def delete(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be deleted.
-        :["planes"][0]: :class:`str`, optional. Controls which image planes are deleted.  Default: '*', which deletes all images.
+        :["image"][0]: :class:`dict`, required. :ref:`Image<images>` containing image planes to be deleted.
+        :["planes"][0]: :class:`str`, optional. Controls which image planes are deleted.  Default: '*', which deletes all planes.
 
     Returns
     -------
-    images: :class:`dict`
-        A copy of the input :ref:`image collection<image-collections>` with some image planes deleted.
+    image: :class:`dict`
+        A copy of the input :ref:`image<images>` with some image planes deleted.
     """
-    images = util.required_images(name, inputs, "images", index=0)
+    image = util.require_image(name, inputs, "image", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
 
-    remove = set(util.match_planes(images.keys(), patterns))
-    remaining = {key: value for key, value in images.items() if key not in remove}
+    remove = set(util.match_planes(image.keys(), patterns))
+    remaining = {name: plane for name, plane in image.items() if name not in remove}
     return remaining
 
 
-def file(name, inputs):
+def load(name, inputs):
     """Load a file into memory.
 
     Parameters
@@ -145,28 +142,27 @@ def file(name, inputs):
 
     Returns
     -------
-    images: :class:`dict`
-        :ref:`Image collection <image-collections>` containing image planes loaded from the file.
+    image: :class:`dict`
+        :ref:`Image <images>` containing image planes loaded from the file.
     """
-    path = util.required_input(name, inputs, "path", type=str)
+    path = util.require_input(name, inputs, "path", type=str)
 
-    path = inputs["path"][0]
-    image = PIL.Image.open(path)
-    log.info(f"Task {name} loaded {path} {image.mode} {image.size[0]}x{image.size[1]}")
+    pil_image = PIL.Image.open(path)
+    log.info(f"Task {name} loaded {path} mode {pil_image.mode} {pil_image.size[0]}x{pil_image.size[1]}")
 
-    images = {}
-    if image.mode == "L":
-        images["C"] = numpy.array(image) / 255.0
-    if image.mode == "RGB":
-        images["C"] = numpy.array(image) / 255.0
-    if image.mode == "RGBA":
-        images["C"] = numpy.array(image)[:,:,0:3] / 255.0
-        images["A"] = numpy.array(image)[:,:,3:4] / 255.0
-    return images
+    image = {}
+    if pil_image.mode == "L":
+        image["C"] = numpy.array(pil_image) / 255.0
+    if pil_image.mode == "RGB":
+        image["C"] = numpy.array(pil_image) / 255.0
+    if pil_image.mode == "RGBA":
+        image["C"] = numpy.array(pil_image)[:,:,0:3] / 255.0
+        image["A"] = numpy.array(pil_image)[:,:,3:4] / 255.0
+    return image
 
 
 def gaussian(name, inputs):
-    """Blur images using a Gaussian kernel.
+    """Blur image using a Gaussian kernel.
 
     Parameters
     ----------
@@ -175,28 +171,28 @@ def gaussian(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing images to be blurred.
-        :["planes"][0]: :class:`str`, optional. Controls which image planes are blurred.  Default: '*', which blurs all images.
+        :["image"][0]: :class:`dict`, required. :ref:`Image<images>` containing planes to be blurred.
+        :["planes"][0]: :class:`str`, optional. Controls which image planes are blurred.  Default: '*', which blurs all planes.
         :["sigma"][0]: number, required. Width of the gaussian kernel in pixels.
 
     Returns
     -------
-    images: :class:`dict`
-        A copy of the input :ref:`image collection<image-collections>` with some image planes blurred.
+    image: :class:`dict`
+        A copy of the input :ref:`image<images>` with some or all planes blurred.
     """
-    images = util.required_images(name, inputs, "images", index=0)
+    image = util.require_image(name, inputs, "image", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
-    sigma = util.required_input(name, inputs, "sigma", type=float)
-    for plane in util.match_planes(images.keys(), patterns):
+    sigma = util.require_input(name, inputs, "sigma", type=float)
+    for plane in util.match_planes(image.keys(), patterns):
         log.info(f"Task {name} gaussian blurring plane {plane} sigma {sigma}")
-        images[plane] = numpy.atleast_3d(skimage.filters.gaussian(images[plane], sigma=sigma, multichannel=True, preserve_range=True))
-    return images
+        image[plane] = numpy.atleast_3d(skimage.filters.gaussian(image[plane], sigma=sigma, multichannel=True, preserve_range=True))
+    return image
 
 
 def merge(name, inputs):
-    """Merge multiple :ref:`image collections<image-collections>` into one.
+    """Merge multiple :ref:`images<images>` into one.
 
-    Inputs are merged in order, sorted by input name.  Images with duplicate
+    Inputs are merged in order, sorted by input name and index.  Images with duplicate
     names will overwrite earlier images.
 
     Parameters
@@ -206,36 +202,36 @@ def merge(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :[...][...]: :class:`dict`, optional. :ref:`Image collections<image-collections>` to be merged.
+        :[...][...]: :class:`dict`, optional. :ref:`Images<images>` to be merged.
 
     Returns
     -------
-    images: :class:`dict`
-        New :ref:`image collection<image-collections>` containing the union of all input images.
+    image: :class:`dict`
+        New :ref:`image<images>` containing the union of all input images.
     """
     merged = {}
     for input in sorted(inputs.keys()):
         for index in range(len(inputs[input])):
-            images = inputs[input][index]
-            if isinstance(images, dict):
-                log.info(f"Task {name} merging input {input} index {index} planes {list(images.keys())}")
-                merged.update(images)
+            image = inputs[input][index]
+            if is_image(image):
+                log.info(f"Task {name} merging input {input} index {index} planes {list(image.keys())}")
+                merged.update(image)
     return merged
 
 
 def offset(name, inputs):
-    images = util.required_images(name, inputs, "images", index=0)
+    image = util.require_image(name, inputs, "image", index=0)
     offset = util.optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
     patterns = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
-    for plane in util.match_planes(images.keys(), patterns):
+    for plane in util.match_planes(image.keys(), patterns):
         log.info(f"Task {name} offset {offset} plane {plane}")
-        images[plane] = numpy.roll(images[plane], shift=offset, axis=(1, 0))
-    return images
+        image[plane] = numpy.roll(image[plane], shift=offset, axis=(1, 0))
+    return image
 
 
 def rename(name, inputs):
-    """Rename image planes within an :ref:`image collection<image-collections>`.
+    """Rename image planes within an :ref:`image<images>`.
 
     Parameters
     ----------
@@ -244,50 +240,78 @@ def rename(name, inputs):
     inputs: :any:`dict`, required
         Inputs for this function, containing:
 
-        :["images"][0]: :class:`dict`, required. :ref:`Image collection<image-collections>` containing image planes to be renamed.
+        :["image"][0]: :class:`dict`, required. :ref:`Image<images>` containing image planes to be renamed.
         :["changes"][0]: :class:`dict`, optional. Maps existing names to new names.  Default: {}, which does nothing.
 
     Returns
     -------
-    images: :class:`dict`
-        A copy of the input :ref:`image collection<image-collections>` with some image planes renamed.
+    image: :class:`dict`
+        A copy of the input :ref:`image<images>` with some image planes renamed.
     """
-    images = util.required_images(name, inputs, "images")
+    image = util.require_image(name, inputs, "image")
     changes = util.optional_input(name, inputs, "changes", type=dict, default={})
 
-    renamed = {changes.get(key, key): value for key, value in images.items()}
+    renamed = {changes.get(name, name): plane for name, plane in image.items()}
     return renamed
 
 
 def rgb2gray(name, inputs):
-    images = util.required_images(name, inputs, "images", index=0)
+    image = util.require_image(name, inputs, "image", index=0)
     patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
-    for plane in util.match_planes(images.keys(), patterns):
-        log.info(f"Task {name} rgb2gray plane {plane}")
-        images[plane] = numpy.atleast_3d(skimage.color.rgb2gray(images[plane]))
-    return images
+    weights = util.optional_input(name, inputs, "weights", type=util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
+    for plane in util.match_planes(image.keys(), patterns):
+        if util.is_plane(image[plane], channels=3, dtype=float):
+            log.info(f"Task {name} rgb2gray plane {plane} weights {weights}")
+            image[plane] = numpy.dot(image[plane], weights)[:,:,None]
+    return image
+
+
+def save(name, inputs):
+    """Save a file to disk.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :class:`dict`, required
+        Inputs for this function, including:
+
+        :["path"][0]: :class:`str`, required. Filesystem path of the file to be saved.
+        :["planes"][0]: :class:`str`, optional. Controls which image planes are to be saved.  Default: '*', which saves all planes.
+    """
+    image = util.require_image(name, inputs, "image", index=0)
+    path = util.require_input(name, inputs, "path", type=str)
+    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+
+    planes = list(util.match_planes(image.keys(), patterns))
+
+    for saver in io.savers:
+        if saver(name, image, planes, path):
+            return
+    raise RuntimeError(f"Task {task} could not save 'image' to disk.")
 
 
 def scale(name, inputs):
-    images = util.required_images(name, inputs, "images", index=0)
-    patterns = util.optional_input(name, inputs, "planes", type=str, default="*")
+    image = util.require_image(name, inputs, "image", index=0)
     order = util.optional_input(name, inputs, "order", type=int, default=3)
-    scale = util.required_input(name, inputs, "scale", type=tuple)
-    for plane in util.match_planes(images.keys(), patterns):
+    scale = util.require_input(name, inputs, "scale", type=util.array(shape=(2,)))
+    for plane in image.keys():
         log.info(f"Task {name} resizing plane {plane} scale {scale} order {order}")
-        images[plane] = skimage.transform.rescale(images[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
-    return images
+        image[plane] = skimage.transform.rescale(image[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
+    return image
 
 
 def solid(name, inputs):
     plane = util.optional_input(name, inputs, "plane", type=str, default="C")
-    size = util.required_input(name, inputs, "size")
-    value = util.optional_input(name, inputs, "value", default=numpy.ones(3, dtype=float))
+    size = util.require_input(name, inputs, "size")
+    value = util.optional_input(name, inputs, "value", type=numpy.array, default=[1, 1, 1])
     log.info(f"Task {name} generating solid plane {plane} size {size} value {value}")
 
-    images = {}
-    images[plane] = numpy.full((size[1], size[0], len(value)), value, dtype=float)
-    return images
+    image = {
+        plane: numpy.full((size[1], size[0], len(value)), value, dtype=float),
+    }
+
+    return image
 
 
 def text(name, inputs):
@@ -297,7 +321,7 @@ def text(name, inputs):
     fontsize = util.optional_input(name, inputs, "fontsize", type=int, default=32)
     plane = util.optional_input(name, inputs, "plane", type=str, default="A")
     position = util.optional_input(name, inputs, "position", default=None)
-    size = util.required_input(name, inputs, "size")
+    size = util.require_input(name, inputs, "size")
     text = util.optional_input(name, inputs, "text", type=str, default="Text!")
 
     if position is None:
@@ -310,8 +334,9 @@ def text(name, inputs):
     draw = PIL.ImageDraw.Draw(image)
     draw.text(position, text, font=font, fill=255, anchor=anchor)
 
-    images = {}
-    images[plane] = numpy.array(image)[:,:,None] / 255.0
-    return images
+    image = {
+        plane: numpy.array(image)[:,:,None] / 255.0,
+    }
+    return image
 
 
