@@ -23,6 +23,8 @@ import sys
 import numpy
 import skimage
 
+import imagecat.color as color
+
 try:
     import Imath
     import OpenEXR
@@ -71,13 +73,12 @@ def pil_loader(task, path, planes):
 
     image = {}
     if pil_image.mode == "L":
-        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+        image["L"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
     if pil_image.mode == "RGB":
-        image["C"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0)
     if pil_image.mode == "RGBA":
-        image["C"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0
+        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0)
         image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
-
     return image
 
 
@@ -86,17 +87,23 @@ def pil_saver(task, image, planes, path):
         return False
 
     if len(planes) == 1:
-        plane = planes[0]
-        image = image[plane]
-        image = PIL.Image.fromarray(skimage.img_as_ubyte(image))
-        image.save(path)
-        log.info(f"Task {task} saved planes {planes} to {path}")
-        return True
+        plane = image[planes[0]]
+        if plane.shape[2] == 1:
+            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(plane), mode="L")
+        elif plane.shape[2] == 3:
+            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(color.linear_to_srgb(plane)), mode="RGB")
+        else:
+            return False
 
-    if len(planes) == 2 and "C" in planes and "A" in planes:
-        raise NotImplementedError()
+    elif len(planes) == 2 and "C" in planes and "A" in planes:
+        C = color.linear_to_srgb(image["C"])
+        A = image["A"]
+        pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(numpy.depth_stack((C, A))), mode="RGBA")
+    else:
+        return False
 
-    return False
+    pil_image.save(path)
+    return True
 
 
 loaders = [

@@ -11,6 +11,7 @@ Contents:
    :maxdepth: 2
 
    imagecat.rst
+   imagecat.color.rst
    imagecat.io.rst
    imagecat.notebook.rst
    imagecat.util.rst

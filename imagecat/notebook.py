@@ -22,6 +22,7 @@ import PIL.Image
 import numpy
 import skimage
 
+import imagecat.color as color
 import imagecat.util as util
 
 
@@ -42,6 +43,7 @@ def display(image, planes="*", width=None, height=None):
     markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
     for name in sorted(util.match_planes(image.keys(), planes)):
         plane = image[name]
+        plane = color.linear_to_srgb(plane)
         pil_image = skimage.img_as_ubyte(plane)
         pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
         pil_image = PIL.Image.fromarray(pil_image)
