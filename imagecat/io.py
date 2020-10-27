@@ -48,15 +48,36 @@ def openexr_saver(task, image, planes, path):
     if extension != ".exr":
         return False
 
-    shape = image[planes[0]].shape
+    channels = {}
+    pixels = {}
+    for plane in planes:
+        dtype = image[plane].dtype
+        if dtype != numpy.float16:
+            raise RuntimeError(f"Unexpected dtype: {dtype}")
+        shape = image[plane].shape
+        if shape[2] == 1:
+            channels[f"{plane}"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            pixels[f"{plane}"] = image[plane][:,:,0].tobytes()
+        elif shape[2] == 2:
+            channels[f"{plane}.x"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            channels[f"{plane}.y"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            pixels[f"{plane}.x"] = image[plane][:,:,0].tobytes()
+            pixels[f"{plane}.y"] = image[plane][:,:,1].tobytes()
+        elif shape[2] == 3:
+            channels[f"{plane}.r"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            channels[f"{plane}.g"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            channels[f"{plane}.b"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            pixels[f"{plane}.r"] = image[plane][:,:,0].tobytes()
+            pixels[f"{plane}.g"] = image[plane][:,:,1].tobytes()
+            pixels[f"{plane}.b"] = image[plane][:,:,2].tobytes()
+        else:
+            raise RuntimeError(f"Unexpected image plane depth: {shape[2]}")
+
     header = OpenEXR.Header(shape[1], shape[0])
-    header["channels"] = {channel: Imath.Channel(Imath.PixelType(Imath.PixelType.HALF)) for channel in "RGB"}
+    header["channels"] = channels
+    log.debug(header)
     writer = OpenEXR.OutputFile(path, header)
-    writer.writePixels({
-        "R": image[planes[0]][:,:,0].astype(numpy.float16).tobytes(),
-        "G": image[planes[0]][:,:,1].astype(numpy.float16).tobytes(),
-        "B": image[planes[0]][:,:,2].astype(numpy.float16).tobytes(),
-    })
+    writer.writePixels(pixels)
 
     return True
 

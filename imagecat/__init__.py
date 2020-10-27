@@ -226,9 +226,9 @@ def merge(name, inputs):
     for input in sorted(inputs.keys()):
         for index in range(len(inputs[input])):
             image = inputs[input][index]
-            if is_image(image):
-                log.info(f"Task {name} merging input {input} index {index} planes {list(image.keys())}")
+            if util.is_image(image):
                 merged.update(image)
+    log.info(f"Task {name} merge result {util.image_repr(merged)}")
     return merged
 
 
