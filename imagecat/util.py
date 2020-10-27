@@ -149,7 +149,7 @@ def is_plane(plane, channels=None, dtype=None):
 def is_image(image):
     if not isinstance(image, dict):
         return False
-    planes = list(images.values())
+    planes = list(image.values())
     for plane in planes:
         if not is_plane(plane):
             return False

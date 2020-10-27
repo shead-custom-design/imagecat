@@ -74,6 +74,24 @@ def add_operation(graph, name, fn, **parameters):
     return name
 
 
+def set_expression(graph, name, expression, locals={}):
+    def res(graph, dimension):
+        def implementation(name):
+            image = graph.output(name)
+            if not util.is_image(image):
+                raise ValueError(f"Not an image: {name}")
+            for plane in image.values():
+                return plane.shape[dimension]
+        return implementation
+
+    builtins = {
+        "xres": res(graph, 1),
+        "yres": res(graph, 0),
+        }
+    builtins.update(locals)
+    graph.set_expression(name, expression, builtins)
+
+
 ################################################################################################
 # Task functions
 
@@ -287,11 +305,17 @@ def save(name, inputs):
 
 def scale(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
+    mode = util.optional_input(name, inputs, "mode", type=str, default="absolute")
     order = util.optional_input(name, inputs, "order", type=int, default=3)
-    scale = util.require_input(name, inputs, "scale", type=util.array(shape=(2,)))
+    size = util.require_input(name, inputs, "size", type=util.array(shape=(2,)))
     for plane in image.keys():
-        log.info(f"Task {name} resizing plane {plane} scale {scale} order {order}")
-        image[plane] = skimage.transform.rescale(image[plane], (scale[0], scale[1], 1), anti_aliasing=True, order=order)
+        if mode == "absolute":
+            image[plane] = skimage.transform.resize(image[plane].astype(numpy.float32), (size[1], size[0]), anti_aliasing=True, order=order).astype(numpy.float16)
+        elif mode == "relative":
+            image[plane] = skimage.transform.rescale(image[plane].astype(numpy.float32), (size[1], size[0], 1), anti_aliasing=True, order=order).astype(numpy.float16)
+        else:
+            raise RuntimeError(f"Task {task} unknown mode: {mode}")
+    log.info(f"Task {name} scale mode {mode} order {order} plane {plane} size {size} result {util.image_repr(image)}")
     return image
 
 

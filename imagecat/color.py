@@ -19,10 +19,18 @@
 import numpy
 
 def srgb_to_linear(image):
+    """Convert an sRGB image to linear color.
+
+    Acessed from https://entropymine.com/imageworsener/srgbformula
+    """
     return numpy.where(image <= 0.04045, image / 12.92, numpy.power((image + 0.055) / 1.055, 2.4))
 
 
 def linear_to_srgb(image):
+    """Convert linear color image to sRGB.
+
+    Acessed from https://entropymine.com/imageworsener/srgbformula
+    """
     return numpy.where(image <= 0.0031308, image * 12.92, 1.055 * numpy.power(image, 1 / 2.4) - 0.055)
 
 
