@@ -29,6 +29,7 @@ import numpy
 import skimage.filters
 
 import imagecat.io as io
+import imagecat.units as units
 import imagecat.util as util
 
 log = logging.getLogger(__name__)
@@ -103,11 +104,11 @@ def composite(name, inputs):
     foreground = util.require_plane(name, inputs, "foreground", index=0, plane=fgplane)
     maskplane = util.optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
     mask = util.require_plane(name, inputs, "mask", index=0, plane=maskplane, channels=1)
-    rotation = util.optional_input(name, inputs, "rotation", index=0, type=float, default=None)
-    translation = util.optional_input(name, inputs, "translation", index=0, default=None)
+    orientation = util.optional_input(name, inputs, "orientation", index=0, type=float, default=0)
+    position = util.optional_input(name, inputs, "position", index=0, default=["0.5vw", "0.5vh"])
 
-    transformed_foreground = util.transform(foreground, background.shape, rotation=rotation, translation=translation)
-    transformed_mask = util.transform(mask, background.shape, rotation=rotation, translation=translation)
+    transformed_foreground = util.transform(foreground, background.shape, orientation=orientation, position=position)
+    transformed_mask = util.transform(mask, background.shape, orientation=orientation, position=position)
 
     alpha = transformed_mask
     one_minus_alpha = 1 - alpha
@@ -115,7 +116,7 @@ def composite(name, inputs):
     merged = {}
     merged["C"] = transformed_foreground * alpha + background * one_minus_alpha
 
-    log.info(f"Task {name} comp {util.plane_repr(fgplane, foreground)} over {util.plane_repr(bgplane, background)} mask {util.plane_repr(maskplane, mask)} rotation {rotation} translation {translation} result {util.image_repr(merged)}")
+    log.info(f"Task {name} comp {util.plane_repr(fgplane, foreground)} over {util.plane_repr(bgplane, background)} mask {util.plane_repr(maskplane, mask)} orientation {orientation} position {position} result {util.image_repr(merged)}")
 
     return merged
 
@@ -167,9 +168,10 @@ def gaussian(name, inputs):
     """
     image = util.require_image(name, inputs, "image", index=0)
     planes = util.optional_input(name, inputs, "planes", type=str, default="*")
-    sigma = util.require_input(name, inputs, "sigma", type=float)
+    sigma = util.optional_input(name, inputs, "sigma", default="5px")
     for plane in util.match_planes(image.keys(), planes):
-        image[plane] = numpy.atleast_3d(skimage.filters.gaussian(image[plane], sigma=sigma, multichannel=True, preserve_range=True).astype(image[plane].dtype))
+        sigma_px = units.length(sigma, image[plane].shape[1], image[plane].shape[0])
+        image[plane] = numpy.atleast_3d(skimage.filters.gaussian(image[plane], sigma=sigma_px, multichannel=True, preserve_range=True).astype(image[plane].dtype))
     log.info(f"Task {name} gaussian {planes} {sigma} result {util.image_repr(image)}")
     return image
 
@@ -234,11 +236,13 @@ def merge(name, inputs):
 
 def offset(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
-    offset = util.optional_input(name, inputs, "offset", index=0, type=numpy.array, default=[0, 0])
+    offset = util.optional_input(name, inputs, "offset", index=0, default=["0.5vw", "0.5vh"])
     planes = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
     for plane in util.match_planes(image.keys(), planes):
-        image[plane] = numpy.roll(image[plane], shift=offset, axis=(1, 0))
+        xoffset = int(units.length(offset[0], image[plane].shape[1], image[plane].shape[0]))
+        yoffset = int(units.length(offset[1], image[plane].shape[1], image[plane].shape[0]))
+        image[plane] = numpy.roll(image[plane], shift=(xoffset, yoffset), axis=(1, 0))
 
     log.info(f"Task {name} offset {offset} {planes} result {util.image_repr(image)}")
     return image
@@ -305,30 +309,27 @@ def save(name, inputs):
 
 def scale(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
-    mode = util.optional_input(name, inputs, "mode", type=str, default="absolute")
     order = util.optional_input(name, inputs, "order", type=int, default=3)
-    size = util.require_input(name, inputs, "size", type=util.array(shape=(2,)))
+    size = util.optional_input(name, inputs, "size", default=("1vw", "1vh"))
+
     for plane in image.keys():
-        if mode == "absolute":
-            image[plane] = skimage.transform.resize(image[plane].astype(numpy.float32), (size[1], size[0]), anti_aliasing=True, order=order).astype(numpy.float16)
-        elif mode == "relative":
-            image[plane] = skimage.transform.rescale(image[plane].astype(numpy.float32), (size[1], size[0], 1), anti_aliasing=True, order=order).astype(numpy.float16)
-        else:
-            raise RuntimeError(f"Task {task} unknown mode: {mode}")
-    log.info(f"Task {name} scale mode {mode} order {order} plane {plane} size {size} result {util.image_repr(image)}")
+        width = units.length(size[0], image[plane].shape[1], image[plane].shape[0])
+        height = units.length(size[1], image[plane].shape[1], image[plane].shape[0])
+        image[plane] = skimage.transform.resize(image[plane].astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(numpy.float16)
+    log.info(f"Task {name} scale order {order} size {size} result {util.image_repr(image)}")
     return image
 
 
 def solid(name, inputs):
     plane = util.optional_input(name, inputs, "plane", type=str, default="C")
-    size = util.require_input(name, inputs, "size")
+    size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
     value = util.optional_input(name, inputs, "value", type=numpy.array, default=[1, 1, 1])
 
     image = {
         plane: numpy.full((size[1], size[0], len(value)), value, dtype=numpy.float16),
     }
 
-    log.info(f"Task {name} solid {plane} {size} {value} result {util.image_repr(image)}")
+    log.info(f"Task {name} solid {plane} size {size} value {value} result {util.image_repr(image)}")
     return image
 
 
@@ -336,19 +337,20 @@ def text(name, inputs):
     anchor = util.optional_input(name, inputs, "anchor", type=str, default="mm")
     fontindex = util.optional_input(name, inputs, "fontindex", type=int, default=0)
     fontname = util.optional_input(name, inputs, "fontname", type=str, default="Helvetica")
-    fontsize = util.optional_input(name, inputs, "fontsize", type=int, default=32)
+    fontsize = util.optional_input(name, inputs, "fontsize", default="32px")
     plane = util.optional_input(name, inputs, "plane", type=str, default="A")
-    position = util.optional_input(name, inputs, "position", default=None)
-    size = util.require_input(name, inputs, "size")
+    position = util.optional_input(name, inputs, "position", default=("0.5vw", "0.5vh"))
+    size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
     text = util.optional_input(name, inputs, "text", type=str, default="Text!")
 
-    if position is None:
-        position = (size[0] / 2, size[1] / 2)
+    fontsize_px = int(units.length(fontsize, size[0], size[1]))
+    x = units.length(position[0], size[0], size[1])
+    y = units.length(position[1], size[0], size[1])
 
-    image = PIL.Image.new("L", size, 0)
-    font = PIL.ImageFont.truetype(fontname, fontsize, fontindex)
+    image = PIL.Image.new("L", (size[0], size[1]), 0)
+    font = PIL.ImageFont.truetype(fontname, fontsize_px, fontindex)
     draw = PIL.ImageDraw.Draw(image)
-    draw.text(position, text, font=font, fill=255, anchor=anchor)
+    draw.text((x, y), text, font=font, fill=255, anchor=anchor)
 
     image = {
         plane: numpy.array(image, dtype=numpy.float16)[:,:,None] / 255.0,

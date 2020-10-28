@@ -22,6 +22,8 @@ import fnmatch
 import numpy
 import skimage.transform
 
+import imagecat.units as units
+
 
 def array(shape, dtype=numpy.float16):
     def implementation(value):
@@ -179,7 +181,7 @@ def require_image(name, inputs, input, *, index=0):
     return image
 
 
-def transform(source, target_shape, *, rotation=None, translation=None):
+def transform(source, target_shape, *, position, orientation):
     """Transform an image using an affine transformation.
 
     Parameters
@@ -190,10 +192,10 @@ def transform(source, target_shape, *, rotation=None, translation=None):
         Desired output image size, as a ``(rows, cols)`` tuple.  Note that this does not have to
         match the size of the `source` image.  By default, the `source` image will be centered in
         the output, cropped if necessary.
-    rotation: number, optional
+    orientation: number, optional
         Rotation of the image around its center, in degrees.
-    translation: 2-tuple of numbers, optional
-        Translation of the image relative to `target_shape`, in relative coordinates.
+    position: 2-tuple of numbers, optional
+        Position of the image center relative to `target_shape`.
 
     Returns
     -------
@@ -206,27 +208,25 @@ def transform(source, target_shape, *, rotation=None, translation=None):
     # Start with an identity matrix.
     matrix = skimage.transform.AffineTransform(matrix=numpy.identity(3))
 
-    # Optionally rotate the image around its center.
-    if rotation is not None:
-        offset = skimage.transform.AffineTransform(translation=(-sx / 2, -sy / 2))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-        # Positive rotation is counter-clockwise in my book.
-        rotation = skimage.transform.AffineTransform(rotation=numpy.radians(-rotation))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(rotation.params, matrix.params))
-
-        offset = skimage.transform.AffineTransform(translation=(sx / 2, sy / 2))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-    # Center the result.
-    offset = skimage.transform.AffineTransform(translation=((tx - sx) / 2, (ty - sy) / 2))
+    # Orient the image around its center.
+    offset = skimage.transform.AffineTransform(translation=(-sx / 2, -sy / 2))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
-    # Optionally transform the image relative to the target.
-    if translation is not None:
-        # +Y is up in my book.
-        offset = skimage.transform.AffineTransform(translation=(translation[0] * tx, -translation[1] * ty))
-        matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+    rotation = skimage.transform.AffineTransform(rotation=numpy.radians(-orientation)) # Positive = counter-clockwise
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(rotation.params, matrix.params))
+
+    offset = skimage.transform.AffineTransform(translation=(sx / 2, sy / 2))
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+    # Center the image on the lower-left corner.
+    offset = skimage.transform.AffineTransform(translation=(-sx / 2, (-sy / 2) + ty))
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+    # Position the image relative to the target shape.
+    xoffset = units.length(position[0], tx, ty)
+    yoffset = units.length(position[1], tx, ty)
+    offset = skimage.transform.AffineTransform(translation=(xoffset, -yoffset))
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
     # Transform the image.
     return skimage.transform.warp(skimage.img_as_float64(source), matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0).astype(numpy.float16)
