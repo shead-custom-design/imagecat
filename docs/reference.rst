@@ -14,4 +14,5 @@ Contents:
    imagecat.color.rst
    imagecat.io.rst
    imagecat.notebook.rst
+   imagecat.units.rst
    imagecat.util.rst
