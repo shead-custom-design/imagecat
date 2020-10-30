@@ -39,6 +39,52 @@ except:
 
 log = logging.getLogger(__name__)
 
+#####################################################################################33
+# Loaders
+
+def openexr_loader(task, path, planes):
+    if "OpenEXR" not in sys.modules:
+        return None
+
+    extension = os.path.splitext(path)[1].lower()
+    if extension != ".exr":
+        return None
+
+    reader = OpenEXR.InputFile(path)
+    header = reader.header()
+    width = header["dataWindow"].max.x - header["dataWindow"].min.x + 1
+    height = header["dataWindow"].max.y - header["dataWindow"].min.y + 1
+
+    image = {}
+    for name, dtype in header["channels"].items():
+        if dtype.type.v == Imath.PixelType.HALF:
+            image[name] = numpy.frombuffer(reader.channel(name), dtype=numpy.float16).reshape((height, width, 1))
+    return image
+
+
+def pil_loader(task, path, planes):
+    if "PIL.Image" not in sys.modules:
+        return None
+
+    if planes != "*":
+        raise NotImplementedError()
+
+    pil_image = PIL.Image.open(path)
+    log.debug(pil_image.info)
+
+    image = {}
+    if pil_image.mode == "L":
+        image["L"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+    if pil_image.mode == "RGB":
+        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0)
+    if pil_image.mode == "RGBA":
+        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0)
+        image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
+    return image
+
+
+#####################################################################################33
+# Savers
 
 def openexr_saver(task, image, planes, path):
     if "OpenEXR" not in sys.modules:
@@ -82,27 +128,6 @@ def openexr_saver(task, image, planes, path):
     return True
 
 
-def pil_loader(task, path, planes):
-    if "PIL.Image" not in sys.modules:
-        return None
-
-    if planes != "*":
-        raise NotImplementedError()
-
-    pil_image = PIL.Image.open(path)
-    log.debug(pil_image.info)
-
-    image = {}
-    if pil_image.mode == "L":
-        image["L"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
-    if pil_image.mode == "RGB":
-        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0)
-    if pil_image.mode == "RGBA":
-        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0)
-        image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
-    return image
-
-
 def pil_saver(task, image, planes, path):
     if "PIL.Image" not in sys.modules:
         return False
@@ -128,6 +153,7 @@ def pil_saver(task, image, planes, path):
 
 
 loaders = [
+    openexr_loader,
     pil_loader,
 ]
 
