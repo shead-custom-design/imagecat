@@ -25,6 +25,19 @@ import skimage.transform
 import imagecat.units as units
 
 
+class Layer:
+    def __init__(self, data, components=None, **kwargs):
+        self.__dict__.update(kwargs)
+        self.__dict__.update(data=data, components=components)
+
+    def __repr__(self):
+        items = (f"{k}={v!r}" for k, v in self.__dict__.items())
+        return "{}({})".format(type(self).__name__, ", ".join(items))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+
 def array(shape, dtype=numpy.float16):
     def implementation(value):
         value = numpy.array(value, dtype=dtype)
