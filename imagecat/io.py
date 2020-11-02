@@ -16,6 +16,7 @@
 """Helpers for implementing Imagecat I/O.
 """
 
+import collections
 import logging
 import os
 import sys
@@ -25,6 +26,7 @@ import skimage
 
 import imagecat
 import imagecat.color as color
+import imagecat.util as util
 
 try:
     import Imath
@@ -57,13 +59,19 @@ def openexr_loader(task, path, layers):
     height = header["dataWindow"].max.y - header["dataWindow"].min.y + 1
 
     image = imagecat.Image()
-    for name, dtype in header["channels"].items():
-        if dtype.type.v == Imath.PixelType.HALF:
-            image.layers[name] = imagecat.Layer(data=numpy.frombuffer(reader.channel(name), dtype=numpy.float16).reshape((height, width, 1)))
-        elif dtype.type.v == Imath.PixelType.FLOAT:
-            image.layers[name] = imagecat.Layer(data=numpy.frombuffer(reader.channel(name), dtype=numpy.float32).reshape((height, width, 1)))
-        elif dtype.type.v == Imath.PixelType.INT:
-            image.layers[name] = imagecat.Layer(data=numpy.frombuffer(reader.channel(name), dtype=numpy.int32).reshape((height, width, 1)))
+    layers = util.channels_to_layers(header["channels"].keys())
+    for name, components, role in layers:
+        data = []
+        for channel, component in components:
+            dtype = header["channels"][channel]
+            if dtype.type.v == Imath.PixelType.HALF:
+                data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.float16).reshape((height, width)))
+            elif dtype.type.v == Imath.PixelType.FLOAT:
+                data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.float32).reshape((height, width)))
+            elif dtype.type.v == Imath.PixelType.INT:
+                data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.int32).reshape((height, width)))
+        data = numpy.dstack(data)
+        image.layers[name] = imagecat.Layer(data=data, components=[component for channel, component in components], role=role)
     return image
 
 
