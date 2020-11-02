@@ -22,38 +22,45 @@ import PIL.Image
 import numpy
 import skimage
 
+import imagecat
 import imagecat.color as color
 import imagecat.util as util
 
 
-def display(image, planes="*", width=None, height=None):
+def display(image, layers="*", width=None, height=None):
     """Display :ref:`image<images>` inline in a Jupyter notebook.
 
     Parameters
     ----------
     image: :class:`dict`, required
         :ref:`Image<images>` to be displayed.
-    planes: :class:`str`, optional
-        Names of the image planes to display.  Use "*" (the default) to display all planes.
+    layers: :class:`str`, optional
+        Names of the image layers to display.  Use "*" (the default) to display all layers.
     width: :class:`str`, optional
         Optional HTML width for each image.
     height: :class:`str`, optional
         Optional HTML height for each image.
     """
+    if not isinstance(image, imagecat.Image):
+        raise ValueError("Expected an instance of imagecat.Image.")
+
     markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
-    for name in sorted(util.match_planes(image.keys(), planes)):
-        plane = image[name]
-        plane = color.linear_to_srgb(plane)
-        pil_image = skimage.img_as_ubyte(plane)
+    for name in sorted(util.match_layers(image.layers.keys(), layers)):
+        layer = image.layers[name]
+        data = layer.data
+        if layer.role == imagecat.Role.RGB:
+            data = color.linear_to_srgb(data)
+
+        stream = io.BytesIO()
+        pil_image = skimage.img_as_ubyte(data)
         pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
         pil_image = PIL.Image.fromarray(pil_image)
-        stream = io.BytesIO()
         pil_image.save(stream, "PNG")
         uri = "data:image/png;base64," + base64.standard_b64encode(stream.getvalue()).decode("ascii")
 
         markup += f"<figure style='margin: 5px'>"
-        markup += f"<image src='{uri}' style='width:{width}; height:{height}'/>"
-        markup += f"<figcaption>{name} <small>{plane.shape[1]}&times;{plane.shape[0]}&times;{plane.shape[2]} {plane.dtype}</small></figcaption>"
+        markup += f"<image src='{uri}' style='width:{width}; height:{height}; box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5)'/>"
+        markup += f"<figcaption>{name} <small>{data.shape[1]}&times;{data.shape[0]}&times;{data.shape[2]} {data.dtype} {layer.role}</small></figcaption>"
         markup += f"</figure>"
     markup += "</div>"
 

@@ -23,6 +23,7 @@ import sys
 import numpy
 import skimage
 
+import imagecat
 import imagecat.color as color
 
 try:
@@ -42,7 +43,7 @@ log = logging.getLogger(__name__)
 #####################################################################################33
 # Loaders
 
-def openexr_loader(task, path, planes):
+def openexr_loader(task, path, layers):
     if "OpenEXR" not in sys.modules:
         return None
 
@@ -55,38 +56,42 @@ def openexr_loader(task, path, planes):
     width = header["dataWindow"].max.x - header["dataWindow"].min.x + 1
     height = header["dataWindow"].max.y - header["dataWindow"].min.y + 1
 
-    image = {}
+    image = imagecat.Image()
     for name, dtype in header["channels"].items():
         if dtype.type.v == Imath.PixelType.HALF:
-            image[name] = numpy.frombuffer(reader.channel(name), dtype=numpy.float16).reshape((height, width, 1))
+            image.layers[name] = imagecat.Layer(data=numpy.frombuffer(reader.channel(name), dtype=numpy.float16).reshape((height, width, 1)))
+        elif dtype.type.v == Imath.PixelType.FLOAT:
+            image.layers[name] = imagecat.Layer(data=numpy.frombuffer(reader.channel(name), dtype=numpy.float32).reshape((height, width, 1)))
+        elif dtype.type.v == Imath.PixelType.INT:
+            image.layers[name] = imagecat.Layer(data=numpy.frombuffer(reader.channel(name), dtype=numpy.int32).reshape((height, width, 1)))
     return image
 
 
-def pil_loader(task, path, planes):
+def pil_loader(task, path, layers):
     if "PIL.Image" not in sys.modules:
         return None
 
-    if planes != "*":
-        raise NotImplementedError()
+    if layers != "*":
+        raise NotImplementedError("Layer matching not implemented.")
 
     pil_image = PIL.Image.open(path)
     log.debug(pil_image.info)
 
-    image = {}
+    image = imagecat.Image()
     if pil_image.mode == "L":
-        image["L"] = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+        image.layers["Y"] = imagecat.Layer(data=numpy.array(pil_image, dtype=numpy.float16) / 255.0)
     if pil_image.mode == "RGB":
-        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0)
+        image.layers["C"] = imagecat.Layer(data=color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0), role=imagecat.Role.RGB)
     if pil_image.mode == "RGBA":
-        image["C"] = color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0)
-        image["A"] = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
+        image.layers["C"] = imagecat.Layer(data=color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0), role=imagecat.Role.RGB)
+        image.layers["A"] = imagecat.Layer(data=numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0)
     return image
 
 
 #####################################################################################33
 # Savers
 
-def openexr_saver(task, image, planes, path):
+def openexr_saver(task, image, layers, path):
     if "OpenEXR" not in sys.modules:
         return False
 
@@ -96,55 +101,46 @@ def openexr_saver(task, image, planes, path):
 
     channels = {}
     pixels = {}
-    for plane in planes:
-        dtype = image[plane].dtype
-        if dtype != numpy.float16:
-            raise RuntimeError(f"Unexpected dtype: {dtype}")
-        shape = image[plane].shape
-        if shape[2] == 1:
-            channels[f"{plane}"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
-            pixels[f"{plane}"] = image[plane][:,:,0].tobytes()
-        elif shape[2] == 2:
-            channels[f"{plane}.x"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
-            channels[f"{plane}.y"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
-            pixels[f"{plane}.x"] = image[plane][:,:,0].tobytes()
-            pixels[f"{plane}.y"] = image[plane][:,:,1].tobytes()
-        elif shape[2] == 3:
-            channels[f"{plane}.r"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
-            channels[f"{plane}.g"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
-            channels[f"{plane}.b"] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
-            pixels[f"{plane}.r"] = image[plane][:,:,0].tobytes()
-            pixels[f"{plane}.g"] = image[plane][:,:,1].tobytes()
-            pixels[f"{plane}.b"] = image[plane][:,:,2].tobytes()
-        else:
-            raise RuntimeError(f"Unexpected image plane depth: {shape[2]}")
+    for layer_name in layers:
+        layer = image.layers[layer_name]
+        dtype = layer.data.dtype
+        shape = layer.data.shape
+        for index, component in enumerate(layer.components):
+            channel_name = f"{layer_name}.{component}" if component else f"{layer_name}"
+            if dtype == numpy.float16:
+                channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+            elif dtype == numpy.float32:
+                channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.FLOAT))
+            elif dtype == numpy.int32:
+                channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.INT))
+            else:
+                raise ValueError(f"Unsupported dtype: {dtype}")
+            pixels[channel_name] = layer.data[:,:,index].tobytes()
 
     header = OpenEXR.Header(shape[1], shape[0])
     header["channels"] = channels
-    log.debug(header)
     writer = OpenEXR.OutputFile(path, header)
     writer.writePixels(pixels)
 
     return True
 
 
-def pil_saver(task, image, planes, path):
+def pil_saver(task, image, layers, path):
     if "PIL.Image" not in sys.modules:
         return False
 
-    if len(planes) == 1:
-        plane = image[planes[0]]
-        if plane.shape[2] == 1:
-            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(plane), mode="L")
-        elif plane.shape[2] == 3:
-            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(color.linear_to_srgb(plane)), mode="RGB")
+    if len(layers) == 1:
+        layer = image.layers[layers[0]]
+        if layer.data.shape[2] == 1:
+            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(layer.data), mode="L")
+        elif layer.data.shape[2] == 3 and layer.role == imagecat.Role.RGB:
+            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(color.linear_to_srgb(layer.data)), mode="RGB")
         else:
             return False
-
-    elif len(planes) == 2 and "C" in planes and "A" in planes:
-        C = color.linear_to_srgb(image["C"])
-        A = image["A"]
-        pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(numpy.depth_stack((C, A))), mode="RGBA")
+    elif len(layers) == 2 and "C" in layers and "A" in layers:
+        C = color.linear_to_srgb(image.layers["C"].data)
+        A = image.layers["A"].data
+        pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(numpy.dstack((C, A))), mode="RGBA")
     else:
         return False
 

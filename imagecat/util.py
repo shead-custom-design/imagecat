@@ -22,20 +22,8 @@ import fnmatch
 import numpy
 import skimage.transform
 
+import imagecat
 import imagecat.units as units
-
-
-class Layer:
-    def __init__(self, data, components=None, **kwargs):
-        self.__dict__.update(kwargs)
-        self.__dict__.update(data=data, components=components)
-
-    def __repr__(self):
-        items = (f"{k}={v!r}" for k, v in self.__dict__.items())
-        return "{}({})".format(type(self).__name__, ", ".join(items))
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
 
 
 def array(shape, dtype=numpy.float16):
@@ -47,38 +35,30 @@ def array(shape, dtype=numpy.float16):
     return implementation
 
 
-def image_repr(image):
-    return " ".join([plane_repr(name, plane) for name, plane in image.items()])
-
-
-def plane_repr(name, plane):
-    return f"{name}({plane.shape[1]}x{plane.shape[0]}x{plane.shape[2]} {plane.dtype})"
-
-
-def match_planes(planes, patterns):
-    """Match image planes against a pattern.
+def match_layers(layers, patterns):
+    """Match image layers against a pattern.
 
     Use this function implementing tasks that can operate on multiple image
-    planes.  `patterns` is a :class:`str` that can contain multiple whitespace
+    layers.  `patterns` is a :class:`str` that can contain multiple whitespace
     delimited patterns.  Patterns can include ``"*"`` which matches everything, ``"?"``
     to match a single character, ``"[seq]"`` to match any character in seq, and ``"[!seq]"``
     to match any character not in seq.
 
     Parameters
     ----------
-    planes: sequence of :class:`str`, required
-        The :ref:`image<images>` plane names to be matched.
+    layers: sequence of :class:`str`, required
+        The :ref:`image<images>` layer names to be matched.
     pattern: :class:`str`, required
-        Whitespace delimited collection of patterns to match against image names.
+        Whitespace delimited collection of patterns to match against layer names.
 
     Yields
     ------
-    planes: sequence of :class:`str` image names that match `patterns`.
+    layers: sequence of :class:`str` layer names that match `patterns`.
     """
-    for plane in planes:
+    for layer in layers:
         for pattern in patterns.split():
-            if fnmatch.fnmatchcase(plane, pattern):
-                yield plane
+            if fnmatch.fnmatchcase(layer, pattern):
+                yield layer
                 break
 
 
@@ -149,49 +129,23 @@ def require_input(name, inputs, input, *, index=0, type=None):
     return value
 
 
-def is_plane(plane, channels=None, dtype=None):
-    if not isinstance(plane, numpy.ndarray):
-        return False
-    if plane.ndim != 3:
-        return False
-    if channels is not None and plane.shape[2] != channels:
-        return False
-    if dtype is not None and plane.dtype != dtype:
-        return False
-    return True
-
-
-def is_image(image):
-    if not isinstance(image, dict):
-        return False
-    planes = list(image.values())
-    for plane in planes:
-        if not is_plane(plane):
-            return False
-        # All planes must have the same resolution
-        if plane.shape[:2] != planes[0].shape[:2]:
-            return False
-    return True
-
-
-def require_plane(name, inputs, input, *, index=0, plane="C", channels=None, dtype=None):
-    image = require_input(name, inputs, input, index=index, type=dict)
-    if plane not in image:
-        raise RuntimeError(f"Task {name} input {input!r} index {index} missing plane {plane}.")
-    if not is_plane(image[plane], channels=channels, dtype=dtype):
-        raise RuntimeError(f"Task {name} input {input!r} index {index} plane {plane} is not an image plane with {channels} channels and dtype {dtype}.")
-    return image[plane]
+def require_layer(name, inputs, input, *, index=0, layer="C", components=None, dtype=None):
+    image = require_image(name, inputs, input, index=index)
+    if layer not in image.layers:
+        raise RuntimeError(f"Task {name} input {input!r} index {index} missing layer {layer}.")
+    if components is not None and image.layers[layer].data.shape[2] != components:
+        raise RuntimeError(f"Expected a layer with {components} components.")
+    if dtype is not None and image.layers[layer].data.dtype != dtype:
+        raise RuntimeError(f"Expected a layer with dtype {dtype}.")
+    return image.layers[layer].modify()
 
 
 def require_image(name, inputs, input, *, index=0):
-    image = require_input(name, inputs, input, index=index, type=dict)
-    planes = list(image.items())
-    for name, plane in planes:
-        if not is_plane(plane):
-            raise ValueError(f"Task {name} input {input!r} index {index} {plane} is not an image plane.")
-        if plane.shape[:2] != planes[0][1].shape[:2]:
-            raise ValueError(f"Task {name} input {input!r} index {index} not all planes are the same resolution.")
-    return image
+    image = require_input(name, inputs, input, index=index)
+    if not isinstance(image, imagecat.Image):
+        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.")
+    # This ensures that we don't accidentally our inputs.
+    return imagecat.Image(layers=dict(image.layers))
 
 
 def transform(source, target_shape, *, position, orientation):
@@ -236,8 +190,8 @@ def transform(source, target_shape, *, position, orientation):
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
     # Position the image relative to the target shape.
-    xoffset = units.length(position[0], tx, ty)
-    yoffset = units.length(position[1], tx, ty)
+    xoffset = units.length(position[0], (tx, ty))
+    yoffset = units.length(position[1], (tx, ty))
     offset = skimage.transform.AffineTransform(translation=(xoffset, -yoffset))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
@@ -260,3 +214,12 @@ def unique_name(graph, name):
     for index in itertools.count(start=1):
         if f"{name}{index}" not in graph:
             return f"{name}{index}"
+
+
+def log_operation(log, name, operation, output, **parameters):
+     log.info(f"Task {name} {operation}:")
+     for name, parameter in sorted(parameters.items()):
+         log.info(f"  {name}: {parameter}")
+     log.info(f"  output: {output!r}")
+
+

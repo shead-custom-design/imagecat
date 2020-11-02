@@ -18,7 +18,7 @@
 
 __version__ = "0.1.0-dev"
 
-import fnmatch
+import enum
 import logging
 
 import PIL.Image
@@ -35,6 +35,83 @@ import imagecat.util as util
 log = logging.getLogger(__name__)
 
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
+
+
+class Role(enum.Enum):
+    NONE = 0
+    RGB = 1
+
+
+class Layer(object):
+    def __init__(self, *, data, components=None, role=None):
+        if not isinstance(data, numpy.ndarray):
+            raise ValueError("Layer data must be an instance of numpy.ndarray.")
+        if data.ndim != 3:
+            raise ValueError("Layer data must have three dimensions.")
+
+        if role is None:
+            if data.shape[2] == 3:
+                role = Role.RGB
+            else:
+                role = Role.NONE
+        if not isinstance(role, Role):
+            raise ValueError("Layer role must be an instance of imagecat.util.Role.")
+
+        if components is None:
+            if data.shape[2] == 1:
+                components = [""]
+            elif data.shape[2] == 3 and role == Role.RGB:
+                components = ["r", "g", "b"]
+            else:
+                components = []
+        if len(components) != data.shape[2]:
+            raise ValueError(f"Expected {data.shape[2]} layer components, received {len(components)}.")
+
+        self.data = data
+        self.components = components
+        self.role = role
+
+    def __repr__(self):
+        return f"Layer({self.data.shape[1]}x{self.data.shape[0]}x{self.data.shape[2]} {self.data.dtype} {self.components} {self.role})"
+
+    @property
+    def res(self):
+        return self.data.shape[1], self.data.shape[0]
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    def modify(self, data=None, components=None, role=None):
+        data = self.data if data is None else data
+        components = self.components if components is None else components
+        role = self.role if role is None else role
+        return Layer(data=data, components=components, role=role)
+
+
+
+class Image(object):
+    def __init__(self, layers={}):
+        first_layer = None
+        for key, layer in layers.items():
+            if not isinstance(key, str):
+                raise ValueError(f"{key} is not a valid layer name.")
+            if not isinstance(layer, Layer):
+                raise ValueError(f"{layer} is not a valid Layer instance.")
+            if first_layer is None:
+                first_layer = layer
+            else:
+                if layer.data.shape[:2] != first_layer.data.shape[:2]:
+                    raise ValueError("All layers must have the same resolution.")
+        self._layers = layers
+
+    def __repr__(self):
+        layers = (f"{k}: {v!r}" for k, v in self._layers.items())
+        return f"Image({','.join(layers)})"
+
+    @property
+    def layers(self):
+        return self._layers
 
 
 ################################################################################################
@@ -98,27 +175,25 @@ def set_expression(graph, name, expression, locals={}):
 
 
 def composite(name, inputs):
-    bgplane = util.optional_input(name, inputs, "bgplane", index=0, type=str, default="C")
-    background = util.require_plane(name, inputs, "background", index=0, plane=bgplane)
-    fgplane = util.optional_input(name, inputs, "fgplane", index=0, type=str, default="C")
-    foreground = util.require_plane(name, inputs, "foreground", index=0, plane=fgplane)
-    maskplane = util.optional_input(name, inputs, "maskplane", index=0, type=str, default="A")
-    mask = util.require_plane(name, inputs, "mask", index=0, plane=maskplane, channels=1)
+    bglayer = util.optional_input(name, inputs, "bglayer", index=0, type=str, default="C")
+    fglayer = util.optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
+    masklayer = util.optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
     orientation = util.optional_input(name, inputs, "orientation", index=0, type=float, default=0)
     position = util.optional_input(name, inputs, "position", index=0, default=["0.5vw", "0.5vh"])
 
-    transformed_foreground = util.transform(foreground, background.shape, orientation=orientation, position=position)
-    transformed_mask = util.transform(mask, background.shape, orientation=orientation, position=position)
+    background = util.require_layer(name, inputs, "background", index=0, layer=bglayer)
+    foreground = util.require_layer(name, inputs, "foreground", index=0, layer=fglayer)
+    mask = util.require_layer(name, inputs, "mask", index=0, layer=masklayer, components=1)
 
+    transformed_foreground = util.transform(foreground.data, background.data.shape, orientation=orientation, position=position)
+    transformed_mask = util.transform(mask.data, background.data.shape, orientation=orientation, position=position)
     alpha = transformed_mask
     one_minus_alpha = 1 - alpha
+    data = transformed_foreground * alpha + background.data * one_minus_alpha
 
-    merged = {}
-    merged["C"] = transformed_foreground * alpha + background * one_minus_alpha
-
-    log.info(f"Task {name} comp {util.plane_repr(fgplane, foreground)} over {util.plane_repr(bgplane, background)} mask {util.plane_repr(maskplane, mask)} orientation {orientation} position {position} result {util.image_repr(merged)}")
-
-    return merged
+    image = Image({"C": Layer(data=data, components=background.components, role=background.role)})
+    util.log_operation(log, name, "composite", image, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, position=position)
+    return image
 
 
 def delete(name, inputs):
@@ -167,12 +242,20 @@ def gaussian(name, inputs):
         A copy of the input :ref:`image<images>` with some or all planes blurred.
     """
     image = util.require_image(name, inputs, "image", index=0)
-    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
-    sigma = util.optional_input(name, inputs, "sigma", default="5px")
-    for plane in util.match_planes(image.keys(), planes):
-        sigma_px = units.length(sigma, image[plane].shape[1], image[plane].shape[0])
-        image[plane] = numpy.atleast_3d(skimage.filters.gaussian(image[plane], sigma=sigma_px, multichannel=True, preserve_range=True).astype(image[plane].dtype))
-    log.info(f"Task {name} gaussian {planes} {sigma} result {util.image_repr(image)}")
+    layers = util.optional_input(name, inputs, "layers", type=str, default="*")
+    radius = util.optional_input(name, inputs, "radius", default=["5px", "5px"])
+
+    layer_names = list(util.match_layers(image.layers.keys(), layers))
+    for layer_name in layer_names:
+        layer = image.layers[layer_name]
+        data = layer.data
+        sigma = [
+            units.length(radius[1], layer.res),
+            units.length(radius[0], layer.res),
+            ]
+        data = numpy.atleast_3d(skimage.filters.gaussian(data, sigma=sigma, multichannel=True, preserve_range=True).astype(data.dtype))
+        image.layers[layer_name] = layer.modify(data=data)
+    util.log_operation(log, name, "gaussian", image, layers=layers, radius=radius)
     return image
 
 
@@ -193,13 +276,15 @@ def load(name, inputs):
     image: :class:`dict`
         :ref:`Image <images>` containing image planes loaded from the file.
     """
+    layers = util.optional_input(name, inputs, "layers", type=str, default="*")
     path = util.require_input(name, inputs, "path", type=str)
-    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
+
     for loader in io.loaders:
-        image = loader(name, path, planes)
+        image = loader(name, path, layers)
         if image is not None:
-            log.info(f"Task {name} load {path} result {util.image_repr(image)}")
+            util.log_operation(log, name, "load", image, layers=layers, path=path)
             return image
+
     raise RuntimeError(f"Task {task} could not load {path} from disk.")
 
 
@@ -207,8 +292,8 @@ def load(name, inputs):
 def merge(name, inputs):
     """Merge multiple :ref:`images<images>` into one.
 
-    Inputs are merged in order, sorted by input name and index.  Images with duplicate
-    names will overwrite earlier images.
+    Inputs are merged in order, sorted by input name and index.  Image layers with duplicate
+    names will overwrite earlier layers.
 
     Parameters
     ----------
@@ -221,30 +306,34 @@ def merge(name, inputs):
 
     Returns
     -------
-    image: :class:`dict`
+    image: :class:`imagecat.Image`
         New :ref:`image<images>` containing the union of all input images.
     """
-    merged = {}
+    merged = Image()
     for input in sorted(inputs.keys()):
         for index in range(len(inputs[input])):
             image = inputs[input][index]
-            if util.is_image(image):
-                merged.update(image)
-    log.info(f"Task {name} merge result {util.image_repr(merged)}")
+            if isinstance(image, Image):
+                merged.layers.update(image.layers)
+    util.log_operation(log, name, "merge", merged)
     return merged
 
 
 def offset(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
+    layers = util.optional_input(name, inputs, "layers", index=0, type=str, default="*")
     offset = util.optional_input(name, inputs, "offset", index=0, default=["0.5vw", "0.5vh"])
-    planes = util.optional_input(name, inputs, "planes", index=0, type=str, default="*")
 
-    for plane in util.match_planes(image.keys(), planes):
-        xoffset = int(units.length(offset[0], image[plane].shape[1], image[plane].shape[0]))
-        yoffset = int(units.length(offset[1], image[plane].shape[1], image[plane].shape[0]))
-        image[plane] = numpy.roll(image[plane], shift=(xoffset, yoffset), axis=(1, 0))
+    layer_names = list(util.match_layers(image.layers.keys(), layers))
+    for layer_name in layer_names:
+        layer = image.layers[layer_name]
+        data = layer.data
+        xoffset = int(units.length(offset[0], layer.res))
+        yoffset = int(units.length(offset[1], layer.res))
+        data = numpy.roll(data, shift=(xoffset, yoffset), axis=(1, 0))
+        image.layers[layer_name] = layer.modify(data=data)
 
-    log.info(f"Task {name} offset {offset} {planes} result {util.image_repr(image)}")
+    util.log_operation(log, name, "offset", image, layers=layers, offset=offset)
     return image
 
 
@@ -299,10 +388,10 @@ def save(name, inputs):
     """
     image = util.require_image(name, inputs, "image", index=0)
     path = util.require_input(name, inputs, "path", type=str)
-    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
-    planes = list(util.match_planes(image.keys(), planes))
+    layers = util.optional_input(name, inputs, "layers", type=str, default="*")
+    layer_names = list(util.match_layers(image.layers.keys(), layers))
     for saver in io.savers:
-        if saver(name, image, planes, path):
+        if saver(name, image, layer_names, path):
             return
     raise RuntimeError(f"Task {task} could not save 'image' to disk.")
 
@@ -312,24 +401,28 @@ def scale(name, inputs):
     order = util.optional_input(name, inputs, "order", type=int, default=3)
     size = util.optional_input(name, inputs, "size", default=("1vw", "1vh"))
 
-    for plane in image.keys():
-        width = units.length(size[0], image[plane].shape[1], image[plane].shape[0])
-        height = units.length(size[1], image[plane].shape[1], image[plane].shape[0])
-        image[plane] = skimage.transform.resize(image[plane].astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(numpy.float16)
-    log.info(f"Task {name} scale order {order} size {size} result {util.image_repr(image)}")
+    for layername, layer in image.layers.items():
+        width = int(units.length(size[0], layer.res))
+        height = int(units.length(size[1], layer.res))
+        data = skimage.transform.resize(layer.data.astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(layer.data.dtype)
+        image.layers[layername] = layer.modify(data=data)
+    util.log_operation(log, name, "scale", image, order=order, size=size)
     return image
 
 
 def solid(name, inputs):
-    plane = util.optional_input(name, inputs, "plane", type=str, default="C")
+    components = util.optional_input(name, inputs, "components", default=["r", "g", "b"])
+    layer = util.optional_input(name, inputs, "layer", type=str, default="C")
+    role = util.optional_input(name, inputs, "role", type=Role, default=Role.RGB)
     size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
-    value = util.optional_input(name, inputs, "value", type=numpy.array, default=[1, 1, 1])
+    values = util.optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
 
-    image = {
-        plane: numpy.full((size[1], size[0], len(value)), value, dtype=numpy.float16),
-    }
+    if components and len(components) != len(values):
+        raise ValueError("Number of components and number of values must match.")
 
-    log.info(f"Task {name} solid {plane} size {size} value {value} result {util.image_repr(image)}")
+    data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
+    image = Image({layer: Layer(data=data, components=components, role=role)})
+    util.log_operation(log, name, "solid", image, components=components, layer=layer, role=role, size=size, values=values)
     return image
 
 
@@ -338,26 +431,23 @@ def text(name, inputs):
     fontindex = util.optional_input(name, inputs, "fontindex", type=int, default=0)
     fontname = util.optional_input(name, inputs, "fontname", type=str, default="Helvetica")
     fontsize = util.optional_input(name, inputs, "fontsize", default="32px")
-    plane = util.optional_input(name, inputs, "plane", type=str, default="A")
+    layer = util.optional_input(name, inputs, "layer", type=str, default="A")
     position = util.optional_input(name, inputs, "position", default=("0.5vw", "0.5vh"))
     size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
     text = util.optional_input(name, inputs, "text", type=str, default="Text!")
 
-    fontsize_px = int(units.length(fontsize, size[0], size[1]))
-    x = units.length(position[0], size[0], size[1])
-    y = units.length(position[1], size[0], size[1])
+    fontsize_px = int(units.length(fontsize, size))
+    x = units.length(position[0], size)
+    y = units.length(position[1], size)
 
-    image = PIL.Image.new("L", (size[0], size[1]), 0)
+    pil_image = PIL.Image.new("L", (size[0], size[1]), 0)
     font = PIL.ImageFont.truetype(fontname, fontsize_px, fontindex)
-    draw = PIL.ImageDraw.Draw(image)
+    draw = PIL.ImageDraw.Draw(pil_image)
     draw.text((x, y), text, font=font, fill=255, anchor=anchor)
 
-    image = {
-        plane: numpy.array(image, dtype=numpy.float16)[:,:,None] / 255.0,
-    }
-
-    log.info(f"Task {name} text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} plane {plane} position {position} size {size} result {util.image_repr(image)}")
-
+    data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
+    image = Image({layer: Layer(data=data)})
+    util.log_operation(log, name, "text", image, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
     return image
 
 

@@ -20,7 +20,7 @@ import numbers
 import re
 
 
-def length(value, width, height, default="px"):
+def length(value, size, default="px"):
     """Convert a length value to pixels.
 
     Supported unit abbreviations include: px, pixel, pixels, vw, vh, vmin,
@@ -32,12 +32,9 @@ def length(value, width, height, default="px"):
         Value to be converted.  The value may be a number (in which case the
         `default` parameter will specify the unit of measure), a :any:`str`
         containing a number and unit abbreviation, or a (value, units) tuple.
-    width: number, required
-        Reference width for use when the caller specifies a relative unit of measure.
-        Note that the width *must* be specified in pixels.
-    height: number, required
-        Reference height for use when the caller specifies a relative unit of measure.
-        Note that the height *must* be specified in pixels.
+    size: (width, height) tuple, required
+        Reference width and height for use when the caller specifies a relative unit of measure.
+        Note that width and height *must* be specified in pixels.
     default: :any:`str`, optional
         Default unit of measure to use when `value` is a plain number.
 
@@ -46,7 +43,7 @@ def length(value, width, height, default="px"):
     value: number
         `value` converted to pixel units.  Note that the result is a
         floating-point number, so callers may need to convert to an int if they
-        are e.g. specifying the size of an image.
+        are intend to e.g. specifying the resolution of an image.
     """
     if isinstance(value, numbers.Number):
         value = (value, default)
@@ -68,12 +65,12 @@ def length(value, width, height, default="px"):
     if units in ["px", "pixel", "pixels"]:
         return value
     if units == "vw":
-        return value * width
+        return value * size[0]
     if units == "vh":
-        return value * height
+        return value * size[1]
     if units == "vmin":
-        return value * min(width, height)
+        return value * min(size[0], size[1])
     if units == "vmax":
-        return value * max(width, height)
+        return value * max(size[0], size[1])
     raise ValueError("Unknown unit of measure: %s" % units)
 
