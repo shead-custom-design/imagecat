@@ -17,8 +17,6 @@ from behave import *
 import logging
 import os
 
-import Imath
-import OpenEXR
 import graphcat
 import numpy
 import skimage.data
@@ -101,53 +99,4 @@ def step_impl(context, name):
 
         raise e
 
-
-@given(u'a color image')
-def step_impl(context):
-    context.images = {"C": skimage.img_as_float(skimage.data.chelsea())}
-
-
-@given(u'a grayscale image')
-def step_impl(context):
-    context.images = {"A": skimage.color.rgb2gray(skimage.img_as_float(skimage.data.chelsea()))[:,:,None]}
-
-
-@when(u'applying the gaussian operator with sigma {sigma}')
-def step_impl(context, sigma):
-    sigma = eval(sigma)
-    graph = graphcat.Graph()
-    imagecat.add_operation(graph, "/operator", imagecat.gaussian, images=context.images, sigma=sigma)
-    context.output = graph.output("/operator")
-
-
-@then(u'the output {channel} should match the {name} reference image')
-def step_impl(context, channel, name):
-    image = context.output[channel]
-    reference_file = os.path.join(reference_dir, f"{name}.exr")
-    failed_file = os.path.join(failed_dir, f"{name}.exr")
-
-    # Get rid of past failures.
-    if os.path.exists(failed_file):
-        os.remove(failed_file)
-
-    # If the reference for this test doesn't exist, create it.
-    if not os.path.exists(reference_file):
-        if not os.path.exists(reference_dir):
-            os.mkdir(reference_dir)
-
-        header = OpenEXR.Header(image.shape[1], image.shape[0])
-        header["channels"] = {channel: Imath.Channel(Imath.PixelType(Imath.PixelType.HALF)) for channel in "RGB"}
-        writer = OpenEXR.OutputFile(reference_file, header)
-        writer.writePixels({
-            "R": image[:,:,0].astype(numpy.float16).tobytes(),
-            "G": image[:,:,1].astype(numpy.float16).tobytes(),
-            "B": image[:,:,2].astype(numpy.float16).tobytes(),
-        })
-#        with open(reference_file, "wb") as stream:
-#            skimage.io.imsave(reference_file, skimage.img_as_ubyte(context.output[channel]))
-        raise AssertionError(f"Created new reference file {reference_file} ... verify its contents before re-running the test.")
-
-    # Load the reference for comparison.
-#    reference = skimage.io.imread(reference_file)
-    raise NotImplementedError()
 
