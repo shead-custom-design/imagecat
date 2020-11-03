@@ -413,8 +413,8 @@ def scale(name, inputs):
 def solid(name, inputs):
     components = util.optional_input(name, inputs, "components", default=["r", "g", "b"])
     layer = util.optional_input(name, inputs, "layer", type=str, default="C")
-    role = util.optional_input(name, inputs, "role", type=Role, default=Role.RGB)
     size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
+    role = util.optional_input(name, inputs, "role", type=Role, default=Role.RGB)
     values = util.optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
 
     if components and len(components) != len(values):

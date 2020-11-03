@@ -6,5 +6,6 @@
 artwork/backup
 dist
 docs/_build
+features/failed
 notebooks/backup
 

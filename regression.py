@@ -14,6 +14,6 @@
 
 import subprocess
 
-subprocess.call(["coverage", "run", "--append", "--source", "imagecat", "-m", "behave"])
+subprocess.call(["coverage", "run", "--append", "--source", "imagecat", "-m", "behave", "--tags=~wip"])
 subprocess.call(["coverage", "report"])
 subprocess.call(["coverage", "html", "--directory", ".cover"])

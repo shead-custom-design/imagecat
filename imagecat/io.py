@@ -16,9 +16,11 @@
 """Helpers for implementing Imagecat I/O.
 """
 
+import bz2
 import collections
 import logging
 import os
+import pickle
 import sys
 
 import numpy
@@ -53,6 +55,9 @@ def openexr_loader(task, path, layers):
     if extension != ".exr":
         return None
 
+    if layers != "*":
+        raise NotImplementedError("Layer matching not implemented.")
+
     reader = OpenEXR.InputFile(path)
     header = reader.header()
     width = header["dataWindow"].max.x - header["dataWindow"].min.x + 1
@@ -72,6 +77,21 @@ def openexr_loader(task, path, layers):
                 data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.int32).reshape((height, width)))
         data = numpy.dstack(data)
         image.layers[name] = imagecat.Layer(data=data, components=[component for channel, component in components], role=role)
+    return image
+
+
+def pickle_loader(task, path, layers):
+    extension = os.path.splitext(path)[1].lower()
+    if extension != ".icp":
+        return None
+
+    if layers != "*":
+        raise NotImplementedError("Layer matching not implemented.")
+
+    with bz2.open(path, "rb") as stream:
+        image = pickle.load(stream)
+    if not isinstance(image, imagecat.Image):
+        raise RuntimeError("Not an Imagecat Pickle (*.icp) file.")
     return image
 
 
@@ -133,6 +153,16 @@ def openexr_saver(task, image, layers, path):
     return True
 
 
+def pickle_saver(task, image, layers, path):
+    extension = os.path.splitext(path)[1].lower()
+    if extension != ".icp":
+        return False
+
+    with bz2.open(path, "wb") as stream:
+        pickle.dump(image, stream)
+    return True
+
+
 def pil_saver(task, image, layers, path):
     if "PIL.Image" not in sys.modules:
         return False
@@ -158,11 +188,13 @@ def pil_saver(task, image, layers, path):
 
 loaders = [
     openexr_loader,
+    pickle_loader,
     pil_loader,
 ]
 
 
 savers = [
     openexr_saver,
+    pickle_saver,
     pil_saver,
 ]
