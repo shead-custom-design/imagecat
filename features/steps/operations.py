@@ -59,6 +59,14 @@ def step_impl(context, task, radius):
     imagecat.add_operation(context.graph, task, imagecat.gaussian, radius=radius)
 
 
+@given(u'a task {task} with operator offset layers {layers} offset {offset}')
+def step_impl(context, task, layers, offset):
+    task = eval(task)
+    layers = eval(layers)
+    offset = eval(offset)
+    imagecat.add_operation(context.graph, task, imagecat.offset, layers=layers, offset=offset)
+
+
 @given(u'a task {task} with operator rgb2gray layers {layers} weights {weights}')
 def step_impl(context, task, layers, weights):
     task = eval(task)

@@ -329,7 +329,7 @@ def offset(name, inputs):
         layer = image.layers[layer_name]
         data = layer.data
         xoffset = int(units.length(offset[0], layer.res))
-        yoffset = int(units.length(offset[1], layer.res))
+        yoffset = -int(units.length(offset[1], layer.res)) # We always treat +Y as "up"
         data = numpy.roll(data, shift=(xoffset, yoffset), axis=(1, 0))
         image.layers[layer_name] = layer.modify(data=data)
 

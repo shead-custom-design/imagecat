@@ -26,6 +26,20 @@ Feature: Operations
             | ("5px", 0)             | gaussian-x          |
 
 
+    Scenario Outline: offset
+        Given an empty graph
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/offset" with operator offset layers <layers> offset <offset>
+        And links [("/text", ("/offset", "image"))]
+        When retrieving the output image from task "/offset"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | layers | offset                 | reference           |
+            | "*"    | (-30, 0)               | offset-x            |
+            | "*"    | (0, "0.25vh")          | offset-y            |
+
+
     @wip
     Scenario Outline: rgb2gray
         Given an empty graph
