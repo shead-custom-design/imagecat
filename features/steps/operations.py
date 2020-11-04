@@ -25,6 +25,7 @@ import imagecat.color
 import test
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+artwork_dir = os.path.join(root_dir, "artwork")
 failed_dir = os.path.join(root_dir, "features", "failed")
 reference_dir = os.path.join(root_dir, "features", "reference")
 
@@ -81,6 +82,8 @@ def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, posit
     size = eval(size)
     task = eval(task)
     text = eval(text)
+
+    fontname = os.path.join(artwork_dir, fontname)
     imagecat.add_operation(context.graph, task, imagecat.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
 
 

@@ -43,8 +43,8 @@ Feature: Operations
         Then the image should match the <reference> reference image
 
         Examples:
-            | anchor | fontindex | fontname    | fontsize | layer | position           | size       | text        | reference            |
-            | "mm"   | 0         | "Helvetica" | "0.33vh" | "A"   | ("0.5vw", "0.5vh") | (256, 128) | "Imagecat!" | text                 |
-            | "lm"   | 0         | "Helvetica" | "0.33vh" | "A"   | ("0.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-left-align      |
-            | "rm"   | 0         | "Helvetica" | "0.33vh" | "A"   | ("1.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-right-align     |
+            | anchor | fontindex | fontname                                | fontsize | layer | position           | size       | text        | reference            |
+            | "mm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("0.5vw", "0.5vh") | (256, 128) | "Imagecat!" | text                 |
+            | "lm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("0.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-left-align      |
+            | "rm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("1.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-right-align     |
 
