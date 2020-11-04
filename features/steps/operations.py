@@ -29,26 +29,44 @@ failed_dir = os.path.join(root_dir, "features", "failed")
 reference_dir = os.path.join(root_dir, "features", "reference")
 
 
-@given(u'the chelsea sample image')
-def step_impl(context):
-    data = skimage.img_as_float(skimage.data.chelsea()).astype(numpy.float16)
-    layer = imagecat.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.Role.RGB)
-    context.image = imagecat.Image({"C": layer})
-
-
 @given(u'an empty graph')
 def step_impl(context):
     context.graph = graphcat.Graph()
+
+
+@given(u'a task {task} which outputs the chelsea sample image')
+def step_impl(context, task):
+    task = eval(task)
+
+    data = skimage.img_as_float(skimage.data.chelsea()).astype(numpy.float16)
+    layer = imagecat.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.Role.RGB)
+    image = imagecat.Image({"C": layer})
+    context.graph.set_task(task, graphcat.constant(image))
+
 
 @given(u'a task {task} with operator solid layer {layer} size {size} values {values} components {components} role {role}')
 def step_impl(context, components, layer, size, role, task, values):
     components = eval(components)
     layer = eval(layer)
-    size = eval(size)
     role = eval(role)
+    size = eval(size)
     task = eval(task)
     values = eval(values)
     imagecat.add_operation(context.graph, task, imagecat.solid, components=components, layer=layer, size=size, values=values, role=role)
+
+
+@given(u'a task {task} with operator text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} layer {layer} position {position} size {size} text {text}')
+def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, position, size, text):
+    anchor = eval(anchor)
+    fontindex = eval(fontindex)
+    fontname = eval(fontname)
+    fontsize = eval(fontsize)
+    layer = eval(layer)
+    position = eval(position)
+    size = eval(size)
+    task = eval(task)
+    text = eval(text)
+    imagecat.add_operation(context.graph, task, imagecat.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
 
 
 @when(u'retrieving the output image from task {task}')
