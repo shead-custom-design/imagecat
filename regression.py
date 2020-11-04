@@ -12,8 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import shutil
 import subprocess
 
-subprocess.call(["coverage", "run", "--append", "--source", "imagecat", "-m", "behave", "--tags=~wip"])
+if os.path.exists(".coverage"):
+    os.remove(".coverage")
+if os.path.exists(".cover"):
+    shutil.rmtree(".cover")
+subprocess.call(["coverage", "run", "--append", "--source", "imagecat", "-m", "behave"])
 subprocess.call(["coverage", "report"])
 subprocess.call(["coverage", "html", "--directory", ".cover"])
