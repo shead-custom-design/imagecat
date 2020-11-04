@@ -34,6 +34,13 @@ def step_impl(context):
     context.graph = graphcat.Graph()
 
 
+@given(u'links {links}')
+def step_impl(context, links):
+    links = eval(links)
+    for source, targets in links:
+        context.graph.set_links(source, targets)
+
+
 @given(u'a task {task} which outputs the chelsea sample image')
 def step_impl(context, task):
     task = eval(task)
@@ -42,6 +49,14 @@ def step_impl(context, task):
     layer = imagecat.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.Role.RGB)
     image = imagecat.Image({"C": layer})
     context.graph.set_task(task, graphcat.constant(image))
+
+
+@given(u'a task {task} with operator scale order {order} size {size}')
+def step_impl(context, task, order, size):
+    order = eval(order)
+    size = eval(size)
+    task = eval(task)
+    imagecat.add_operation(context.graph, task, imagecat.scale, order=order, size=size)
 
 
 @given(u'a task {task} with operator solid layer {layer} size {size} values {values} components {components} role {role}')
