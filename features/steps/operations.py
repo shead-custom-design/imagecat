@@ -52,6 +52,21 @@ def step_impl(context, task):
     context.graph.set_task(task, graphcat.constant(image))
 
 
+@given(u'a task {task} with operator gaussian radius {radius}')
+def step_impl(context, task, radius):
+    task = eval(task)
+    radius = eval(radius)
+    imagecat.add_operation(context.graph, task, imagecat.gaussian, radius=radius)
+
+
+@given(u'a task {task} with operator rgb2gray layers {layers} weights {weights}')
+def step_impl(context, task, layers, weights):
+    task = eval(task)
+    layers = eval(layers)
+    weights = eval(weights)
+    imagecat.add_operation(context.graph, task, imagecat.rgb2gray, layers=layers, weights=weights)
+
+
 @given(u'a task {task} with operator scale order {order} size {size}')
 def step_impl(context, task, order, size):
     order = eval(order)

@@ -364,12 +364,14 @@ def rename(name, inputs):
 
 def rgb2gray(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
-    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
+    layers = util.optional_input(name, inputs, "layers", type=str, default="*")
     weights = util.optional_input(name, inputs, "weights", type=util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
-    for plane in util.match_planes(image.keys(), planes):
-        if util.is_plane(image[plane], channels=3):
-            image[plane] = numpy.dot(image[plane], weights)[:,:,None]
-    log.info(f"Task {name} rgb2gray {planes} {weights} result {util.image_repr(image)}")
+    for name in util.match_layers(image.layers.keys(), layers):
+        layer = image.layers[name]
+        if layer.data.shape[2] != 3:
+            continue
+        image.layers[name] = Layer(data=numpy.dot(layer.data, weights)[:,:,None])
+    util.log_operation(log, name, "rgb2gray", image, layers=layers, weights=weights)
     return image
 
 

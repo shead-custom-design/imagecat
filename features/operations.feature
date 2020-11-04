@@ -3,7 +3,7 @@ Feature: Operations
     Scenario Outline: Test Setup
         Given an empty graph
         And a task "/sample" which outputs the <sample> sample image
-        When retrieving the output image from task "/sample" 
+        When retrieving the output image from task "/sample"
         Then the image should match the <reference> reference image
 
         Examples:
@@ -11,17 +11,47 @@ Feature: Operations
             | chelsea   | chelsea           |
 
 
-    Scenario Outline: scale
+    Scenario Outline: gaussian
+        Given an empty graph
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/gaussian" with operator gaussian radius <radius>
+        And links [("/text", ("/gaussian", "image"))]
+        When retrieving the output image from task "/gaussian"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | radius                 | reference           |
+            | ("2px", "2px")         | gaussian            |
+            | (0, 5)                 | gaussian-y          |
+            | ("5px", 0)             | gaussian-x          |
+
+
+    @wip
+    Scenario Outline: rgb2gray
         Given an empty graph
         And a task "/sample" which outputs the chelsea sample image
+        And a task "/rgb2gray" with operator rgb2gray layers <layers> weights <weights>
+        And links [("/sample", ("/rgb2gray", "image"))]
+        When retrieving the output image from task "/rgb2gray"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | layers   | weights                  | reference         |
+            | "*"      | [0.33, 0.33, 0.33]       | rgb2gray          |
+
+
+    Scenario Outline: scale
+        Given an empty graph
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
         And a task "/scale" with operator scale order <order> size <size>
-        And links [("/sample", ("/scale", "image"))]
+        And links [("/text", ("/scale", "image"))]
         When retrieving the output image from task "/scale"
         Then the image should match the <reference> reference image
 
         Examples:
-            | order  | size                   | reference           |
-            | 3      | ((0.5, "vw"), "0.5vh") | scale               |
+            | order  | size                       | reference           |
+            | 3      | ((2, "vw"), "2vh")         | scale-cubic         |
+            | 0      | ((2, "vmax"), (2, "vmin")) | scale-nearest       |
 
 
     Scenario Outline: solid
