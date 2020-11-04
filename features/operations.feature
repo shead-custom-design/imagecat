@@ -40,7 +40,6 @@ Feature: Operations
             | "*"    | (0, "0.25vh")          | offset-y            |
 
 
-    @wip
     Scenario Outline: rgb2gray
         Given an empty graph
         And a task "/sample" which outputs the chelsea sample image
