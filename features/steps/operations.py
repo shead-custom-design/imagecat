@@ -22,6 +22,7 @@ import numpy
 import skimage.data
 
 import imagecat.color
+import imagecat.notebook
 import test
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -127,6 +128,11 @@ def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, posit
 def step_impl(context, task):
     task = eval(task)
     context.image = context.graph.output(task)
+
+
+@then(u'displaying the image in a notebook should produce a visualization')
+def step_impl(context):
+    imagecat.notebook.display(context.image)
 
 
 @then(u'the image should match the {name} reference image')

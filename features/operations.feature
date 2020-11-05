@@ -119,3 +119,15 @@ Feature: Operations
             | "lm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("0.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-left-align      |
             | "rm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("1.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-right-align     |
 
+
+    Scenario: Notebook Display
+        Given an empty graph
+        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role imagecat.Role.RGB
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/merge" with operator merge
+        And links [("/fill1", ("/merge", "image1"))]
+        And links [("/text", ("/merge", "image2"))]
+        When retrieving the output image from task "/merge"
+        Then displaying the image in a notebook should produce a visualization
+
+

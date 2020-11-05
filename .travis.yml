@@ -3,7 +3,7 @@ language: python
 python:
     - "3.7"
 install:
-    - pip install behave coverage coveralls graphcat Pillow scikit-image
+    - pip install behave coverage coveralls graphcat ipython Pillow scikit-image
 script:
     - coverage run --source imagecat -m behave --tags ~wip
     - coverage report
