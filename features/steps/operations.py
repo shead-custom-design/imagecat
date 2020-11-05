@@ -52,11 +52,28 @@ def step_impl(context, task):
     context.graph.set_task(task, graphcat.constant(image))
 
 
+@given(u'a task {task} with operator fill layer {layer} size {size} values {values} components {components} role {role}')
+def step_impl(context, components, layer, size, role, task, values):
+    components = eval(components)
+    layer = eval(layer)
+    role = eval(role)
+    size = eval(size)
+    task = eval(task)
+    values = eval(values)
+    imagecat.add_operation(context.graph, task, imagecat.fill, components=components, layer=layer, size=size, values=values, role=role)
+
+
 @given(u'a task {task} with operator gaussian radius {radius}')
 def step_impl(context, task, radius):
     task = eval(task)
     radius = eval(radius)
     imagecat.add_operation(context.graph, task, imagecat.gaussian, radius=radius)
+
+
+@given(u'a task {task} with operator merge')
+def step_impl(context, task):
+    task = eval(task)
+    imagecat.add_operation(context.graph, task, imagecat.merge)
 
 
 @given(u'a task {task} with operator offset layers {layers} offset {offset}')
@@ -65,6 +82,13 @@ def step_impl(context, task, layers, offset):
     layers = eval(layers)
     offset = eval(offset)
     imagecat.add_operation(context.graph, task, imagecat.offset, layers=layers, offset=offset)
+
+
+@given(u'a task {task} with operator rename changes {changes}')
+def step_impl(context, task, changes):
+    task = eval(task)
+    changes = eval(changes)
+    imagecat.add_operation(context.graph, task, imagecat.rename, changes=changes)
 
 
 @given(u'a task {task} with operator rgb2gray layers {layers} weights {weights}')
@@ -81,17 +105,6 @@ def step_impl(context, task, order, size):
     size = eval(size)
     task = eval(task)
     imagecat.add_operation(context.graph, task, imagecat.scale, order=order, size=size)
-
-
-@given(u'a task {task} with operator solid layer {layer} size {size} values {values} components {components} role {role}')
-def step_impl(context, components, layer, size, role, task, values):
-    components = eval(components)
-    layer = eval(layer)
-    role = eval(role)
-    size = eval(size)
-    task = eval(task)
-    values = eval(values)
-    imagecat.add_operation(context.graph, task, imagecat.solid, components=components, layer=layer, size=size, values=values, role=role)
 
 
 @given(u'a task {task} with operator text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} layer {layer} position {position} size {size} text {text}')

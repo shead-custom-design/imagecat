@@ -107,7 +107,7 @@ class Image(object):
 
     def __repr__(self):
         layers = (f"{k}: {v!r}" for k, v in self._layers.items())
-        return f"Image({','.join(layers)})"
+        return f"Image({', '.join(layers)})"
 
     @property
     def layers(self):
@@ -220,6 +220,22 @@ def delete(name, inputs):
     remove = set(util.match_planes(image.keys(), planes))
     remaining = {name: plane for name, plane in image.items() if name not in remove}
     return remaining
+
+
+def fill(name, inputs):
+    components = util.optional_input(name, inputs, "components", default=["r", "g", "b"])
+    layer = util.optional_input(name, inputs, "layer", type=str, default="C")
+    size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
+    role = util.optional_input(name, inputs, "role", type=Role, default=Role.RGB)
+    values = util.optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
+
+    if components and len(components) != len(values):
+        raise ValueError("Number of components and number of values must match.")
+
+    data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
+    image = Image({layer: Layer(data=data, components=components, role=role)})
+    util.log_operation(log, name, "fill", image, components=components, layer=layer, role=role, size=size, values=values)
+    return image
 
 
 def gaussian(name, inputs):
@@ -357,9 +373,9 @@ def rename(name, inputs):
     """
     image = util.require_image(name, inputs, "image")
     changes = util.optional_input(name, inputs, "changes", type=dict, default={})
-
-    renamed = {changes.get(name, name): plane for name, plane in image.items()}
-    return renamed
+    image = Image(layers={changes.get(name, name): layer for name, layer in image.layers.items()})
+    util.log_operation(log, name, "rename", image, changes=changes)
+    return image
 
 
 def rgb2gray(name, inputs):
@@ -409,22 +425,6 @@ def scale(name, inputs):
         data = skimage.transform.resize(layer.data.astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(layer.data.dtype)
         image.layers[layername] = layer.modify(data=data)
     util.log_operation(log, name, "scale", image, order=order, size=size)
-    return image
-
-
-def solid(name, inputs):
-    components = util.optional_input(name, inputs, "components", default=["r", "g", "b"])
-    layer = util.optional_input(name, inputs, "layer", type=str, default="C")
-    size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
-    role = util.optional_input(name, inputs, "role", type=Role, default=Role.RGB)
-    values = util.optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
-
-    if components and len(components) != len(values):
-        raise ValueError("Number of components and number of values must match.")
-
-    data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
-    image = Image({layer: Layer(data=data, components=components, role=role)})
-    util.log_operation(log, name, "solid", image, components=components, layer=layer, role=role, size=size, values=values)
     return image
 
 

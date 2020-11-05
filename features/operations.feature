@@ -11,6 +11,18 @@ Feature: Operations
             | chelsea   | chelsea           |
 
 
+    Scenario Outline: fill
+        Given an empty graph
+        And a task "/fill" with operator fill layer <layer> size <size> values <values> components <components> role <role>
+        When retrieving the output image from task "/fill"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | layer  | size        | values          | components       | role               | reference          |
+            | "C"    | (128, 128)  | (1, 0.5, 0)     | ["r", "g", "b"]  | imagecat.Role.RGB  | fill-color        |
+            | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | ["x", "y", "z"]  | imagecat.Role.NONE | fill-vel          |
+
+
     Scenario Outline: gaussian
         Given an empty graph
         And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
@@ -26,6 +38,21 @@ Feature: Operations
             | ("5px", 0)             | gaussian-x          |
 
 
+    Scenario Outline: merge
+        Given an empty graph
+        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role imagecat.Role.RGB
+        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role imagecat.Role.NONE
+        And a task "/merge" with operator merge
+        And links [("/fill1", ("/merge", "image1"))]
+        And links [("/fill2", ("/merge", "image2"))]
+        When retrieving the output image from task "/merge"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | reference         |
+            | merge             |
+
+
     Scenario Outline: offset
         Given an empty graph
         And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
@@ -38,6 +65,19 @@ Feature: Operations
             | layers | offset                 | reference           |
             | "*"    | (-30, 0)               | offset-x            |
             | "*"    | (0, "0.25vh")          | offset-y            |
+
+
+    Scenario Outline: rename
+        Given an empty graph
+        And a task "/fill" with operator fill layer "A" size (128, 128) values [1] components ["alpha"] role imagecat.Role.NONE
+        And a task "/rename" with operator rename changes <changes>
+        And links [("/fill", ("/rename", "image"))]
+        When retrieving the output image from task "/rename"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | changes                  | reference         |
+            | {"A": "mask"}            | rename            |
 
 
     Scenario Outline: rgb2gray
@@ -65,18 +105,6 @@ Feature: Operations
             | order  | size                       | reference           |
             | 3      | ((2, "vw"), "2vh")         | scale-cubic         |
             | 0      | ((2, "vmax"), (2, "vmin")) | scale-nearest       |
-
-
-    Scenario Outline: solid
-        Given an empty graph
-        And a task "/solid" with operator solid layer <layer> size <size> values <values> components <components> role <role>
-        When retrieving the output image from task "/solid"
-        Then the image should match the <reference> reference image
-
-        Examples:
-            | layer  | size        | values          | components       | role               | reference           |
-            | "C"    | (128, 128)  | (1, 0.5, 0)     | ["r", "g", "b"]  | imagecat.Role.RGB  | solid-color         |
-            | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | ["x", "y", "z"]  | imagecat.Role.NONE | solid-vel           |
 
 
     Scenario Outline: text
