@@ -28,6 +28,23 @@ Feature: Operations
             | ("0.5vw", "0.8vh")         | 30          | composite           |
 
 
+    Scenario Outline: delete
+        Given an empty graph
+        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role imagecat.Role.RGB
+        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role imagecat.Role.NONE
+        And a task "/merge" with operator merge
+        And a task "/delete" with operator delete layers <layers>
+        And links [("/fill1", ("/merge", "image1"))]
+        And links [("/fill2", ("/merge", "image2"))]
+        And links [("/merge", ("/delete", "image"))]
+        When retrieving the output image from task "/delete"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | layers | reference         |
+            | "A"    | delete            |
+
+
     Scenario Outline: fill
         Given an empty graph
         And a task "/fill" with operator fill layer <layer> size <size> values <values> components <components> role <role>

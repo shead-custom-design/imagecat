@@ -197,7 +197,7 @@ def composite(name, inputs):
 
 
 def delete(name, inputs):
-    """Delete image planes from an :ref:`image<images>`.
+    """Delete layers from an :ref:`image<images>`.
 
     Parameters
     ----------
@@ -207,7 +207,7 @@ def delete(name, inputs):
         Inputs for this function, containing:
 
         :["image"][0]: :class:`dict`, required. :ref:`Image<images>` containing image planes to be deleted.
-        :["planes"][0]: :class:`str`, optional. Controls which image planes are deleted.  Default: '*', which deletes all planes.
+        :["layers"][0]: :class:`str`, optional. Controls which image layers are deleted.  Default: '*', which deletes all layers.
 
     Returns
     -------
@@ -215,11 +215,12 @@ def delete(name, inputs):
         A copy of the input :ref:`image<images>` with some image planes deleted.
     """
     image = util.require_image(name, inputs, "image", index=0)
-    planes = util.optional_input(name, inputs, "planes", type=str, default="*")
+    layers = util.optional_input(name, inputs, "layers", type=str, default="*")
 
-    remove = set(util.match_planes(image.keys(), planes))
-    remaining = {name: plane for name, plane in image.items() if name not in remove}
-    return remaining
+    remove = set(util.match_layers(image.layers.keys(), layers))
+    image = Image(layers={name: layer for name, layer in image.layers.items() if name not in remove})
+    util.log_operation(log, name, "delete", image, layers=layers)
+    return image
 
 
 def fill(name, inputs):

@@ -61,6 +61,13 @@ def step_impl(context, task, position, orientation):
     imagecat.add_operation(context.graph, task, imagecat.composite, position=position, orientation=orientation)
 
 
+@given(u'a task {task} with operator delete layers {layers}')
+def step_impl(context, task, layers):
+    task = eval(task)
+    layers = eval(layers)
+    imagecat.add_operation(context.graph, task, imagecat.delete, layers=layers)
+
+
 @given(u'a task {task} with operator fill layer {layer} size {size} values {values} components {components} role {role}')
 def step_impl(context, components, layer, size, role, task, values):
     components = eval(components)
