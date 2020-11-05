@@ -42,7 +42,7 @@ def display(image, layers="*", width=None, height=None):
         Optional HTML height for each image.
     """
     if not isinstance(image, imagecat.Image):
-        raise ValueError("Expected an instance of imagecat.Image.")
+        raise ValueError("Expected an instance of imagecat.Image.") # pragma: no cover
 
     markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
     for name in sorted(util.match_layers(image.layers.keys(), layers)):

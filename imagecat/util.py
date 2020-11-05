@@ -31,63 +31,14 @@ import imagecat.units as units
 log = logging.getLogger(__name__)
 
 
-
 def array(shape, dtype=numpy.float16):
     def implementation(value):
         value = numpy.array(value, dtype=dtype)
         if value.shape != shape:
-            raise ValueError(f"Expected array with shape {shape}, received {value.shape}.")
+            raise ValueError(f"Expected array with shape {shape}, received {value.shape}.") # pragma: no cover
         return value
     return implementation
 
-
-def channels_to_layers(channels):
-    layers = [channel.rsplit(".", 1) for channel in channels]
-    #log.debug(f"layers: {layers}")
-    layers = [layer if len(layer) > 1 else ["", layer[0]] for layer in layers]
-    #log.debug(f"layers: {layers}")
-    layers = [(channel, layer, component) for channel, (layer, component) in zip(channels, layers)]
-    #log.debug(f"layers: {layers}")
-    groups = collections.defaultdict(list)
-    for channel, layer, component in layers:
-        groups[layer].append((channel, component))
-    layers = list(groups.items())
-    #log.debug(f"layers: {layers}")
-
-#    def split_layers(layers):
-#        for layer, channels in layers:
-#            if layer:
-#                yield (layer, channels)
-#                continue
-#            ci_components = [component.lower() for component, channel in channels]
-#            if "r" in ci_components and "g" in ci_components and "b" in ci_components:
-#                yield (layer, [channels[ci_components.index("r")], channels[ci_components.index("g")], channels[ci_components.index("b")]])
-#            channels = [channel for channel, ci_component in zip(channels, ci_components) if ci_component not in "rgb"]
-#            for channel in channels:
-#                yield layer, [channel]
-#    layers = list(split_layers(layers))
-
-    def organize_layers(layers):
-        for layer, components in layers:
-            ci_components = [component.lower() for channel, component in components]
-            for collection in ["rgb", "hsv", "hsb", "xy", "xyz", "uv", "uvw"]:
-                if sorted(ci_components) == sorted(collection):
-                    components = [components[ci_components.index(component)] for component in collection]
-            yield layer, components
-    layers = list(organize_layers(layers))
-    #log.debug(f"layers: {layers}")
-
-    def categorize_layers(layers):
-        for layer, components in layers:
-            ci_components = [component.lower() for channel, component in components]
-            if ci_components == ["r", "g", "b"]:
-                yield layer, components, imagecat.Role.RGB
-            else:
-                yield layer, components, imagecat.Role.NONE
-    layers = list(categorize_layers(layers))
-    #log.debug(f"layers: {layers}")
-
-    return layers
 
 def match_layers(layers, patterns):
     """Match image layers against a pattern.
@@ -197,7 +148,7 @@ def require_layer(name, inputs, input, *, index=0, layer="C", components=None, d
 def require_image(name, inputs, input, *, index=0):
     image = require_input(name, inputs, input, index=index)
     if not isinstance(image, imagecat.Image):
-        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.")
+        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover 
     # This ensures that we don't accidentally our inputs.
     return imagecat.Image(layers=dict(image.layers))
 

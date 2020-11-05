@@ -53,6 +53,14 @@ def step_impl(context, task):
     context.graph.set_task(task, graphcat.constant(image))
 
 
+@given(u'a task {task} with operator composite position {position} orientation {orientation}')
+def step_impl(context, task, position, orientation):
+    task = eval(task)
+    position = eval(position)
+    orientation = eval(orientation)
+    imagecat.add_operation(context.graph, task, imagecat.composite, position=position, orientation=orientation)
+
+
 @given(u'a task {task} with operator fill layer {layer} size {size} values {values} components {components} role {role}')
 def step_impl(context, components, layer, size, role, task, values):
     components = eval(components)

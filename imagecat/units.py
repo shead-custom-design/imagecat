@@ -52,13 +52,13 @@ def length(value, size, default="px"):
         value = (float(value), units)
 
     if not isinstance(value, tuple):
-        raise ValueError("Value must be a number, string or (number, string) tuple.")
+        raise ValueError("Value must be a number, string or (number, string) tuple.") # pragma: no cover
     if not len(value) == 2:
-        raise ValueError("Value must be a number, string or (number, string) tuple.")
+        raise ValueError("Value must be a number, string or (number, string) tuple.") # pragma: no cover
     if not isinstance(value[0], numbers.Number):
-        raise ValueError("Value must be a number, string or (number, string) tuple.")
+        raise ValueError("Value must be a number, string or (number, string) tuple.") # pragma: no cover
     if not isinstance(value[1], str):
-        raise ValueError("Value must be a number, string or (number, string) tuple.")
+        raise ValueError("Value must be a number, string or (number, string) tuple.") # pragma: no cover
 
     value, units = value
     units = units.lower()
@@ -72,5 +72,5 @@ def length(value, size, default="px"):
         return value * min(size[0], size[1])
     if units == "vmax":
         return value * max(size[0], size[1])
-    raise ValueError("Unknown unit of measure: %s" % units)
+    raise ValueError("Unknown unit of measure: %s" % units) # pragma: no cover
 

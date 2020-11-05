@@ -11,6 +11,23 @@ Feature: Operations
             | chelsea   | chelsea           |
 
 
+    Scenario Outline: composite
+        Given an empty graph
+        And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role imagecat.Role.RGB
+        And a task "/background" with operator fill layer "C" size [512, 512] values [1, 0.5, 0] components None role imagecat.Role.RGB
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/comp" with operator composite position <position> orientation <orientation>
+        And links [("/foreground", ("/comp", "foreground"))]
+        And links [("/background", ("/comp", "background"))]
+        And links [("/text", ("/comp", "mask"))]
+        When retrieving the output image from task "/comp"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | position                   | orientation | reference           |
+            | ("0.5vw", "0.8vh")         | 30          | composite           |
+
+
     Scenario Outline: fill
         Given an empty graph
         And a task "/fill" with operator fill layer <layer> size <size> values <values> components <components> role <role>
