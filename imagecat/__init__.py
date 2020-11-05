@@ -231,7 +231,7 @@ def fill(name, inputs):
     values = util.optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
 
     if components and len(components) != len(values):
-        raise ValueError("Number of components and number of values must match.")
+        raise ValueError("Number of components and number of values must match.") # pragma: no cover
 
     data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
     image = Image({layer: Layer(data=data, components=components, role=role)})
@@ -302,7 +302,7 @@ def load(name, inputs):
             util.log_operation(log, name, "load", image, layers=layers, path=path)
             return image
 
-    raise RuntimeError(f"Task {task} could not load {path} from disk.")
+    raise RuntimeError(f"Task {task} could not load {path} from disk.") # pragma: no cover
 
 
 
@@ -412,7 +412,7 @@ def save(name, inputs):
     for saver in io.savers:
         if saver(name, image, layer_names, path):
             return
-    raise RuntimeError(f"Task {task} could not save 'image' to disk.")
+    raise RuntimeError(f"Task {task} could not save 'image' to disk.") # pragma: no cover
 
 
 def scale(name, inputs):

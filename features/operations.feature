@@ -11,6 +11,22 @@ Feature: Operations
             | chelsea   | chelsea           |
 
 
+    Scenario Outline: File IO
+        Given an empty graph
+        And a task "/sample" which outputs the <sample> sample image
+        And a task "/save" with operator save path <path>
+        And links [("/sample", ("/save", "image"))]
+        And a task "/load" with operator load path <path>
+        When updating the task "/save"
+        And retrieving the output image from task "/load"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | sample    | path              | reference         |
+            | chelsea   | "chelsea.exr"     | chelsea-exr       |
+            | chelsea   | "chelsea.icp"     | chelsea-icp       |
+            | chelsea   | "chelsea.png"     | chelsea-png       |
+
     Scenario Outline: composite
         Given an empty graph
         And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role imagecat.Role.RGB

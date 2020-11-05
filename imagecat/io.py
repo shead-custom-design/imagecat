@@ -33,12 +33,12 @@ import imagecat.util as util
 try:
     import Imath
     import OpenEXR
-except:
+except: # pragma: no cover
     pass
 
 try:
     import PIL.Image
-except:
+except: # pragma: no cover
     pass
 
 
@@ -49,7 +49,7 @@ log = logging.getLogger(__name__)
 
 def openexr_loader(task, path, layers):
     if "OpenEXR" not in sys.modules:
-        return None
+        return None # pragma: no cover
 
     extension = os.path.splitext(path)[1].lower()
     if extension != ".exr":
@@ -91,13 +91,13 @@ def pickle_loader(task, path, layers):
     with bz2.open(path, "rb") as stream:
         image = pickle.load(stream)
     if not isinstance(image, imagecat.Image):
-        raise RuntimeError("Not an Imagecat Pickle (*.icp) file.")
+        raise RuntimeError("Not an Imagecat Pickle (*.icp) file.") # pragma: no cover
     return image
 
 
 def pil_loader(task, path, layers):
     if "PIL.Image" not in sys.modules:
-        return None
+        return None # pragma: no cover
 
     if layers != "*":
         raise NotImplementedError("Layer matching not implemented.")
@@ -121,7 +121,7 @@ def pil_loader(task, path, layers):
 
 def openexr_saver(task, image, layers, path):
     if "OpenEXR" not in sys.modules:
-        return False
+        return False # pragma: no cover
 
     extension = os.path.splitext(path)[1].lower()
     if extension != ".exr":
@@ -165,7 +165,7 @@ def pickle_saver(task, image, layers, path):
 
 def pil_saver(task, image, layers, path):
     if "PIL.Image" not in sys.modules:
-        return False
+        return False # pragma: no cover
 
     if len(layers) == 1:
         layer = image.layers[layers[0]]

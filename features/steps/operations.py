@@ -16,6 +16,7 @@ from behave import *
 
 import logging
 import os
+import tempfile
 
 import graphcat
 import numpy
@@ -29,6 +30,7 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 artwork_dir = os.path.join(root_dir, "artwork")
 failed_dir = os.path.join(root_dir, "features", "failed")
 reference_dir = os.path.join(root_dir, "features", "reference")
+temp_dir = tempfile.mkdtemp()
 
 
 @given(u'an empty graph')
@@ -51,7 +53,6 @@ def step_impl(context, task):
     layer = imagecat.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.Role.RGB)
     image = imagecat.Image({"C": layer})
     context.graph.set_task(task, graphcat.constant(image))
-
 
 @given(u'a task {task} with operator composite position {position} orientation {orientation}')
 def step_impl(context, task, position, orientation):
@@ -86,6 +87,14 @@ def step_impl(context, task, radius):
     imagecat.add_operation(context.graph, task, imagecat.gaussian, radius=radius)
 
 
+@given(u'a task {task} with operator load path {path}')
+def step_impl(context, task, path):
+    task = eval(task)
+    path = eval(path)
+    path = os.path.join(temp_dir, path)
+    imagecat.add_operation(context.graph, task, imagecat.load, path=path)
+
+
 @given(u'a task {task} with operator merge')
 def step_impl(context, task):
     task = eval(task)
@@ -115,6 +124,14 @@ def step_impl(context, task, layers, weights):
     imagecat.add_operation(context.graph, task, imagecat.rgb2gray, layers=layers, weights=weights)
 
 
+@given(u'a task {task} with operator save path {path}')
+def step_impl(context, task, path):
+    task = eval(task)
+    path = eval(path)
+    path = os.path.join(temp_dir, path)
+    imagecat.add_operation(context.graph, task, imagecat.save, path=path)
+
+
 @given(u'a task {task} with operator scale order {order} size {size}')
 def step_impl(context, task, order, size):
     order = eval(order)
@@ -137,6 +154,12 @@ def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, posit
 
     fontname = os.path.join(artwork_dir, fontname)
     imagecat.add_operation(context.graph, task, imagecat.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
+
+
+@when(u'updating the task {task}')
+def step_impl(context, task):
+    task = eval(task)
+    context.graph.update(task)
 
 
 @when(u'retrieving the output image from task {task}')
