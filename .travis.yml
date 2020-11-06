@@ -2,8 +2,12 @@ sudo: false
 language: python
 python:
     - "3.7"
+addons:
+    apt:
+        packages:
+            - openexr
 install:
-    - pip install behave coverage coveralls graphcat ipython Pillow scikit-image
+    - pip install behave coverage coveralls graphcat ipython OpenEXR Pillow scikit-image
 script:
     - coverage run --source imagecat -m behave --tags ~wip
     - coverage report
