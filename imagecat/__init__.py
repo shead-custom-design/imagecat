@@ -91,7 +91,9 @@ class Layer(object):
 
 
 class Image(object):
-    def __init__(self, layers={}):
+    def __init__(self, layers=None):
+        if layers is None:
+            layers = {}
         first_layer = None
         for key, layer in layers.items():
             if not isinstance(key, str):
@@ -191,9 +193,9 @@ def composite(name, inputs):
     one_minus_alpha = 1 - alpha
     data = transformed_foreground * alpha + background.data * one_minus_alpha
 
-    image = Image({"C": Layer(data=data, components=background.components, role=background.role)})
-    util.log_operation(log, name, "composite", image, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, position=position)
-    return image
+    output = Image(layers={"C": Layer(data=data, components=background.components, role=background.role)})
+    util.log_operation(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, position=position)
+    return output
 
 
 def delete(name, inputs):
@@ -218,9 +220,9 @@ def delete(name, inputs):
     layers = util.optional_input(name, inputs, "layers", type=str, default="*")
 
     remove = set(util.match_layers(image.layers.keys(), layers))
-    image = Image(layers={name: layer for name, layer in image.layers.items() if name not in remove})
-    util.log_operation(log, name, "delete", image, layers=layers)
-    return image
+    output = Image(layers={name: layer for name, layer in image.layers.items() if name not in remove})
+    util.log_operation(log, name, "delete", output, layers=layers)
+    return output
 
 
 def fill(name, inputs):
@@ -234,9 +236,9 @@ def fill(name, inputs):
         raise ValueError("Number of components and number of values must match.") # pragma: no cover
 
     data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
-    image = Image({layer: Layer(data=data, components=components, role=role)})
-    util.log_operation(log, name, "fill", image, components=components, layer=layer, role=role, size=size, values=values)
-    return image
+    output = Image(layers={layer: Layer(data=data, components=components, role=role)})
+    util.log_operation(log, name, "fill", output, components=components, layer=layer, role=role, size=size, values=values)
+    return output
 
 
 def gaussian(name, inputs):
@@ -262,8 +264,8 @@ def gaussian(name, inputs):
     layers = util.optional_input(name, inputs, "layers", type=str, default="*")
     radius = util.optional_input(name, inputs, "radius", default=["5px", "5px"])
 
-    layer_names = list(util.match_layers(image.layers.keys(), layers))
-    for layer_name in layer_names:
+    output = Image()
+    for layer_name in util.match_layers(image.layers.keys(), layers):
         layer = image.layers[layer_name]
         data = layer.data
         sigma = [
@@ -271,9 +273,9 @@ def gaussian(name, inputs):
             units.length(radius[0], layer.res),
             ]
         data = numpy.atleast_3d(skimage.filters.gaussian(data, sigma=sigma, multichannel=True, preserve_range=True).astype(data.dtype))
-        image.layers[layer_name] = layer.modify(data=data)
-    util.log_operation(log, name, "gaussian", image, layers=layers, radius=radius)
-    return image
+        output.layers[layer_name] = layer.modify(data=data)
+    util.log_operation(log, name, "gaussian", output, layers=layers, radius=radius)
+    return output
 
 
 def load(name, inputs):
@@ -297,13 +299,11 @@ def load(name, inputs):
     path = util.require_input(name, inputs, "path", type=str)
 
     for loader in io.loaders:
-        image = loader(name, path, layers)
-        if image is not None:
-            util.log_operation(log, name, "load", image, layers=layers, path=path)
-            return image
-
+        output = loader(name, path, layers)
+        if output is not None:
+            util.log_operation(log, name, "load", output, layers=layers, path=path)
+            return output
     raise RuntimeError(f"Task {task} could not load {path} from disk.") # pragma: no cover
-
 
 
 def merge(name, inputs):
@@ -326,14 +326,14 @@ def merge(name, inputs):
     image: :class:`imagecat.Image`
         New :ref:`image<images>` containing the union of all input images.
     """
-    merged = Image()
+    output = Image()
     for input in sorted(inputs.keys()):
         for index in range(len(inputs[input])):
             image = inputs[input][index]
             if isinstance(image, Image):
-                merged.layers.update(image.layers)
-    util.log_operation(log, name, "merge", merged)
-    return merged
+                output.layers.update(image.layers)
+    util.log_operation(log, name, "merge", output)
+    return output
 
 
 def offset(name, inputs):
@@ -341,17 +341,16 @@ def offset(name, inputs):
     layers = util.optional_input(name, inputs, "layers", index=0, type=str, default="*")
     offset = util.optional_input(name, inputs, "offset", index=0, default=["0.5vw", "0.5vh"])
 
-    layer_names = list(util.match_layers(image.layers.keys(), layers))
-    for layer_name in layer_names:
+    output = Image()
+    for layer_name in util.match_layers(image.layers.keys(), layers):
         layer = image.layers[layer_name]
         data = layer.data
         xoffset = int(units.length(offset[0], layer.res))
         yoffset = -int(units.length(offset[1], layer.res)) # We always treat +Y as "up"
         data = numpy.roll(data, shift=(xoffset, yoffset), axis=(1, 0))
-        image.layers[layer_name] = layer.modify(data=data)
-
-    util.log_operation(log, name, "offset", image, layers=layers, offset=offset)
-    return image
+        output.layers[layer_name] = layer.modify(data=data)
+    util.log_operation(log, name, "offset", output, layers=layers, offset=offset)
+    return output
 
 
 def rename(name, inputs):
@@ -374,22 +373,25 @@ def rename(name, inputs):
     """
     image = util.require_image(name, inputs, "image")
     changes = util.optional_input(name, inputs, "changes", type=dict, default={})
-    image = Image(layers={changes.get(name, name): layer for name, layer in image.layers.items()})
-    util.log_operation(log, name, "rename", image, changes=changes)
-    return image
+
+    output = Image(layers={changes.get(name, name): layer for name, layer in image.layers.items()})
+    util.log_operation(log, name, "rename", output, changes=changes)
+    return output
 
 
 def rgb2gray(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
     layers = util.optional_input(name, inputs, "layers", type=str, default="*")
     weights = util.optional_input(name, inputs, "weights", type=util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
+
+    output = Image()
     for name in util.match_layers(image.layers.keys(), layers):
         layer = image.layers[name]
         if layer.data.shape[2] != 3:
             continue
-        image.layers[name] = Layer(data=numpy.dot(layer.data, weights)[:,:,None])
-    util.log_operation(log, name, "rgb2gray", image, layers=layers, weights=weights)
-    return image
+        output.layers[name] = Layer(data=numpy.dot(layer.data, weights)[:,:,None])
+    util.log_operation(log, name, "rgb2gray", output, layers=layers, weights=weights)
+    return output
 
 
 def save(name, inputs):
@@ -408,6 +410,7 @@ def save(name, inputs):
     image = util.require_image(name, inputs, "image", index=0)
     path = util.require_input(name, inputs, "path", type=str)
     layers = util.optional_input(name, inputs, "layers", type=str, default="*")
+
     layer_names = list(util.match_layers(image.layers.keys(), layers))
     for saver in io.savers:
         if saver(name, image, layer_names, path):
@@ -420,13 +423,14 @@ def scale(name, inputs):
     order = util.optional_input(name, inputs, "order", type=int, default=3)
     size = util.optional_input(name, inputs, "size", default=("1vw", "1vh"))
 
+    output = Image()
     for layername, layer in image.layers.items():
         width = int(units.length(size[0], layer.res))
         height = int(units.length(size[1], layer.res))
         data = skimage.transform.resize(layer.data.astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(layer.data.dtype)
-        image.layers[layername] = layer.modify(data=data)
-    util.log_operation(log, name, "scale", image, order=order, size=size)
-    return image
+        output.layers[layername] = layer.modify(data=data)
+    util.log_operation(log, name, "scale", output, order=order, size=size)
+    return output
 
 
 def text(name, inputs):
@@ -449,8 +453,8 @@ def text(name, inputs):
     draw.text((x, y), text, font=font, fill=255, anchor=anchor)
 
     data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
-    image = Image({layer: Layer(data=data)})
-    util.log_operation(log, name, "text", image, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
-    return image
+    output = Image({layer: Layer(data=data)})
+    util.log_operation(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
+    return output
 
 
