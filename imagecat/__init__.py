@@ -19,6 +19,7 @@
 __version__ = "0.1.0-dev"
 
 import enum
+import functools
 import logging
 
 import PIL.Image
@@ -28,6 +29,7 @@ import graphcat
 import numpy
 import skimage.filters
 
+import imagecat.color.brewer
 import imagecat.io as io
 import imagecat.units as units
 import imagecat.util as util
@@ -174,6 +176,27 @@ def set_expression(graph, name, expression, locals={}):
 
 ################################################################################################
 # Task functions
+
+
+def colormap(name, inputs):
+    image = util.require_image(name, inputs, "image", index=0)
+    layers = util.optional_input(name, inputs, "layers", type=str, default="*")
+    mapping = util.optional_input(name, inputs, "mapping", default=None)
+
+    if mapping is None:
+        palette = imagecat.color.brewer.palette("BlueRed")
+        mapping = functools.partial(imagecat.color.linear_map, palette=palette)
+
+    output = Image()
+    for layer_name in util.match_layers(image.layers.keys(), layers):
+        layer = image.layers[layer_name]
+        data = layer.data
+        if data.shape[2] != 1:
+            continue
+        data = mapping(data[:,:,0])
+        output.layers[layer_name] = Layer(data=data)
+    util.log_operation(log, name, "colormap", output, layers=layers, mapping=mapping)
+    return output
 
 
 def composite(name, inputs):
@@ -455,6 +478,20 @@ def text(name, inputs):
     data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
     output = Image({layer: Layer(data=data)})
     util.log_operation(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
+    return output
+
+
+def uniform(name, inputs):
+    components = util.optional_input(name, inputs, "components", default=["r", "g", "b"])
+    layer = util.optional_input(name, inputs, "layer", type=str, default="C")
+    role = util.optional_input(name, inputs, "role", type=Role, default=Role.RGB)
+    seed = util.optional_input(name, inputs, "seed", type=int, default=1234)
+    size = util.optional_input(name, inputs, "size", type=util.array(shape=(2,), dtype=int), default=[256, 256])
+
+    generator = numpy.random.default_rng(seed=seed)
+    data = generator.uniform(size=(size[1], size[0], len(components))).astype(numpy.float16)
+    output = Image(layers={layer: Layer(data=data, components=components, role=role)})
+    util.log_operation(log, name, "uniform", output, components=components, layer=layer, role=role, seed=seed, size=size)
     return output
 
 

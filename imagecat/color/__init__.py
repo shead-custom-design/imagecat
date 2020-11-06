@@ -47,3 +47,34 @@ def linear_to_srgb(image):
 #        [-0.0241270599, -0.1246206123,  1.1488221099],
 #        ]),
 #}
+
+
+class Palette(object):
+    def __init__(self, colors, reverse=False):
+        colors = numpy.array(colors)
+        if reverse:
+            colors = colors[::-1]
+        self._colors = colors
+
+    @property
+    def colors(self):
+        return self._colors
+
+
+def linear_map(plane, palette, min=None, max=None):
+    plane = numpy.array(plane)
+    if min is None:
+        min = plane.min()
+    if max is None:
+        max = plane.max()
+
+    colors = palette.colors
+    stops = numpy.linspace(min, max, len(colors))
+
+    flat = numpy.reshape(plane, -1)
+    mapped = numpy.empty((len(flat), colors.shape[1]), dtype=numpy.float)
+    for index, component in enumerate(colors.T):
+        mapped[:,index] = numpy.interp(flat, stops, component)
+    return mapped.reshape((plane.shape[0], plane.shape[1], colors.shape[1]))
+
+
