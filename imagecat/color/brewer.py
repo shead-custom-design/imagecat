@@ -17,7 +17,7 @@
 
 import numpy
 
-from imagecat.color import Palette
+from imagecat.color import Palette, srgb_to_linear
 
 
 def palette(name, count=None, reverse=False):
@@ -27,6 +27,7 @@ def palette(name, count=None, reverse=False):
     colors = numpy.array(data[count]) / 255.0
     if data.get("reverse", False):
         colors = colors[::-1]
+    colors = srgb_to_linear(colors)
     return Palette(colors=colors, reverse=reverse)
 
 palette.data = {

@@ -17,10 +17,11 @@
 
 import numpy
 
-from imagecat.color import Palette
+from imagecat.color import Palette, srgb_to_linear
 
 def palette(name, reverse=False):
     colors = numpy.array(palette.data[name])[:,1:]
+    colors = srgb_to_linear(colors)
     return Palette(colors=colors, reverse=reverse)
 
 palette.data = {

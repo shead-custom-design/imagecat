@@ -408,11 +408,11 @@ def rgb2gray(name, inputs):
     weights = util.optional_input(name, inputs, "weights", type=util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
 
     output = Image()
-    for name in util.match_layers(image.layers.keys(), layers):
-        layer = image.layers[name]
+    for layer_name in util.match_layers(image.layers.keys(), layers):
+        layer = image.layers[layer_name]
         if layer.data.shape[2] != 3:
             continue
-        output.layers[name] = Layer(data=numpy.dot(layer.data, weights)[:,:,None])
+        output.layers[layer_name] = Layer(data=numpy.dot(layer.data, weights)[:,:,None])
     util.log_operation(log, name, "rgb2gray", output, layers=layers, weights=weights)
     return output
 
