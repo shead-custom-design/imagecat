@@ -177,7 +177,7 @@ def require_input(name, inputs, input, *, index=0, type=None):
     if input in inputs and 0 <= index and index < len(inputs[input]):
         value = inputs[input][index]
     else:
-        raise RuntimeError(f"Task {name} missing required input {input!r} index {index}.")
+        raise RuntimeError(f"Task {name} missing required input {input!r} index {index}.") # pragma: no cover
     if type is not None:
         value = type(value)
     return value
@@ -186,18 +186,18 @@ def require_input(name, inputs, input, *, index=0, type=None):
 def require_layer(name, inputs, input, *, index=0, layer="C", components=None, dtype=None):
     image = require_image(name, inputs, input, index=index)
     if layer not in image.layers:
-        raise RuntimeError(f"Task {name} input {input!r} index {index} missing layer {layer}.")
+        raise RuntimeError(f"Task {name} input {input!r} index {index} missing layer {layer}.") # pragma: no cover
     if components is not None and image.layers[layer].data.shape[2] != components:
-        raise RuntimeError(f"Expected a layer with {components} components.")
+        raise RuntimeError(f"Expected a layer with {components} components.") # pragma: no cover
     if dtype is not None and image.layers[layer].data.dtype != dtype:
-        raise RuntimeError(f"Expected a layer with dtype {dtype}.")
+        raise RuntimeError(f"Expected a layer with dtype {dtype}.") # pragma: no cover
     return image.layers[layer].modify()
 
 
 def require_image(name, inputs, input, *, index=0):
     image = require_input(name, inputs, input, index=index)
     if not isinstance(image, imagecat.Image):
-        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover 
+        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover
     # This ensures that we don't accidentally our inputs.
     return imagecat.Image(layers=dict(image.layers))
 
