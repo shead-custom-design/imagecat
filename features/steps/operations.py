@@ -51,8 +51,8 @@ def step_impl(context, task):
     task = eval(task)
 
     data = skimage.img_as_float(skimage.data.chelsea()).astype(numpy.float16)
-    layer = imagecat.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.Role.RGB)
-    image = imagecat.Image({"C": layer})
+    layer = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.data.Role.RGB)
+    image = imagecat.data.Image({"C": layer})
     context.graph.set_task(task, graphcat.constant(image))
 
 @given(u'a task {task} with operator composite position {position} orientation {orientation}')
@@ -196,12 +196,16 @@ def step_impl(context, name):
 
         raise AssertionError(f"Created new reference file {reference_file} ... verify its contents before re-running the test.")
 
-    # Load the reference for comparison.
-    graph = graphcat.Graph()
-    imagecat.add_task(graph, "/load", imagecat.operator.load, path=reference_file)
-    reference_image = graph.output("/load")
 
     try:
+        # Load the reference for comparison
+        graph = graphcat.Graph()
+        imagecat.add_task(graph, "/load", imagecat.operator.load, path=reference_file)
+        try:
+            reference_image = graph.output("/load")
+        except Exception as e:
+            raise AssertionError(f"Unable to load reference file {reference_file} ... verify its contents and replace as-needed.")
+
         test.assert_image_equal(context.image, reference_image)
     except Exception as e:
         # Save the failed file for later examination.
@@ -210,7 +214,7 @@ def step_impl(context, name):
 
         graph = graphcat.Graph()
         graph.set_task("/image", graphcat.constant(context.image))
-        imagecat.add_task(graph, "/save", imagecat.save, path=failed_file)
+        imagecat.add_task(graph, "/save", imagecat.operator.save, path=failed_file)
         imagecat.set_links(graph, "/image", ("/save", "image"))
         graph.update("/save")
 

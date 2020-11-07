@@ -19,6 +19,7 @@ import fnmatch
 import numpy
 
 
+# Warning!  Moving this to another module will break *.icp file loading.
 class Image(object):
     def __init__(self, layers=None):
         if layers is None:
@@ -49,6 +50,7 @@ class Image(object):
         return match_layer_names(self.layers.keys(), patterns)
 
 
+# Warning!  Moving this to another module will break *.icp file loading.
 class Layer(object):
     def __init__(self, *, data, components=None, role=None):
         if not isinstance(data, numpy.ndarray):
@@ -96,6 +98,7 @@ class Layer(object):
         return Layer(data=data, components=components, role=role)
 
 
+# Warning!  Moving this to another module will break *.icp file loading.
 class Role(enum.Enum):
     NONE = 0
     RGB = 1

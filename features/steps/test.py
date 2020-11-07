@@ -16,7 +16,7 @@ import unittest
 
 import numpy.testing
 
-import imagecat
+import imagecat.data
 
 
 def assert_equal(first, second, msg=None):
@@ -32,10 +32,10 @@ def assert_true(expr, msg=None):
 
 
 def assert_layer_equal(lhs, rhs):
-    if not isinstance(lhs, imagecat.Layer):
-        raise ValueError("Left operand must be an instance of imagecat.Layer.")
-    if not isinstance(rhs, imagecat.Layer):
-        raise ValueError("Right operand must be an instance of imagecat.Layer.")
+    if not isinstance(lhs, imagecat.data.Layer):
+        raise ValueError("Left operand must be an instance of imagecat.data.Layer.")
+    if not isinstance(rhs, imagecat.data.Layer):
+        raise ValueError("Right operand must be an instance of imagecat.data.Layer.")
     assert_equal(lhs.data.dtype, rhs.data.dtype)
     numpy.testing.assert_allclose(lhs.data, rhs.data, rtol=0, atol=0.0005)
     assert_equal(lhs.components, rhs.components)
@@ -43,10 +43,10 @@ def assert_layer_equal(lhs, rhs):
 
 
 def assert_image_equal(lhs, rhs):
-    if not isinstance(lhs, imagecat.Image):
-        raise ValueError("lhs must be an instance of imagecat.Image.")
-    if not isinstance(rhs, imagecat.Image):
-        raise ValueError("rhs must be an instance of imagecat.Image.")
+    if not isinstance(lhs, imagecat.data.Image):
+        raise ValueError("lhs must be an instance of imagecat.data.Image.")
+    if not isinstance(rhs, imagecat.data.Image):
+        raise ValueError("rhs must be an instance of imagecat.data.Image.")
     if sorted(lhs.layers.keys()) != sorted(rhs.layers.keys()):
         raise ValueError("lhs channel names {lhs.layers.keys()} != rhs channel names {rhs.layers.keys()}")
     for name in lhs.layers.keys():

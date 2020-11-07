@@ -21,8 +21,6 @@ __version__ = "0.1.0-dev"
 import itertools
 import logging
 
-from imagecat.storage import Image, Layer, Role
-
 
 log = logging.getLogger(__name__)
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)

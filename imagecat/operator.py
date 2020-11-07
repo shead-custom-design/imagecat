@@ -21,8 +21,8 @@ import numpy
 import skimage.filters
 import skimage.transform
 
+import imagecat.data
 import imagecat.io
-import imagecat.storage
 import imagecat.units
 
 log = logging.getLogger(__name__)
@@ -128,10 +128,10 @@ def require_layer(name, inputs, input, *, index=0, layer="C", components=None, d
 
 def require_image(name, inputs, input, *, index=0):
     image = require_input(name, inputs, input, index=index)
-    if not isinstance(image, imagecat.storage.Image):
+    if not isinstance(image, imagecat.data.Image):
         raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover
     # This ensures that we don't accidentally our inputs.
-    return imagecat.storage.Image(layers=dict(image.layers))
+    return imagecat.data.Image(layers=dict(image.layers))
 
 
 def transform(source, target_shape, *, position, orientation):
@@ -198,14 +198,14 @@ def colormap(name, inputs):
         palette = imagecat.color.brewer.palette("BlueRed")
         mapping = functools.partial(imagecat.color.linear_map, palette=palette)
 
-    output = imagecat.storage.Image()
+    output = imagecat.data.Image()
     for layer_name in image.match_layer_names(layers):
         layer = image.layers[layer_name]
         data = layer.data
         if data.shape[2] != 1:
             continue
         data = mapping(data[:,:,0])
-        output.layers[layer_name] = imagecat.storage.Layer(data=data)
+        output.layers[layer_name] = imagecat.data.Layer(data=data)
     log_result(log, name, "colormap", output, layers=layers, mapping=mapping)
     return output
 
@@ -227,7 +227,7 @@ def composite(name, inputs):
     one_minus_alpha = 1 - alpha
     data = transformed_foreground * alpha + background.data * one_minus_alpha
 
-    output = imagecat.storage.Image(layers={"C": imagecat.storage.Layer(data=data, components=background.components, role=background.role)})
+    output = imagecat.data.Image(layers={"C": imagecat.data.Layer(data=data, components=background.components, role=background.role)})
     log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, position=position)
     return output
 
@@ -254,7 +254,7 @@ def delete(name, inputs):
     layers = optional_input(name, inputs, "layers", type=str, default="*")
 
     remove = image.match_layer_names(layers)
-    output = imagecat.storage.Image(layers={name: layer for name, layer in image.layers.items() if name not in remove})
+    output = imagecat.data.Image(layers={name: layer for name, layer in image.layers.items() if name not in remove})
     log_result(log, name, "delete", output, layers=layers)
     return output
 
@@ -263,14 +263,14 @@ def fill(name, inputs):
     components = optional_input(name, inputs, "components", default=["r", "g", "b"])
     layer = optional_input(name, inputs, "layer", type=str, default="C")
     size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
-    role = optional_input(name, inputs, "role", type=imagecat.storage.Role, default=imagecat.storage.Role.RGB)
+    role = optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
     values = optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
 
     if components and len(components) != len(values):
         raise ValueError("Number of components and number of values must match.") # pragma: no cover
 
     data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
-    output = imagecat.storage.Image(layers={layer: imagecat.storage.Layer(data=data, components=components, role=role)})
+    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=components, role=role)})
     log_result(log, name, "fill", output, components=components, layer=layer, role=role, size=size, values=values)
     return output
 
@@ -298,7 +298,7 @@ def gaussian(name, inputs):
     layers = optional_input(name, inputs, "layers", type=str, default="*")
     radius = optional_input(name, inputs, "radius", default=["5px", "5px"])
 
-    output = imagecat.storage.Image()
+    output = imagecat.data.Image()
     for layer_name in image.match_layer_names(layers):
         layer = image.layers[layer_name]
         data = layer.data
@@ -357,14 +357,14 @@ def merge(name, inputs):
 
     Returns
     -------
-    image: :class:`imagecat.storage.Image`
+    image: :class:`imagecat.data.Image`
         New :ref:`image<images>` containing the union of all input images.
     """
-    output = imagecat.storage.Image()
+    output = imagecat.data.Image()
     for input in sorted(inputs.keys()):
         for index in range(len(inputs[input])):
             image = inputs[input][index]
-            if isinstance(image, imagecat.storage.Image):
+            if isinstance(image, imagecat.data.Image):
                 output.layers.update(image.layers)
     log_result(log, name, "merge", output)
     return output
@@ -375,7 +375,7 @@ def offset(name, inputs):
     layers = optional_input(name, inputs, "layers", index=0, type=str, default="*")
     offset = optional_input(name, inputs, "offset", index=0, default=["0.5vw", "0.5vh"])
 
-    output = imagecat.storage.Image()
+    output = imagecat.data.Image()
     for layer_name in image.match_layer_names(layers):
         layer = image.layers[layer_name]
         data = layer.data
@@ -408,7 +408,7 @@ def rename(name, inputs):
     image = require_image(name, inputs, "image")
     changes = optional_input(name, inputs, "changes", type=dict, default={})
 
-    output = imagecat.storage.Image(layers={changes.get(name, name): layer for name, layer in image.layers.items()})
+    output = imagecat.data.Image(layers={changes.get(name, name): layer for name, layer in image.layers.items()})
     log_result(log, name, "rename", output, changes=changes)
     return output
 
@@ -418,12 +418,12 @@ def rgb2gray(name, inputs):
     layers = optional_input(name, inputs, "layers", type=str, default="*")
     weights = optional_input(name, inputs, "weights", type=array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
 
-    output = imagecat.storage.Image()
+    output = imagecat.data.Image()
     for layer_name in image.match_layer_names(layers):
         layer = image.layers[layer_name]
         if layer.data.shape[2] != 3:
             continue
-        output.layers[layer_name] = imagecat.storage.Layer(data=numpy.dot(layer.data, weights)[:,:,None])
+        output.layers[layer_name] = imagecat.data.Layer(data=numpy.dot(layer.data, weights)[:,:,None])
     log_result(log, name, "rgb2gray", output, layers=layers, weights=weights)
     return output
 
@@ -457,7 +457,7 @@ def scale(name, inputs):
     order = optional_input(name, inputs, "order", type=int, default=3)
     size = optional_input(name, inputs, "size", default=("1vw", "1vh"))
 
-    output = imagecat.storage.Image()
+    output = imagecat.data.Image()
     for layername, layer in image.layers.items():
         width = int(imagecat.units.length(size[0], layer.res))
         height = int(imagecat.units.length(size[1], layer.res))
@@ -487,7 +487,7 @@ def text(name, inputs):
     draw.text((x, y), text, font=font, fill=255, anchor=anchor)
 
     data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
-    output = imagecat.storage.Image({layer: imagecat.storage.Layer(data=data)})
+    output = imagecat.data.Image({layer: imagecat.data.Layer(data=data)})
     log_result(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
     return output
 
@@ -495,13 +495,13 @@ def text(name, inputs):
 def uniform(name, inputs):
     components = optional_input(name, inputs, "components", default=["r", "g", "b"])
     layer = optional_input(name, inputs, "layer", type=str, default="C")
-    role = optional_input(name, inputs, "role", type=imagecat.storage.Role, default=imagecat.storage.Role.RGB)
+    role = optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
     seed = optional_input(name, inputs, "seed", type=int, default=1234)
     size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
 
     generator = numpy.random.default_rng(seed=seed)
     data = generator.uniform(size=(size[1], size[0], len(components))).astype(numpy.float16)
-    output = imagecat.storage.Image(layers={layer: imagecat.storage.Layer(data=data, components=components, role=role)})
+    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=components, role=role)})
     log_result(log, name, "uniform", output, components=components, layer=layer, role=role, seed=seed, size=size)
     return output
 

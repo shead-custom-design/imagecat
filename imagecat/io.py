@@ -27,7 +27,7 @@ import numpy
 import skimage
 
 from imagecat.color import linear_to_srgb, srgb_to_linear
-from imagecat.storage import Image, Layer, Role, channels_to_layers
+from imagecat.data import Image, Layer, Role, channels_to_layers
 
 try:
     import Imath

@@ -22,8 +22,8 @@ import PIL.Image
 import numpy
 import skimage
 
-from imagecat.storage import Image, Role, match_layer_names
 from imagecat.color import linear_to_srgb
+from imagecat.data import Image, Role, match_layer_names
 
 
 def display(image, layers="*", width=None, height=None):
