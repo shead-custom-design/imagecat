@@ -135,7 +135,7 @@ def require_image(name, inputs, input, *, index=0):
     return imagecat.data.Image(layers=dict(image.layers))
 
 
-def transform(source, target_shape, *, position, orientation):
+def transform(source, target_shape, *, pivot, position, orientation):
     """Transform an image using an affine transformation.
 
     Parameters
@@ -146,40 +146,50 @@ def transform(source, target_shape, *, position, orientation):
         Desired output image size, as a ``(rows, cols)`` tuple.  Note that this does not have to
         match the size of the `source` image.  By default, the `source` image will be centered in
         the output, cropped if necessary.
+    pivot: 2-tuple of numbers, required
+        Location of the point on the source image around which scaling and rotation takes place.
     orientation: number, optional
-        Rotation of the image around its center, in degrees.
+        Rotation of the source around its pivot point, in degrees.  Positive
+        angles lead to counter-clockwise rotation.
     position: 2-tuple of numbers, optional
-        Position of the image center relative to `target_shape`.
+        Position of the image pivot point relative to `target_shape`.
 
     Returns
     -------
     image: :class:`numpy.ndarray`
         The transformed image.
     """
-    sy, sx = source.shape[:2]
-    ty, tx = target_shape[:2]
+    # Get the source resolution.
+    sourcey, sourcex = source.shape[:2]
+    # Get the target resolution 
+    targety, targetx = target_shape[:2]
 
     # Start with an identity matrix.
     matrix = skimage.transform.AffineTransform(matrix=numpy.identity(3))
 
-    # Orient the image around its center.
-    offset = skimage.transform.AffineTransform(translation=(-sx / 2, -sy / 2))
+    # Position the source image relative to its pivot.
+    pivotx = imagecat.units.length(pivot[0], (sourcex, sourcey))
+    pivoty = imagecat.units.length(pivot[1], (sourcex, sourcey))
+
+    offset = skimage.transform.AffineTransform(translation=(0, -sourcey))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
+    offset = skimage.transform.AffineTransform(translation=(-pivotx, pivoty))
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
+    # Rotate the source.
     rotation = skimage.transform.AffineTransform(rotation=numpy.radians(-orientation)) # Positive = counter-clockwise
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(rotation.params, matrix.params))
 
-    offset = skimage.transform.AffineTransform(translation=(sx / 2, sy / 2))
-    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
-
-    # Center the image on the lower-left corner.
-    offset = skimage.transform.AffineTransform(translation=(-sx / 2, (-sy / 2) + ty))
+    # Position the pivot relative to the target.
+    offset = skimage.transform.AffineTransform(translation=(0, targety))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
     # Position the image relative to the target shape.
-    xoffset = imagecat.units.length(position[0], (tx, ty))
-    yoffset = imagecat.units.length(position[1], (tx, ty))
-    offset = skimage.transform.AffineTransform(translation=(xoffset, -yoffset))
+    positionx = imagecat.units.length(position[0], (targetx, targety))
+    positiony = imagecat.units.length(position[1], (targetx, targety))
+
+    offset = skimage.transform.AffineTransform(translation=(positionx, -positiony))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
     # Transform the image.
@@ -216,20 +226,21 @@ def composite(name, inputs):
     fglayer = optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
     masklayer = optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
     orientation = optional_input(name, inputs, "orientation", index=0, type=float, default=0)
+    pivot = optional_input(name, inputs, "pivot", index=0, default=["0.5vw", "0.5vh"])
     position = optional_input(name, inputs, "position", index=0, default=["0.5vw", "0.5vh"])
 
     background = require_layer(name, inputs, "background", index=0, layer=bglayer)
     foreground = require_layer(name, inputs, "foreground", index=0, layer=fglayer)
     mask = require_layer(name, inputs, "mask", index=0, layer=masklayer, components=1)
 
-    transformed_foreground = transform(foreground.data, background.data.shape, orientation=orientation, position=position)
-    transformed_mask = transform(mask.data, background.data.shape, orientation=orientation, position=position)
+    transformed_foreground = transform(foreground.data, background.data.shape, pivot=pivot, orientation=orientation, position=position)
+    transformed_mask = transform(mask.data, background.data.shape, pivot=pivot, orientation=orientation, position=position)
     alpha = transformed_mask
     one_minus_alpha = 1 - alpha
     data = transformed_foreground * alpha + background.data * one_minus_alpha
 
     output = imagecat.data.Image(layers={"C": imagecat.data.Layer(data=data, components=background.components, role=background.role)})
-    log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, position=position)
+    log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, pivot=pivot, position=position)
     return output
 
 

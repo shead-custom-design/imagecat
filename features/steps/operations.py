@@ -116,12 +116,13 @@ def step_impl(context, task, layers):
     imagecat.add_task(context.graph, task, imagecat.operator.colormap, layers=layers, mapping=context.mapping)
 
 
-@given(u'a task {task} with operator composite position {position} orientation {orientation}')
-def step_impl(context, task, position, orientation):
+@given(u'a task {task} with operator composite pivot {pivot} position {position} orientation {orientation}')
+def step_impl(context, task, pivot, position, orientation):
     task = eval(task)
+    pivot = eval(pivot)
     position = eval(position)
     orientation = eval(orientation)
-    imagecat.add_task(context.graph, task, imagecat.operator.composite, position=position, orientation=orientation)
+    imagecat.add_task(context.graph, task, imagecat.operator.composite, pivot=pivot, position=position, orientation=orientation)
 
 
 @given(u'a task {task} with operator delete layers {layers}')
