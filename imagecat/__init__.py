@@ -27,6 +27,11 @@ logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
 
 
 def add_links(graph, *args, **kwargs):
+    """Add links between tasks in a :class:`graphcat.Graph`.
+
+    This function calls-through to :meth:`graphcat.Graph.add_links`,
+    and is provided for symmetry with :func:`add_task`.
+    """
     return graph.add_links(*args, **kwargs)
 
 
@@ -65,10 +70,21 @@ def add_task(graph, name, fn, **parameters):
 
 
 def set_links(graph, *args, **kwargs):
+    """Set links between tasks in a :class:`graphcat.Graph`.
+
+    This function calls-through to :meth:`graphcat.Graph.set_links`,
+    and is provided for symmetry with :func:`add_task`.
+    """
     return graph.set_links(*args, **kwargs)
 
 
 def set_expression(graph, name, expression, locals={}):
+    """Setup an expression task in a :class:`graphcat.Graph`.
+
+    This function calls-through to :meth:`graphcat.Graph.set_expression`,
+    but provides a library of Imagecat-specific functionality that can
+    be used by expressions.
+    """
     def res(graph, dimension):
         def implementation(name):
             image = graph.output(name)

@@ -8,6 +8,10 @@ Credits
 Included in Imagecat
 --------------------
 
+Cynthia A. Brewer, "ColorBrewer: Color Advice for Maps,"
+http://colorbrewer2.org, accessed October, 2014.
+
+
 Tyler Finck, "League Spartan" TrueType font
 https://github.com/theleagueof/league-spartan:
 
@@ -24,4 +28,5 @@ https://github.com/theleagueof/league-spartan:
 
     Version 1.1 - 26 February 2007
 
-
+Jason Summers, "A close look at the sRGB formula"
+https://entropymine.com/imageworsener/srgbformula, accessed November, 2020.

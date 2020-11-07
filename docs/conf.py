@@ -53,6 +53,7 @@ extensions = [
 ]
 
 intersphinx_mapping = {
+    "numpy": ('https://numpy.org/doc/stable/', None),
     "python": ("https://docs.python.org/3", None),
     "graphcat": ("https://graphcat.readthedocs.io/en/stable", None),
     }

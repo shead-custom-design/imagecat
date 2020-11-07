@@ -40,7 +40,7 @@ class Image(object):
     See Also
     --------
     :ref:`images`
-        For an in-depth discussion of images in Imagecat.
+        For an in-depth discussion of how images are stored in Imagecat.
     """
     def __init__(self, layers=None):
         if layers is None:
@@ -95,6 +95,39 @@ class Image(object):
 
 # Warning!  Moving this to another module will break *.icp file loading.
 class Layer(object):
+    """Storage for one layer in a bitmap image.
+
+    An Imagecat :class:`Layer` contains the data and metadata that describe
+    a single layer in an Imagecat :class:`Image`.  This includes the raw
+    data itself, a set of names for each component in the data, and a role
+    enumeration that describes the semantic purpose of the layer.
+
+    Parameters
+    ----------
+    data: :class:`numpy.ndarray`, required
+        A three dimensional :math:`M \\times N \\times C` array containing the
+        layer data, organized into :math:`M` rows in top-to-bottom order,
+        :math:`N` columns in left-to-right order, and :math:`C` components or
+        channels.  The array dtype should be `numpy.float16` for most data,
+        with `numpy.float32` and `numpy.int32` reserved for special cases such
+        as depth maps and object id maps, respectively.
+    components: sequence of :class:`str`, optional
+        Component names for each of the :math:`C` components in the data.  If
+        :any:`None` (the default), a set of component names will be inferred
+        from context, but this process may fail.  Component names can be any
+        strings, but good choices are `["r", "g", "b"]` for RGB color data,
+        `["x", "y", "z"]` for vector / normal information, `["u", "v"]` for
+        texture coordinates, and `[""]` for single-component layers like
+        alphas or masks.
+    role: :class:`Role`, optional
+        Semantic purpose of the layer.  If :any:`None` (the default), an
+        attempt will be made to infer the role from context.
+
+    See Also
+    --------
+    :ref:`images`
+        For an in-depth discussion of how images are stored in Imagecat.
+    """
     def __init__(self, *, data, components=None, role=None):
         if not isinstance(data, numpy.ndarray):
             raise ValueError("Layer data must be an instance of numpy.ndarray.") # pragma: no cover
@@ -128,10 +161,23 @@ class Layer(object):
 
     @property
     def res(self):
+        """Layer resolution in x and y.
+
+        Returns
+        -------
+        res: (width, height) :any:`tuple`
+            The resolution of the layer, ignoring the number of components.
+        """
         return self.data.shape[1], self.data.shape[0]
 
     @property
     def shape(self):
+        """Shape of the underlying data array.
+
+        Returns
+        -------
+        shape: (rows, columns, components) :any:`tuple`
+        """
         return self.data.shape
 
     def modify(self, data=None, components=None, role=None):
@@ -148,6 +194,11 @@ class Role(enum.Enum):
     Because Imagecat allows an image to contain many types of data - not just
     colors - :class:`Role` is used to indicate how a given layer should be
     treated for operations such as visualization and file IO.
+
+    See Also
+    --------
+    :ref:`images`
+        For an in-depth discussion of how images are stored in Imagecat.
     """
     NONE = 0
     """General purpose catch-all for layers with no specific role."""
