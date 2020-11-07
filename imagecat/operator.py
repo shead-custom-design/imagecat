@@ -493,11 +493,14 @@ def text(name, inputs):
 
 
 def uniform(name, inputs):
-    components = optional_input(name, inputs, "components", default=["r", "g", "b"])
+    components = optional_input(name, inputs, "components", default=None)
     layer = optional_input(name, inputs, "layer", type=str, default="C")
     role = optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
     seed = optional_input(name, inputs, "seed", type=int, default=1234)
     size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
+
+    if components is None:
+        components = [""]
 
     generator = numpy.random.default_rng(seed=seed)
     data = generator.uniform(size=(size[1], size[0], len(components))).astype(numpy.float16)

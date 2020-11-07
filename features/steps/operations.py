@@ -27,6 +27,9 @@ import imagecat.notebook
 import imagecat.operator
 import test
 
+# As a special-case to make scenarios less wordy
+from imagecat.data import Role
+
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 artwork_dir = os.path.join(root_dir, "artwork")
 failed_dir = os.path.join(root_dir, "features", "failed")
@@ -157,6 +160,17 @@ def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, posit
     imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
 
 
+@given(u'a task {task} with operator uniform layer {layer} size {size} components {components} role {role} seed {seed}')
+def step_impl(context, task, layer, size, components, role, seed):
+    components = eval(components)
+    layer = eval(layer)
+    role = eval(role)
+    seed = eval(seed)
+    size = eval(size)
+    task = eval(task)
+    imagecat.add_task(context.graph, task, imagecat.operator.uniform, components=components, layer=layer, role=role, seed=seed, size=size)
+
+
 @when(u'updating the task {task}')
 def step_impl(context, task):
     task = eval(task)
@@ -190,7 +204,7 @@ def step_impl(context, name):
 
         graph = graphcat.Graph()
         graph.set_task("/image", graphcat.constant(context.image))
-        imagecat.add_task(graph, "/save", imagecat.save, path=reference_file)
+        imagecat.add_task(graph, "/save", imagecat.operator.save, path=reference_file)
         imagecat.set_links(graph, "/image", ("/save", "image"))
         graph.update("/save")
 

@@ -29,8 +29,8 @@ Feature: Operations
 
     Scenario Outline: composite
         Given an empty graph
-        And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role imagecat.data.Role.RGB
-        And a task "/background" with operator fill layer "C" size [512, 512] values [1, 0.5, 0] components None role imagecat.data.Role.RGB
+        And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role Role.RGB
+        And a task "/background" with operator fill layer "C" size [512, 512] values [1, 0.5, 0] components None role Role.RGB
         And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
         And a task "/comp" with operator composite position <position> orientation <orientation>
         And links [("/foreground", ("/comp", "foreground"))]
@@ -46,8 +46,8 @@ Feature: Operations
 
     Scenario Outline: delete
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role imagecat.data.Role.RGB
-        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role imagecat.data.Role.NONE
+        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
+        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role Role.NONE
         And a task "/merge" with operator merge
         And a task "/delete" with operator delete layers <layers>
         And links [("/fill1", ("/merge", "image1"))]
@@ -69,8 +69,8 @@ Feature: Operations
 
         Examples:
             | layer  | size        | values          | components       | role               | reference          |
-            | "C"    | (128, 128)  | (1, 0.5, 0)     | ["r", "g", "b"]  | imagecat.data.Role.RGB  | fill-color        |
-            | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | ["x", "y", "z"]  | imagecat.data.Role.NONE | fill-vel          |
+            | "C"    | (128, 128)  | (1, 0.5, 0)     | ["r", "g", "b"]  | Role.RGB  | fill-color        |
+            | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | ["x", "y", "z"]  | Role.NONE | fill-vel          |
 
 
     Scenario Outline: gaussian
@@ -90,8 +90,8 @@ Feature: Operations
 
     Scenario Outline: merge
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role imagecat.data.Role.RGB
-        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role imagecat.data.Role.NONE
+        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
+        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role Role.NONE
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
         And links [("/fill2", ("/merge", "image2"))]
@@ -119,7 +119,7 @@ Feature: Operations
 
     Scenario Outline: rename
         Given an empty graph
-        And a task "/fill" with operator fill layer "A" size (128, 128) values [1] components ["alpha"] role imagecat.data.Role.NONE
+        And a task "/fill" with operator fill layer "A" size (128, 128) values [1] components ["alpha"] role Role.NONE
         And a task "/rename" with operator rename changes <changes>
         And links [("/fill", ("/rename", "image"))]
         When retrieving the output image from task "/rename"
@@ -170,9 +170,21 @@ Feature: Operations
             | "rm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("1.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-right-align     |
 
 
+    Scenario Outline: uniform
+        Given an empty graph
+        And a task "/uniform" with operator uniform layer <layer> size <size> components <components> role <role> seed <seed>
+        When retrieving the output image from task "/uniform"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | layer  | size        | components       | role      | seed | reference         |
+            | "C"    | (128, 128)  | ["r", "g", "b"]  | Role.RGB  | 1234 | uniform-color     |
+            | "L"    | (128, 128)  | None             | Role.NONE | 1234 | uniform-gray      |
+
+
     Scenario: Notebook Display
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role imagecat.data.Role.RGB
+        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
         And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
