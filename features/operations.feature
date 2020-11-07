@@ -27,6 +27,23 @@ Feature: Operations
             | chelsea   | "chelsea.icp"     | chelsea-icp       |
             | chelsea   | "chelsea.png"     | chelsea-png       |
 
+
+    Scenario Outline: colormap
+        Given an empty graph
+        And a task "/uniform" with operator uniform layer "L" size (128, 128) components None role Role.NONE seed 1234
+        And a <color module> <palette> palette reversed: <reversed>
+        And a <colormap> colormap
+        And a task "/colormap" with operator colormap layers <layers>
+        And links [("/uniform", ("/colormap", "image"))]
+        When retrieving the output image from task "/colormap"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | color module | palette      | reversed  | colormap       | layers    | reference                           |
+            | basic        | "Blackbody"  | False     | linear         | "*"       | colormap-linear-basic-blackbody     |
+            | brewer       | "BlueRed"    | True      | linear         | "*"       | colormap-linear-brewer-bluered      |
+
+
     Scenario Outline: composite
         Given an empty graph
         And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role Role.RGB

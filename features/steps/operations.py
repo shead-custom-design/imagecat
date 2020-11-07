@@ -14,6 +14,7 @@
 
 from behave import *
 
+import functools
 import logging
 import os
 import tempfile
@@ -23,6 +24,9 @@ import numpy
 import skimage.data
 
 import imagecat
+import imagecat.color
+import imagecat.color.basic
+import imagecat.color.brewer
 import imagecat.notebook
 import imagecat.operator
 import test
@@ -57,6 +61,33 @@ def step_impl(context, task):
     layer = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.data.Role.RGB)
     image = imagecat.data.Image({"C": layer})
     context.graph.set_task(task, graphcat.constant(image))
+
+
+@given(u'a basic {name} palette reversed: {reverse}')
+def step_impl(context, name, reverse):
+    name = eval(name)
+    reverse = eval(reverse)
+    context.palette = imagecat.color.basic.palette(name, reverse=reverse)
+
+
+@given(u'a brewer {name} palette reversed: {reverse}')
+def step_impl(context, name, reverse):
+    name = eval(name)
+    reverse = eval(reverse)
+    context.palette = imagecat.color.brewer.palette(name, reverse=reverse)
+
+
+@given(u'a linear colormap')
+def step_impl(context):
+	context.mapping = functools.partial(imagecat.color.linear_map, palette=context.palette)
+
+
+@given(u'a task {task} with operator colormap layers {layers}')
+def step_impl(context, task, layers):
+    layers = eval(layers)
+    task = eval(task)
+    imagecat.add_task(context.graph, task, imagecat.operator.colormap, layers=layers, mapping=context.mapping)
+
 
 @given(u'a task {task} with operator composite position {position} orientation {orientation}')
 def step_impl(context, task, position, orientation):
