@@ -21,6 +21,23 @@ from imagecat.color import Palette, srgb_to_linear
 
 
 def palette(name, count=None, reverse=False):
+    """Factory for :class:`imagecat.color.Palette` instances using Color Brewer 2 palettes.
+
+    Parameters
+    ----------
+    name: :class:`str`, required
+        The name of the Color Brewer palette to use.
+    count: int, optional
+        Selects the Color Brewer palette with the given number of colors, or
+        the maximum number of colors if :any:`None` (the default).
+    reverse: bool, optional
+        If `True`, reverse the order of the colors.
+
+    Returns
+    -------
+    palette: :class:`imagecat.color.Palette`
+        Palette with the given color brewer colors.
+    """
     data = palette.data[name]
     if count is None:
         count = max([key for key in data.keys() if isinstance(key, int)])

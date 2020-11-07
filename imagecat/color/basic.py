@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Functionality for working with Color Brewer color maps, https://colorbrewer2.org.
+"""Functionality for working with high quality color maps.
 """
 
 import numpy
@@ -20,6 +20,23 @@ import numpy
 from imagecat.color import Palette, srgb_to_linear
 
 def palette(name, reverse=False):
+    """Factory for :class:`imagecat.color.Palette` instances based on a set of high quality color palettes.
+
+    Currently, the palettes "Blockbody", "ExtendedBlackbody", "Kindlmann", and
+    "ExtendedKindlemann" are supported.
+
+    Parameters
+    ----------
+    name: :class:`str`, required
+        The name of the palette to use.
+    reverse: bool, optional
+        If `True`, reverse the order of the colors.
+
+    Returns
+    -------
+    palette: :class:`imagecat.color.Palette`
+        Palette with the requested colors.
+    """
     colors = numpy.array(palette.data[name])[:,1:]
     colors = srgb_to_linear(colors)
     return Palette(colors=colors, reverse=reverse)

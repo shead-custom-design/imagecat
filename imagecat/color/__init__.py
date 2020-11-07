@@ -13,25 +13,85 @@
 # limitations under the License.
 
 
-"""Helpers for colorspace conversion.
+"""Functionality for color mapping and colorspace conversion.
 """
 
 import numpy
 
-def srgb_to_linear(image):
-    """Convert an sRGB image to linear color.
+class Palette(object):
+    """Storage for an ordered collection of colors.
+
+    A palette is an ordered collection of colors.  Typically, palettes are
+    used to define color mappings.
+
+    See Also
+    --------
+    :func:`srgb_to_linear`
+        Useful for converting colors from other sources into linear space.
+
+    Parameters
+    ----------
+    colors: :class:`numpy.ndarray`, required
+        :math:`M \\times N` matrix containing :math:`M` colors with :math:`N`
+        components each.  Note that while three components for colors is
+        typical, any number of components is allowed.  The color components
+        *must* be in linear space, not sRGB.
+    reverse: boolean, optional
+        If `True`, reverse the order of `colors`.
+    """
+    def __init__(self, colors, reverse=False):
+        colors = numpy.array(colors)
+        if reverse:
+            colors = colors[::-1]
+        self._colors = colors
+
+    @property
+    def colors(self):
+        """Color data stored by this palette.
+
+        Returns
+        -------
+        :class:`numpy.ndarray`
+            :math:`M \\times N` matrix containing :math:`M` colors with :math:`N`
+            components each.
+        """
+        return self._colors
+
+
+def srgb_to_linear(data):
+    """Convert sRGB data to linear color.
 
     Acessed from https://entropymine.com/imageworsener/srgbformula
+
+    Parameters
+    ----------
+    data: :class:`numpy.ndarray`, required
+        Array of any shape containing sRGB data to be converted to linear.
+
+    Returns
+    -------
+    converted: :class:`numpy.ndarray`
+        Array with the same shape as `data` containing values in linear space.
     """
-    return numpy.where(image <= 0.04045, image / 12.92, numpy.power((image + 0.055) / 1.055, 2.4))
+    return numpy.where(data <= 0.04045, data / 12.92, numpy.power((data + 0.055) / 1.055, 2.4))
 
 
-def linear_to_srgb(image):
-    """Convert linear color image to sRGB.
+def linear_to_srgb(data):
+    """Convert linear color data to sRGB.
 
     Acessed from https://entropymine.com/imageworsener/srgbformula
+
+    Parameters
+    ----------
+    data: :class:`numpy.ndarray`, required
+        Array of any shape containing linear data to be converted to sRGB.
+
+    Returns
+    -------
+    converted: :class:`numpy.ndarray`
+        Array with the same shape as `data` containing values in sRGB space.
     """
-    return numpy.where(image <= 0.0031308, image * 12.92, 1.055 * numpy.power(image, 1 / 2.4) - 0.055)
+    return numpy.where(data <= 0.0031308, data * 12.92, 1.055 * numpy.power(data, 1 / 2.4) - 0.055)
 
 
 # Generated using https://www.colour-science.org:8010/apps/rgb_colourspace_transformation_matrix
@@ -49,32 +109,39 @@ def linear_to_srgb(image):
 #}
 
 
-class Palette(object):
-    def __init__(self, colors, reverse=False):
-        colors = numpy.array(colors)
-        if reverse:
-            colors = colors[::-1]
-        self._colors = colors
+def linear_map(data, palette, min=None, max=None):
+    """Convert scalar to color data using a linear map.
 
-    @property
-    def colors(self):
-        return self._colors
+    Parameters
+    ----------
+    data: :class:`numpy.ndarray`, required
+        The data to be mapped.
+    palette: :class:`Palette`, required
+        The palette of colors to use for the linear mapping.
+    min: number, optional
+        If :any:`None` (the default) uses the minimum value in `data`.
+    max: number, optional
+        If :any:`None` (the default) uses the maximum value in `data`.
 
-
-def linear_map(plane, palette, min=None, max=None):
-    plane = numpy.array(plane)
+    Returns
+    -------
+    mapped: :class:`numpy.ndarray`
+        Mapped data with the same shape as `data`, but an extra dimension
+        added.
+    """
+    data = numpy.array(data)
     if min is None:
-        min = plane.min()
+        min = data.min()
     if max is None:
-        max = plane.max()
+        max = data.max()
 
     colors = palette.colors
     stops = numpy.linspace(min, max, len(colors))
 
-    flat = numpy.reshape(plane, -1)
+    flat = numpy.reshape(data, -1)
     mapped = numpy.empty((len(flat), colors.shape[1]), dtype=numpy.float)
     for index, component in enumerate(colors.T):
         mapped[:,index] = numpy.interp(flat, stops, component)
-    return mapped.reshape((plane.shape[0], plane.shape[1], colors.shape[1]))
+    return mapped.reshape((*data.shape, colors.shape[1]))
 
 
