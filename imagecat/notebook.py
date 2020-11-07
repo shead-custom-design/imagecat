@@ -22,9 +22,8 @@ import PIL.Image
 import numpy
 import skimage
 
-import imagecat
-import imagecat.color as color
-import imagecat.util as util
+from imagecat.storage import Image, Role, match_layer_names
+from imagecat.color import linear_to_srgb
 
 
 def display(image, layers="*", width=None, height=None):
@@ -41,15 +40,15 @@ def display(image, layers="*", width=None, height=None):
     height: :class:`str`, optional
         Optional HTML height for each image.
     """
-    if not isinstance(image, imagecat.Image):
+    if not isinstance(image, Image):
         raise ValueError("Expected an instance of imagecat.Image.") # pragma: no cover
 
     markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
-    for name in sorted(util.match_layers(image.layers.keys(), layers)):
+    for name in sorted(image.match_layer_names(layers)):
         layer = image.layers[name]
         data = layer.data
-        if layer.role == imagecat.Role.RGB:
-            data = color.linear_to_srgb(data)
+        if layer.role == Role.RGB:
+            data = linear_to_srgb(data)
 
         stream = io.BytesIO()
         pil_image = skimage.img_as_ubyte(data)

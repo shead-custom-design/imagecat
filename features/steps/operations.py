@@ -22,8 +22,9 @@ import graphcat
 import numpy
 import skimage.data
 
-import imagecat.color
+import imagecat
 import imagecat.notebook
+import imagecat.operator
 import test
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -42,7 +43,7 @@ def step_impl(context):
 def step_impl(context, links):
     links = eval(links)
     for source, targets in links:
-        context.graph.set_links(source, targets)
+        imagecat.set_links(context.graph, source, targets)
 
 
 @given(u'a task {task} which outputs the chelsea sample image')
@@ -59,14 +60,14 @@ def step_impl(context, task, position, orientation):
     task = eval(task)
     position = eval(position)
     orientation = eval(orientation)
-    imagecat.add_operation(context.graph, task, imagecat.composite, position=position, orientation=orientation)
+    imagecat.add_task(context.graph, task, imagecat.operator.composite, position=position, orientation=orientation)
 
 
 @given(u'a task {task} with operator delete layers {layers}')
 def step_impl(context, task, layers):
     task = eval(task)
     layers = eval(layers)
-    imagecat.add_operation(context.graph, task, imagecat.delete, layers=layers)
+    imagecat.add_task(context.graph, task, imagecat.operator.delete, layers=layers)
 
 
 @given(u'a task {task} with operator fill layer {layer} size {size} values {values} components {components} role {role}')
@@ -77,14 +78,14 @@ def step_impl(context, components, layer, size, role, task, values):
     size = eval(size)
     task = eval(task)
     values = eval(values)
-    imagecat.add_operation(context.graph, task, imagecat.fill, components=components, layer=layer, size=size, values=values, role=role)
+    imagecat.add_task(context.graph, task, imagecat.operator.fill, components=components, layer=layer, size=size, values=values, role=role)
 
 
 @given(u'a task {task} with operator gaussian radius {radius}')
 def step_impl(context, task, radius):
     task = eval(task)
     radius = eval(radius)
-    imagecat.add_operation(context.graph, task, imagecat.gaussian, radius=radius)
+    imagecat.add_task(context.graph, task, imagecat.operator.gaussian, radius=radius)
 
 
 @given(u'a task {task} with operator load path {path}')
@@ -92,13 +93,13 @@ def step_impl(context, task, path):
     task = eval(task)
     path = eval(path)
     path = os.path.join(temp_dir, path)
-    imagecat.add_operation(context.graph, task, imagecat.load, path=path)
+    imagecat.add_task(context.graph, task, imagecat.operator.load, path=path)
 
 
 @given(u'a task {task} with operator merge')
 def step_impl(context, task):
     task = eval(task)
-    imagecat.add_operation(context.graph, task, imagecat.merge)
+    imagecat.add_task(context.graph, task, imagecat.operator.merge)
 
 
 @given(u'a task {task} with operator offset layers {layers} offset {offset}')
@@ -106,14 +107,14 @@ def step_impl(context, task, layers, offset):
     task = eval(task)
     layers = eval(layers)
     offset = eval(offset)
-    imagecat.add_operation(context.graph, task, imagecat.offset, layers=layers, offset=offset)
+    imagecat.add_task(context.graph, task, imagecat.operator.offset, layers=layers, offset=offset)
 
 
 @given(u'a task {task} with operator rename changes {changes}')
 def step_impl(context, task, changes):
     task = eval(task)
     changes = eval(changes)
-    imagecat.add_operation(context.graph, task, imagecat.rename, changes=changes)
+    imagecat.add_task(context.graph, task, imagecat.operator.rename, changes=changes)
 
 
 @given(u'a task {task} with operator rgb2gray layers {layers} weights {weights}')
@@ -121,7 +122,7 @@ def step_impl(context, task, layers, weights):
     task = eval(task)
     layers = eval(layers)
     weights = eval(weights)
-    imagecat.add_operation(context.graph, task, imagecat.rgb2gray, layers=layers, weights=weights)
+    imagecat.add_task(context.graph, task, imagecat.operator.rgb2gray, layers=layers, weights=weights)
 
 
 @given(u'a task {task} with operator save path {path}')
@@ -129,7 +130,7 @@ def step_impl(context, task, path):
     task = eval(task)
     path = eval(path)
     path = os.path.join(temp_dir, path)
-    imagecat.add_operation(context.graph, task, imagecat.save, path=path)
+    imagecat.add_task(context.graph, task, imagecat.operator.save, path=path)
 
 
 @given(u'a task {task} with operator scale order {order} size {size}')
@@ -137,7 +138,7 @@ def step_impl(context, task, order, size):
     order = eval(order)
     size = eval(size)
     task = eval(task)
-    imagecat.add_operation(context.graph, task, imagecat.scale, order=order, size=size)
+    imagecat.add_task(context.graph, task, imagecat.operator.scale, order=order, size=size)
 
 
 @given(u'a task {task} with operator text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} layer {layer} position {position} size {size} text {text}')
@@ -153,7 +154,7 @@ def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, posit
     text = eval(text)
 
     fontname = os.path.join(artwork_dir, fontname)
-    imagecat.add_operation(context.graph, task, imagecat.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
+    imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
 
 
 @when(u'updating the task {task}')
@@ -189,15 +190,15 @@ def step_impl(context, name):
 
         graph = graphcat.Graph()
         graph.set_task("/image", graphcat.constant(context.image))
-        imagecat.add_operation(graph, "/save", imagecat.save, path=reference_file)
-        graph.set_links("/image", ("/save", "image"))
+        imagecat.add_task(graph, "/save", imagecat.save, path=reference_file)
+        imagecat.set_links(graph, "/image", ("/save", "image"))
         graph.update("/save")
 
         raise AssertionError(f"Created new reference file {reference_file} ... verify its contents before re-running the test.")
 
     # Load the reference for comparison.
     graph = graphcat.Graph()
-    imagecat.add_operation(graph, "/load", imagecat.load, path=reference_file)
+    imagecat.add_task(graph, "/load", imagecat.operator.load, path=reference_file)
     reference_image = graph.output("/load")
 
     try:
@@ -209,8 +210,8 @@ def step_impl(context, name):
 
         graph = graphcat.Graph()
         graph.set_task("/image", graphcat.constant(context.image))
-        imagecat.add_operation(graph, "/save", imagecat.save, path=failed_file)
-        graph.set_links("/image", ("/save", "image"))
+        imagecat.add_task(graph, "/save", imagecat.save, path=failed_file)
+        imagecat.set_links(graph, "/image", ("/save", "image"))
         graph.update("/save")
 
         raise e
