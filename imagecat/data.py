@@ -27,14 +27,14 @@ class Image(object):
         first_layer = None
         for key, layer in layers.items():
             if not isinstance(key, str):
-                raise ValueError(f"{key} is not a valid layer name.")
+                raise ValueError(f"{key} is not a valid layer name.") # pragma: no cover
             if not isinstance(layer, Layer):
-                raise ValueError(f"{layer} is not a valid Layer instance.")
+                raise ValueError(f"{layer} is not a valid Layer instance.") # pragma: no cover
             if first_layer is None:
                 first_layer = layer
             else:
                 if layer.data.shape[:2] != first_layer.data.shape[:2]:
-                    raise ValueError("All layers must have the same resolution.")
+                    raise ValueError("All layers must have the same resolution.") # pragma: no cover
         self._layers = layers
 
     def __repr__(self):
@@ -54,9 +54,9 @@ class Image(object):
 class Layer(object):
     def __init__(self, *, data, components=None, role=None):
         if not isinstance(data, numpy.ndarray):
-            raise ValueError("Layer data must be an instance of numpy.ndarray.")
+            raise ValueError("Layer data must be an instance of numpy.ndarray.") # pragma: no cover
         if data.ndim != 3:
-            raise ValueError("Layer data must have three dimensions.")
+            raise ValueError("Layer data must have three dimensions.") # pragma: no cover
 
         if role is None:
             if data.shape[2] == 3:
@@ -64,7 +64,7 @@ class Layer(object):
             else:
                 role = Role.NONE
         if not isinstance(role, Role):
-            raise ValueError("Layer role must be an instance of imagecat.storage.Role.")
+            raise ValueError("Layer role must be an instance of imagecat.storage.Role.") # pragma: no cover
 
         if components is None:
             if data.shape[2] == 1:
@@ -74,7 +74,7 @@ class Layer(object):
             else:
                 components = []
         if len(components) != data.shape[2]:
-            raise ValueError(f"Expected {data.shape[2]} layer components, received {len(components)}.")
+            raise ValueError(f"Expected {data.shape[2]} layer components, received {len(components)}.") # pragma: no cover
 
         self.data = data
         self.components = components

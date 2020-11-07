@@ -28,6 +28,16 @@ Feature: Operations
             | chelsea   | "chelsea.png"     | chelsea-png       |
 
 
+    Scenario: Unique Names
+        Given an empty graph
+        And a task "/sample" with constant value "foo"
+        And a task "/sample" with constant value "bar"
+        Then the graph should contain task "/sample"
+        And the graph should contain task "/sample1"
+        And the output from "/sample" should be "foo"
+        And the output from "/sample1" should be "bar"
+
+
     Scenario Outline: colormap
         Given an empty graph
         And a task "/uniform" with operator uniform layer "L" size (128, 128) components None role Role.NONE seed 1234
@@ -42,6 +52,15 @@ Feature: Operations
             | color module | palette      | reversed  | colormap       | layers    | reference                           |
             | basic        | "Blackbody"  | False     | linear         | "*"       | colormap-linear-basic-blackbody     |
             | brewer       | "BlueRed"    | True      | linear         | "*"       | colormap-linear-brewer-bluered      |
+
+
+    Scenario: colormap default mapping
+        Given an empty graph
+        And a task "/uniform" with operator uniform layer "L" size (128, 128) components None role Role.NONE seed 1234
+        And a task "/colormap" with operator colormap layers "*" and default mapping
+        And links [("/uniform", ("/colormap", "image"))]
+        When retrieving the output image from task "/colormap"
+        Then the image should match the colormap-default reference image
 
 
     Scenario Outline: composite

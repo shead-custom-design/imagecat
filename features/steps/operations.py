@@ -63,6 +63,26 @@ def step_impl(context, task):
     context.graph.set_task(task, graphcat.constant(image))
 
 
+@given(u'a task {task} with constant value {value}')
+def step_impl(context, task, value):
+    task = eval(task)
+    value = eval(value)
+    imagecat.add_task(context.graph, task, graphcat.constant(value))
+
+
+@then(u'the graph should contain task {task}')
+def step_impl(context, task):
+    task = eval(task)
+    test.assert_true(task in context.graph)
+
+
+@then(u'the output from {task} should be {value}')
+def step_impl(context, task, value):
+    task = eval(task)
+    value = eval(value)
+    test.assert_equal(context.graph.output(task), value)
+
+
 @given(u'a basic {name} palette reversed: {reverse}')
 def step_impl(context, name, reverse):
     name = eval(name)
@@ -80,6 +100,13 @@ def step_impl(context, name, reverse):
 @given(u'a linear colormap')
 def step_impl(context):
 	context.mapping = functools.partial(imagecat.color.linear_map, palette=context.palette)
+
+
+@given(u'a task {task} with operator colormap layers {layers} and default mapping')
+def step_impl(context, task, layers):
+    layers = eval(layers)
+    task = eval(task)
+    imagecat.add_task(context.graph, task, imagecat.operator.colormap, layers=layers)
 
 
 @given(u'a task {task} with operator colormap layers {layers}')
