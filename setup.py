@@ -34,7 +34,7 @@ setup(
     install_requires=[
         "Pillow>=8.0.0",
         "graphcat>=0.5.0",
-        "numpy",
+        "numpy>=1.17",
         "scikit-image",
         "sphinx_rtd_theme",
     ],
