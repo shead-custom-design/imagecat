@@ -1,7 +1,7 @@
-imagecat.storage module
-=======================
+imagecat.data module
+====================
 
-.. automodule:: imagecat.storage
+.. automodule:: imagecat.data
     :members:
     :undoc-members:
     :show-inheritance:

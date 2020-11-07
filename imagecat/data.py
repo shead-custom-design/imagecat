@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Functionality for manipulating images and related data structures.
+"""
+
 import collections
 import enum
 import fnmatch
@@ -21,6 +24,24 @@ import numpy
 
 # Warning!  Moving this to another module will break *.icp file loading.
 class Image(object):
+    """Storage for a multi-layer bitmap image.
+
+    An Imagecat :class:`Image` is composed of zero-to-many layers, which are
+    instances of :class:`Layer`.  Each layer is named, and all layer names must
+    be unique.
+
+    Parameters
+    ----------
+    layers: :class:`dict`, required
+        Dictionary mapping :class:`str` layer names to :class:`Layer` instances that
+        contain the data for each layer.  If :any:`None` (the default), creates
+        an empty (no layers) image.
+
+    See Also
+    --------
+    :ref:`images`
+        For an in-depth discussion of images in Imagecat.
+    """
     def __init__(self, layers=None):
         if layers is None:
             layers = {}
@@ -43,10 +64,32 @@ class Image(object):
 
     @property
     def layers(self):
+        """Access the :class:`dict` containing layers.
+
+        Returns
+        -------
+        layers: :class:`dict`
+            Dictionary mapping :class:`str` layer names to :class:`Layer` instances that
+            contain the data for each layer.
+        """
         return self._layers
 
 
     def match_layer_names(self, patterns):
+        """Return layer names in this image that match the given patterns.
+
+        See :func:`match_layer_names` for a description of the pattern syntax.
+
+        Parameters
+        ----------
+        patterns: :class:`str`, required
+            Patterns to match against this image's layer names.
+
+        Returns
+        -------
+        layers: sequence of :class:`str`
+            Layer names in this image that match `patterns`.
+        """
         return match_layer_names(self.layers.keys(), patterns)
 
 
@@ -100,8 +143,17 @@ class Layer(object):
 
 # Warning!  Moving this to another module will break *.icp file loading.
 class Role(enum.Enum):
+    """Semantic description of how :class:`Layer` data should be interpreted.
+
+    Because Imagecat allows an image to contain many types of data - not just
+    colors - :class:`Role` is used to indicate how a given layer should be
+    treated for operations such as visualization and file IO.
+    """
     NONE = 0
+    """General purpose catch-all for layers with no specific role."""
     RGB = 1
+    """Indicates that a layer contains RGB information that e.g. should be
+    converted to sRGB for display."""
 
 
 def channels_to_layers(channels):
@@ -154,9 +206,9 @@ def channels_to_layers(channels):
 
 
 def match_layer_names(names, patterns):
-    """Match image layers against a pattern.
+    """Match image layer names against a pattern.
 
-    Use this function implementing tasks that can operate on multiple image
+    Use this function to implement operators that operate on multiple image
     layers.  `patterns` is a :class:`str` that can contain multiple whitespace
     delimited patterns.  Patterns can include ``"*"`` which matches everything, ``"?"``
     to match a single character, ``"[seq]"`` to match any character in seq, and ``"[!seq]"``
@@ -164,7 +216,7 @@ def match_layer_names(names, patterns):
 
     Parameters
     ----------
-    names: :class:`Image` or sequence of :class:`str`, required
+    names: Sequence of :class:`str`, required
         The :ref:`image<images>` layer names to be matched.
     pattern: :class:`str`, required
         Whitespace delimited collection of patterns to match against layer names.
