@@ -23,8 +23,17 @@ import re
 def length(value, size, default="px"):
     """Convert a length value to pixels.
 
-    Supported unit abbreviations include: px, pixel, pixels, vw, vh, vmin,
-    and vmax.
+    Supported unit abbreviations include:
+
+    :px, pixel, pixels: absolute length in pixels
+    :w, width: relative length, as a fraction of the width of an image
+    :h, height: relative length, as a fraction of the height of an image
+    :min: relative length, as a fraction of the smaller of width and height
+    :max: relative length, as a fraction of the larger of width and height
+
+    Relative lengths will be relative to some reference that is
+    context-specific and documented.  For example: the text operator fontsize
+    is relative to the size of the output image.
 
     Parameters
     ----------
@@ -62,15 +71,15 @@ def length(value, size, default="px"):
 
     value, units = value
     units = units.lower()
-    if units in ["px", "pixel", "pixels"]:
+    if units in {"px", "pixel", "pixels"}:
         return value
-    if units == "vw":
+    if units in {"w", "width"}:
         return value * size[0]
-    if units == "vh":
+    if units in {"h", "height"}:
         return value * size[1]
-    if units == "vmin":
+    if units in {"min"}:
         return value * min(size[0], size[1])
-    if units == "vmax":
+    if units in {"max"}:
         return value * max(size[0], size[1])
     raise ValueError("Unknown unit of measure: %s" % units) # pragma: no cover
 

@@ -67,7 +67,7 @@ Feature: Operations
         Given an empty graph
         And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role Role.RGB
         And a task "/background" with operator fill layer "C" size [512, 512] values [1, 0.5, 0] components None role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
         And a task "/comp" with operator composite pivot <pivot> position <position> orientation <orientation>
         And links [("/foreground", ("/comp", "foreground"))]
         And links [("/background", ("/comp", "background"))]
@@ -77,8 +77,8 @@ Feature: Operations
 
         Examples:
             | pivot              | position                   | orientation | reference           |
-            | ("0.5vw", "0.5vh") | ("0.5vw", "0.8vh")         | 30          | composite           |
-            | ("0vw", "1vh")     | ("0vw", "1vh")             | 0           | composite-tl        |
+            | ("0.5w", "0.5h") | ("0.5w", "0.8h")         | 30          | composite           |
+            | ("0w", "1h")     | ("0w", "1h")             | 0           | composite-tl        |
 
 
     Scenario Outline: delete
@@ -112,7 +112,7 @@ Feature: Operations
 
     Scenario Outline: gaussian
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
         And a task "/gaussian" with operator gaussian radius <radius>
         And links [("/text", ("/gaussian", "image"))]
         When retrieving the output image from task "/gaussian"
@@ -142,7 +142,7 @@ Feature: Operations
 
     Scenario Outline: offset
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
         And a task "/offset" with operator offset layers <layers> offset <offset>
         And links [("/text", ("/offset", "image"))]
         When retrieving the output image from task "/offset"
@@ -151,7 +151,7 @@ Feature: Operations
         Examples:
             | layers | offset                 | reference           |
             | "*"    | (-30, 0)               | offset-x            |
-            | "*"    | (0, "0.25vh")          | offset-y            |
+            | "*"    | (0, "0.25h")          | offset-y            |
 
 
     Scenario Outline: rename
@@ -182,7 +182,7 @@ Feature: Operations
 
     Scenario Outline: scale
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
         And a task "/scale" with operator scale order <order> size <size>
         And links [("/text", ("/scale", "image"))]
         When retrieving the output image from task "/scale"
@@ -190,8 +190,8 @@ Feature: Operations
 
         Examples:
             | order  | size                       | reference           |
-            | 3      | ((2, "vw"), "2vh")         | scale-cubic         |
-            | 0      | ((2, "vmax"), (2, "vmin")) | scale-nearest       |
+            | 3      | ((2, "w"), "2h")         | scale-cubic         |
+            | 0      | ((2, "max"), (2, "min")) | scale-nearest       |
 
 
     Scenario Outline: text
@@ -202,9 +202,9 @@ Feature: Operations
 
         Examples:
             | anchor | fontindex | fontname                                | fontsize | layer | position           | size       | text        | reference            |
-            | "mm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("0.5vw", "0.5vh") | (256, 128) | "Imagecat!" | text                 |
-            | "lm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("0.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-left-align      |
-            | "rm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33vh" | "A"   | ("1.0vw", "0.5vh") | (256, 128) | "Imagecat!" | text-right-align     |
+            | "mm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33h" | "A"   | ("0.5w", "0.5h") | (256, 128) | "Imagecat!" | text                 |
+            | "lm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33h" | "A"   | ("0.0w", "0.5h") | (256, 128) | "Imagecat!" | text-left-align      |
+            | "rm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33h" | "A"   | ("1.0w", "0.5h") | (256, 128) | "Imagecat!" | text-right-align     |
 
 
     Scenario Outline: uniform
@@ -222,7 +222,7 @@ Feature: Operations
     Scenario: Notebook Display
         Given an empty graph
         And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33vh" layer "A" position ("0.5vw", "0.5vh") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
         And links [("/text", ("/merge", "image2"))]

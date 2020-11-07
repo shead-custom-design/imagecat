@@ -226,8 +226,8 @@ def composite(name, inputs):
     fglayer = optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
     masklayer = optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
     orientation = optional_input(name, inputs, "orientation", index=0, type=float, default=0)
-    pivot = optional_input(name, inputs, "pivot", index=0, default=["0.5vw", "0.5vh"])
-    position = optional_input(name, inputs, "position", index=0, default=["0.5vw", "0.5vh"])
+    pivot = optional_input(name, inputs, "pivot", index=0, default=["0.5w", "0.5h"])
+    position = optional_input(name, inputs, "position", index=0, default=["0.5w", "0.5h"])
 
     background = require_layer(name, inputs, "background", index=0, layer=bglayer)
     foreground = require_layer(name, inputs, "foreground", index=0, layer=fglayer)
@@ -385,7 +385,7 @@ def merge(name, inputs):
 def offset(name, inputs):
     image = require_image(name, inputs, "image", index=0)
     layers = optional_input(name, inputs, "layers", index=0, type=str, default="*")
-    offset = optional_input(name, inputs, "offset", index=0, default=["0.5vw", "0.5vh"])
+    offset = optional_input(name, inputs, "offset", index=0, default=["0.5w", "0.5h"])
 
     output = imagecat.data.Image()
     for layer_name in image.match_layer_names(layers):
@@ -467,7 +467,7 @@ def save(name, inputs):
 def scale(name, inputs):
     image = require_image(name, inputs, "image", index=0)
     order = optional_input(name, inputs, "order", type=int, default=3)
-    size = optional_input(name, inputs, "size", default=("1vw", "1vh"))
+    size = optional_input(name, inputs, "size", default=("1w", "1h"))
 
     output = imagecat.data.Image()
     for layername, layer in image.layers.items():
@@ -485,7 +485,7 @@ def text(name, inputs):
     fontname = optional_input(name, inputs, "fontname", type=str, default="Helvetica")
     fontsize = optional_input(name, inputs, "fontsize", default="32px")
     layer = optional_input(name, inputs, "layer", type=str, default="A")
-    position = optional_input(name, inputs, "position", default=("0.5vw", "0.5vh"))
+    position = optional_input(name, inputs, "position", default=("0.5w", "0.5h"))
     size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
     text = optional_input(name, inputs, "text", type=str, default="Text!")
 
