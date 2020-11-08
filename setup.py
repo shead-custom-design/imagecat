@@ -33,7 +33,7 @@ setup(
     description="Simple, flexible tools for procedural image editing.",
     install_requires=[
         "Pillow>=8.0.0",
-        "graphcat>=0.5.0",
+        "graphcat>=0.6.0",
         "numpy>=1.17",
         "scikit-image",
         "sphinx_rtd_theme",
