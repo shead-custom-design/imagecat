@@ -15,6 +15,7 @@ Contents:
    imagecat.color.basic.rst
    imagecat.color.brewer.rst
    imagecat.data.rst
+   imagecat.expression.rst
    imagecat.io.rst
    imagecat.notebook.rst
    imagecat.operator.rst

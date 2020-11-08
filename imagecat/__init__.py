@@ -21,6 +21,7 @@ __version__ = "0.1.0-dev"
 import itertools
 import logging
 
+import imagecat.expression
 
 log = logging.getLogger(__name__)
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.INFO)
@@ -85,19 +86,7 @@ def set_expression(graph, name, expression, locals={}):
     but provides a library of Imagecat-specific functionality that can
     be used by expressions.
     """
-    def res(graph, dimension):
-        def implementation(name):
-            image = graph.output(name)
-            if not isinstance(image, Image):
-                raise ValueError(f"Not an image: {name}")
-            for plane in image.values():
-                return plane.shape[dimension]
-        return implementation
-
-    builtins = {
-        "xres": res(graph, 1),
-        "yres": res(graph, 0),
-        }
+    builtins = imagecat.expression.builtins(graph)
     builtins.update(locals)
     graph.set_expression(name, expression, builtins)
 
