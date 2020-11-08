@@ -132,15 +132,15 @@ def step_impl(context, task, layers):
     imagecat.add_task(context.graph, task, imagecat.operator.delete, layers=layers)
 
 
-@given(u'a task {task} with operator fill layer {layer} size {size} values {values} components {components} role {role}')
-def step_impl(context, components, layer, size, role, task, values):
+@given(u'a task {task} with operator fill layer {layer} res {res} values {values} components {components} role {role}')
+def step_impl(context, components, layer, res, role, task, values):
     components = eval(components)
     layer = eval(layer)
     role = eval(role)
-    size = eval(size)
+    res = eval(res)
     task = eval(task)
     values = eval(values)
-    imagecat.add_task(context.graph, task, imagecat.operator.fill, components=components, layer=layer, size=size, values=values, role=role)
+    imagecat.add_task(context.graph, task, imagecat.operator.fill, components=components, layer=layer, res=res, values=values, role=role)
 
 
 @given(u'a task {task} with operator gaussian radius {radius}')
@@ -195,39 +195,39 @@ def step_impl(context, task, path):
     imagecat.add_task(context.graph, task, imagecat.operator.save, path=path)
 
 
-@given(u'a task {task} with operator scale order {order} size {size}')
-def step_impl(context, task, order, size):
+@given(u'a task {task} with operator resize order {order} res {res}')
+def step_impl(context, task, order, res):
     order = eval(order)
-    size = eval(size)
+    res = eval(res)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.scale, order=order, size=size)
+    imagecat.add_task(context.graph, task, imagecat.operator.resize, order=order, res=res)
 
 
-@given(u'a task {task} with operator text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} layer {layer} position {position} size {size} text {text}')
-def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, position, size, text):
+@given(u'a task {task} with operator text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} layer {layer} position {position} res {res} text {text}')
+def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, position, res, text):
     anchor = eval(anchor)
     fontindex = eval(fontindex)
     fontname = eval(fontname)
     fontsize = eval(fontsize)
     layer = eval(layer)
     position = eval(position)
-    size = eval(size)
+    res = eval(res)
     task = eval(task)
     text = eval(text)
 
     fontname = os.path.join(artwork_dir, fontname)
-    imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
+    imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, res=res, text=text)
 
 
-@given(u'a task {task} with operator uniform layer {layer} size {size} components {components} role {role} seed {seed}')
-def step_impl(context, task, layer, size, components, role, seed):
+@given(u'a task {task} with operator uniform layer {layer} res {res} components {components} role {role} seed {seed}')
+def step_impl(context, task, layer, res, components, role, seed):
     components = eval(components)
     layer = eval(layer)
     role = eval(role)
     seed = eval(seed)
-    size = eval(size)
+    res = eval(res)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.uniform, components=components, layer=layer, role=role, seed=seed, size=size)
+    imagecat.add_task(context.graph, task, imagecat.operator.uniform, components=components, layer=layer, role=role, seed=seed, res=res)
 
 
 @when(u'updating the task {task}')

@@ -40,7 +40,7 @@ Feature: Operations
 
     Scenario Outline: colormap
         Given an empty graph
-        And a task "/uniform" with operator uniform layer "L" size (128, 128) components None role Role.NONE seed 1234
+        And a task "/uniform" with operator uniform layer "L" res (128, 128) components None role Role.NONE seed 1234
         And a <color module> <palette> palette reversed: <reversed>
         And a <colormap> colormap
         And a task "/colormap" with operator colormap layers <layers>
@@ -56,7 +56,7 @@ Feature: Operations
 
     Scenario: colormap default mapping
         Given an empty graph
-        And a task "/uniform" with operator uniform layer "L" size (128, 128) components None role Role.NONE seed 1234
+        And a task "/uniform" with operator uniform layer "L" res (128, 128) components None role Role.NONE seed 1234
         And a task "/colormap" with operator colormap layers "*" and default mapping
         And links [("/uniform", ("/colormap", "image"))]
         When retrieving the output image from task "/colormap"
@@ -65,9 +65,9 @@ Feature: Operations
 
     Scenario Outline: composite
         Given an empty graph
-        And a task "/foreground" with operator fill layer "C" size [256, 128] values [0, 0, 0] components None role Role.RGB
-        And a task "/background" with operator fill layer "C" size [512, 512] values [1, 0.5, 0] components None role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
+        And a task "/foreground" with operator fill layer "C" res [256, 128] values [0, 0, 0] components None role Role.RGB
+        And a task "/background" with operator fill layer "C" res [512, 512] values [1, 0.5, 0] components None role Role.RGB
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
         And a task "/comp" with operator composite pivot <pivot> position <position> orientation <orientation>
         And links [("/foreground", ("/comp", "foreground"))]
         And links [("/background", ("/comp", "background"))]
@@ -83,8 +83,8 @@ Feature: Operations
 
     Scenario Outline: delete
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role Role.NONE
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
+        And a task "/fill2" with operator fill layer "A" res (128, 128) values [1.0] components None role Role.NONE
         And a task "/merge" with operator merge
         And a task "/delete" with operator delete layers <layers>
         And links [("/fill1", ("/merge", "image1"))]
@@ -100,19 +100,19 @@ Feature: Operations
 
     Scenario Outline: fill
         Given an empty graph
-        And a task "/fill" with operator fill layer <layer> size <size> values <values> components <components> role <role>
+        And a task "/fill" with operator fill layer <layer> res <res> values <values> components <components> role <role>
         When retrieving the output image from task "/fill"
         Then the image should match the <reference> reference image
 
         Examples:
-            | layer  | size        | values          | components       | role               | reference          |
+            | layer  | res        | values          | components       | role               | reference          |
             | "C"    | (128, 128)  | (1, 0.5, 0)     | ["r", "g", "b"]  | Role.RGB  | fill-color        |
             | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | ["x", "y", "z"]  | Role.NONE | fill-vel          |
 
 
     Scenario Outline: gaussian
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
         And a task "/gaussian" with operator gaussian radius <radius>
         And links [("/text", ("/gaussian", "image"))]
         When retrieving the output image from task "/gaussian"
@@ -127,8 +127,8 @@ Feature: Operations
 
     Scenario Outline: merge
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/fill2" with operator fill layer "A" size (128, 128) values [1.0] components None role Role.NONE
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
+        And a task "/fill2" with operator fill layer "A" res (128, 128) values [1.0] components None role Role.NONE
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
         And links [("/fill2", ("/merge", "image2"))]
@@ -142,7 +142,7 @@ Feature: Operations
 
     Scenario Outline: offset
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
         And a task "/offset" with operator offset layers <layers> offset <offset>
         And links [("/text", ("/offset", "image"))]
         When retrieving the output image from task "/offset"
@@ -156,7 +156,7 @@ Feature: Operations
 
     Scenario Outline: rename
         Given an empty graph
-        And a task "/fill" with operator fill layer "A" size (128, 128) values [1] components ["alpha"] role Role.NONE
+        And a task "/fill" with operator fill layer "A" res (128, 128) values [1] components ["alpha"] role Role.NONE
         And a task "/rename" with operator rename changes <changes>
         And links [("/fill", ("/rename", "image"))]
         When retrieving the output image from task "/rename"
@@ -180,28 +180,28 @@ Feature: Operations
             | "*"      | [0.33, 0.33, 0.33]       | rgb2gray          |
 
 
-    Scenario Outline: scale
+    Scenario Outline: resize
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
-        And a task "/scale" with operator scale order <order> size <size>
-        And links [("/text", ("/scale", "image"))]
-        When retrieving the output image from task "/scale"
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
+        And a task "/resize" with operator resize order <order> res <res>
+        And links [("/text", ("/resize", "image"))]
+        When retrieving the output image from task "/resize"
         Then the image should match the <reference> reference image
 
         Examples:
-            | order  | size                       | reference           |
-            | 3      | ((2, "w"), "2h")         | scale-cubic         |
-            | 0      | ((2, "max"), (2, "min")) | scale-nearest       |
+            | order  | res                     | reference           |
+            | 3      | ((2, "w"), "2h")         | resize-cubic         |
+            | 0      | ((2, "max"), (2, "min")) | resize-nearest       |
 
 
     Scenario Outline: text
         Given an empty graph
-        And a task "/text" with operator text anchor <anchor> fontindex <fontindex> fontname <fontname> fontsize <fontsize> layer <layer> position <position> size <size> text <text>
+        And a task "/text" with operator text anchor <anchor> fontindex <fontindex> fontname <fontname> fontsize <fontsize> layer <layer> position <position> res <res> text <text>
         When retrieving the output image from task "/text"
         Then the image should match the <reference> reference image
 
         Examples:
-            | anchor | fontindex | fontname                                | fontsize | layer | position           | size       | text        | reference            |
+            | anchor | fontindex | fontname                                | fontsize | layer | position           | res       | text        | reference            |
             | "mm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33h" | "A"   | ("0.5w", "0.5h") | (256, 128) | "Imagecat!" | text                 |
             | "lm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33h" | "A"   | ("0.0w", "0.5h") | (256, 128) | "Imagecat!" | text-left-align      |
             | "rm"   | 0         | "LeagueSpartan-SemiBold.ttf" | "0.33h" | "A"   | ("1.0w", "0.5h") | (256, 128) | "Imagecat!" | text-right-align     |
@@ -209,20 +209,20 @@ Feature: Operations
 
     Scenario Outline: uniform
         Given an empty graph
-        And a task "/uniform" with operator uniform layer <layer> size <size> components <components> role <role> seed <seed>
+        And a task "/uniform" with operator uniform layer <layer> res <res> components <components> role <role> seed <seed>
         When retrieving the output image from task "/uniform"
         Then the image should match the <reference> reference image
 
         Examples:
-            | layer  | size        | components       | role      | seed | reference         |
+            | layer  | res        | components       | role      | seed | reference         |
             | "C"    | (128, 128)  | ["r", "g", "b"]  | Role.RGB  | 1234 | uniform-color     |
             | "L"    | (128, 128)  | None             | Role.NONE | 1234 | uniform-gray      |
 
 
     Scenario: Notebook Display
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" size (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") size (256, 128) text "Imagecat!"
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
+        And a task "/text" with operator text anchor "mm" fontindex 0 fontname "LeagueSpartan-SemiBold.ttf" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
         And links [("/text", ("/merge", "image2"))]

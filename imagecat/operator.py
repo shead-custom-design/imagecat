@@ -274,16 +274,16 @@ def delete(name, inputs):
 def fill(name, inputs):
     components = optional_input(name, inputs, "components", default=["r", "g", "b"])
     layer = optional_input(name, inputs, "layer", type=str, default="C")
-    size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
+    res = optional_input(name, inputs, "res", type=array(shape=(2,), dtype=int), default=[256, 256])
     role = optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
     values = optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
 
     if components and len(components) != len(values):
         raise ValueError("Number of components and number of values must match.") # pragma: no cover
 
-    data = numpy.full((size[1], size[0], len(values)), values, dtype=numpy.float16)
+    data = numpy.full((res[1], res[0], len(values)), values, dtype=numpy.float16)
     output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=components, role=role)})
-    log_result(log, name, "fill", output, components=components, layer=layer, role=role, size=size, values=values)
+    log_result(log, name, "fill", output, components=components, layer=layer, role=role, res=res, values=values)
     return output
 
 
@@ -464,18 +464,18 @@ def save(name, inputs):
     raise RuntimeError(f"Task {task} could not save 'image' to disk.") # pragma: no cover
 
 
-def scale(name, inputs):
+def resize(name, inputs):
     image = require_image(name, inputs, "image", index=0)
     order = optional_input(name, inputs, "order", type=int, default=3)
-    size = optional_input(name, inputs, "size", default=("1w", "1h"))
+    res = optional_input(name, inputs, "res", default=("1w", "1h"))
 
     output = imagecat.data.Image()
     for layername, layer in image.layers.items():
-        width = int(imagecat.units.length(size[0], layer.res))
-        height = int(imagecat.units.length(size[1], layer.res))
+        width = int(imagecat.units.length(res[0], layer.res))
+        height = int(imagecat.units.length(res[1], layer.res))
         data = skimage.transform.resize(layer.data.astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(layer.data.dtype)
         output.layers[layername] = layer.modify(data=data)
-    log_result(log, name, "scale", output, order=order, size=size)
+    log_result(log, name, "resize", output, order=order, res=res)
     return output
 
 
@@ -486,21 +486,21 @@ def text(name, inputs):
     fontsize = optional_input(name, inputs, "fontsize", default="32px")
     layer = optional_input(name, inputs, "layer", type=str, default="A")
     position = optional_input(name, inputs, "position", default=("0.5w", "0.5h"))
-    size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
+    res = optional_input(name, inputs, "res", type=array(shape=(2,), dtype=int), default=[256, 256])
     text = optional_input(name, inputs, "text", type=str, default="Text!")
 
-    fontsize_px = int(imagecat.units.length(fontsize, size))
-    x = imagecat.units.length(position[0], size)
-    y = imagecat.units.length(position[1], size)
+    fontsize_px = int(imagecat.units.length(fontsize, res))
+    x = imagecat.units.length(position[0], res)
+    y = imagecat.units.length(position[1], res)
 
-    pil_image = PIL.Image.new("L", (size[0], size[1]), 0)
+    pil_image = PIL.Image.new("L", (res[0], res[1]), 0)
     font = PIL.ImageFont.truetype(fontname, fontsize_px, fontindex)
     draw = PIL.ImageDraw.Draw(pil_image)
     draw.text((x, y), text, font=font, fill=255, anchor=anchor)
 
     data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
     output = imagecat.data.Image({layer: imagecat.data.Layer(data=data)})
-    log_result(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, size=size, text=text)
+    log_result(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, res=res, text=text)
     return output
 
 
@@ -509,15 +509,15 @@ def uniform(name, inputs):
     layer = optional_input(name, inputs, "layer", type=str, default="C")
     role = optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
     seed = optional_input(name, inputs, "seed", type=int, default=1234)
-    size = optional_input(name, inputs, "size", type=array(shape=(2,), dtype=int), default=[256, 256])
+    res = optional_input(name, inputs, "res", type=array(shape=(2,), dtype=int), default=[256, 256])
 
     if components is None:
         components = [""]
 
     generator = numpy.random.default_rng(seed=seed)
-    data = generator.uniform(size=(size[1], size[0], len(components))).astype(numpy.float16)
+    data = generator.uniform(size=(res[1], res[0], len(components))).astype(numpy.float16)
     output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=components, role=role)})
-    log_result(log, name, "uniform", output, components=components, layer=layer, role=role, seed=seed, size=size)
+    log_result(log, name, "uniform", output, components=components, layer=layer, role=role, seed=seed, res=res)
     return output
 
 
