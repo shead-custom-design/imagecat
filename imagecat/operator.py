@@ -200,7 +200,7 @@ def transform(source, target_shape, *, pivot, position, orientation):
 # Operators
 
 
-def colormap(name, inputs):
+def colormap(graph, name, inputs):
     image = require_image(name, inputs, "image", index=0)
     layers = optional_input(name, inputs, "layers", type=str, default="*")
     mapping = optional_input(name, inputs, "mapping", default=None)
@@ -221,7 +221,7 @@ def colormap(name, inputs):
     return output
 
 
-def composite(name, inputs):
+def composite(graph, name, inputs):
     bglayer = optional_input(name, inputs, "bglayer", index=0, type=str, default="C")
     fglayer = optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
     masklayer = optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
@@ -244,7 +244,7 @@ def composite(name, inputs):
     return output
 
 
-def delete(name, inputs):
+def delete(graph, name, inputs):
     """Delete layers from an :ref:`image<images>`.
 
     Parameters
@@ -271,7 +271,7 @@ def delete(name, inputs):
     return output
 
 
-def fill(name, inputs):
+def fill(graph, name, inputs):
     components = optional_input(name, inputs, "components", default=["r", "g", "b"])
     layer = optional_input(name, inputs, "layer", type=str, default="C")
     res = optional_input(name, inputs, "res", type=array(shape=(2,), dtype=int), default=[256, 256])
@@ -287,7 +287,7 @@ def fill(name, inputs):
     return output
 
 
-def gaussian(name, inputs):
+def gaussian(graph, name, inputs):
     """Blur image using a Gaussian kernel.
 
     Parameters
@@ -324,7 +324,7 @@ def gaussian(name, inputs):
     return output
 
 
-def load(name, inputs):
+def load(graph, name, inputs):
     """Load a file into memory.
 
     Parameters
@@ -352,7 +352,7 @@ def load(name, inputs):
     raise RuntimeError(f"Task {task} could not load {path} from disk.") # pragma: no cover
 
 
-def merge(name, inputs):
+def merge(graph, name, inputs):
     """Merge multiple :ref:`images<images>` into one.
 
     Inputs are merged in order, sorted by input name and index.  Image layers with duplicate
@@ -382,7 +382,7 @@ def merge(name, inputs):
     return output
 
 
-def offset(name, inputs):
+def offset(graph, name, inputs):
     image = require_image(name, inputs, "image", index=0)
     layers = optional_input(name, inputs, "layers", index=0, type=str, default="*")
     offset = optional_input(name, inputs, "offset", index=0, default=["0.5w", "0.5h"])
@@ -399,8 +399,8 @@ def offset(name, inputs):
     return output
 
 
-def rename(name, inputs):
-    """Rename image planes within an :ref:`image<images>`.
+def rename(graph, name, inputs):
+    """Rename layers within an :ref:`image<images>`.
 
     Parameters
     ----------
@@ -425,7 +425,7 @@ def rename(name, inputs):
     return output
 
 
-def rgb2gray(name, inputs):
+def rgb2gray(graph, name, inputs):
     image = require_image(name, inputs, "image", index=0)
     layers = optional_input(name, inputs, "layers", type=str, default="*")
     weights = optional_input(name, inputs, "weights", type=array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
@@ -440,7 +440,7 @@ def rgb2gray(name, inputs):
     return output
 
 
-def save(name, inputs):
+def save(graph, name, inputs):
     """Save a file to disk.
 
     Parameters
@@ -464,7 +464,7 @@ def save(name, inputs):
     raise RuntimeError(f"Task {task} could not save 'image' to disk.") # pragma: no cover
 
 
-def resize(name, inputs):
+def resize(graph, name, inputs):
     image = require_image(name, inputs, "image", index=0)
     order = optional_input(name, inputs, "order", type=int, default=3)
     res = optional_input(name, inputs, "res", default=("1w", "1h"))
@@ -479,7 +479,7 @@ def resize(name, inputs):
     return output
 
 
-def text(name, inputs):
+def text(graph, name, inputs):
     anchor = optional_input(name, inputs, "anchor", type=str, default="mm")
     fontindex = optional_input(name, inputs, "fontindex", type=int, default=0)
     fontname = optional_input(name, inputs, "fontname", type=str, default="Helvetica")
@@ -504,7 +504,7 @@ def text(name, inputs):
     return output
 
 
-def uniform(name, inputs):
+def uniform(graph, name, inputs):
     components = optional_input(name, inputs, "components", default=None)
     layer = optional_input(name, inputs, "layer", type=str, default="C")
     role = optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
