@@ -47,6 +47,12 @@ log = logging.getLogger(__name__)
 # Loaders
 
 def openexr_loader(task, path, layers):
+    """Image loader plugin for OpenEXR (.exr) files.
+
+    Implemented using https://www.excamera.com/sphinx/articles-openexr.html
+
+    Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
+    """
     if "OpenEXR" not in sys.modules:
         return None # pragma: no cover
 
@@ -80,6 +86,14 @@ def openexr_loader(task, path, layers):
 
 
 def pickle_loader(task, path, layers):
+    """Image loader plugin for Imagecat Pickle (.icp) files.
+
+    The .icp format serializes an Imagecat image as a gzip2-compressed Python
+    pickle object.  It is primarily used in testing, and is **not** recommended
+    for general use.
+
+    Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
+    """
     extension = os.path.splitext(path)[1].lower()
     if extension != ".icp":
         return None
@@ -95,6 +109,12 @@ def pickle_loader(task, path, layers):
 
 
 def pil_loader(task, path, layers):
+    """Image loader plugin that uses Pillow for file I/O.
+
+    Loads any file format supported by Pillow, https://pillow.readthedocs.io.
+
+    Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
+    """
     if "PIL.Image" not in sys.modules:
         return None # pragma: no cover
 
@@ -119,6 +139,12 @@ def pil_loader(task, path, layers):
 # Savers
 
 def openexr_saver(task, image, layers, path):
+    """Image saver plugin for OpenEXR (.exr) files.
+
+    Implemented using https://www.excamera.com/sphinx/articles-openexr.html
+
+    Use :func:`imagecat.operator.save` to save images in an Imagecat workflow.
+    """
     if "OpenEXR" not in sys.modules:
         return False # pragma: no cover
 
@@ -153,6 +179,14 @@ def openexr_saver(task, image, layers, path):
 
 
 def pickle_saver(task, image, layers, path):
+    """Image saver plugin for Imagecat Pickle (.icp) files.
+
+    The .icp format serializes an Imagecat image as a gzip2-compressed Python
+    pickle object.  It is primarily used in testing, and is **not** recommended
+    for general use.
+
+    Use :func:`imagecat.operator.save` to save images in an Imagecat workflow.
+    """
     extension = os.path.splitext(path)[1].lower()
     if extension != ".icp":
         return False
@@ -163,6 +197,12 @@ def pickle_saver(task, image, layers, path):
 
 
 def pil_saver(task, image, layers, path):
+    """Image saver plugin that uses Pillow for file I/O.
+
+    Saves any file format supported by Pillow, https://pillow.readthedocs.io.
+
+    Use :func:`imagecat.operator.save` to save images in an Imagecat workflow.
+    """
     if "PIL.Image" not in sys.modules:
         return False # pragma: no cover
 
@@ -190,6 +230,7 @@ loaders = [
     pickle_loader,
     pil_loader,
 ]
+"""List of available loader plugins.  In-house plugins may be prepended to this list for use with :func:`imagecat.operator.load`."""
 
 
 savers = [
@@ -197,3 +238,4 @@ savers = [
     pickle_saver,
     pil_saver,
 ]
+"""List of available saver plugins.  In-house plugins may be prepended to this list for use with :func:`imagecat.operator.save`."""

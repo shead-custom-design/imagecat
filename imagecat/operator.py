@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Functions that produce, consume, and modify Imagecat images.
+"""
+
 import functools
 import logging
 
