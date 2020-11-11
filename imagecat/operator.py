@@ -124,7 +124,7 @@ def require_layer(name, inputs, input, *, index=0, layer="C", components=None, d
         raise RuntimeError(f"Expected a layer with {components} components.") # pragma: no cover
     if dtype is not None and image.layers[layer].data.dtype != dtype:
         raise RuntimeError(f"Expected a layer with dtype {dtype}.") # pragma: no cover
-    return image.layers[layer].modify()
+    return image.layers[layer].copy()
 
 
 def require_image(name, inputs, input, *, index=0):
@@ -319,7 +319,7 @@ def gaussian(graph, name, inputs):
             imagecat.units.length(radius[0], layer.res),
             ]
         data = numpy.atleast_3d(skimage.filters.gaussian(data, sigma=sigma, multichannel=True, preserve_range=True).astype(data.dtype))
-        output.layers[layer_name] = layer.modify(data=data)
+        output.layers[layer_name] = layer.copy(data=data)
     log_result(log, name, "gaussian", output, layers=layers, radius=radius)
     return output
 
@@ -394,7 +394,7 @@ def offset(graph, name, inputs):
         xoffset = int(imagecat.units.length(offset[0], layer.res))
         yoffset = -int(imagecat.units.length(offset[1], layer.res)) # We always treat +Y as "up"
         data = numpy.roll(data, shift=(xoffset, yoffset), axis=(1, 0))
-        output.layers[layer_name] = layer.modify(data=data)
+        output.layers[layer_name] = layer.copy(data=data)
     log_result(log, name, "offset", output, layers=layers, offset=offset)
     return output
 
@@ -474,7 +474,7 @@ def resize(graph, name, inputs):
         width = int(imagecat.units.length(res[0], layer.res))
         height = int(imagecat.units.length(res[1], layer.res))
         data = skimage.transform.resize(layer.data.astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(layer.data.dtype)
-        output.layers[layername] = layer.modify(data=data)
+        output.layers[layername] = layer.copy(data=data)
     log_result(log, name, "resize", output, order=order, res=res)
     return output
 

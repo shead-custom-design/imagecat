@@ -25,11 +25,11 @@ def length(value, size, default="px"):
 
     Supported unit abbreviations include:
 
-    :px, pixel, pixels: absolute length in pixels
-    :w, width: relative length, as a fraction of the width of an image
-    :h, height: relative length, as a fraction of the height of an image
-    :min: relative length, as a fraction of the smaller of width and height
-    :max: relative length, as a fraction of the larger of width and height
+    :"px", "pixel", "pixels": absolute length in pixels
+    :"w", "width": relative length, as a fraction of the width of an image
+    :"h", "height": relative length, as a fraction of the height of an image
+    :"min": relative length, as a fraction of the smaller of width and height
+    :"max": relative length, as a fraction of the larger of width and height
 
     Relative lengths will be relative to some reference that is
     context-specific and documented.  For example: the text operator fontsize

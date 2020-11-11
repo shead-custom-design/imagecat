@@ -180,7 +180,28 @@ class Layer(object):
         """
         return self.data.shape
 
-    def modify(self, data=None, components=None, role=None):
+    def copy(self, data=None, components=None, role=None):
+        """Return a shallow copy of the layer, with optional modifications.
+
+        This method returns a new instance of :class:`Layer` that can be altered
+        without modifying the original.  Note that the new layer still references
+        the same `data` as the original, unless a new data array is supplied as
+        an argument.
+
+        Parameters
+        ----------
+        data: :class:`numpy.ndarray`, optional
+            Replaces the existing data array in the new layer, if not :any:`None` (the default).
+        components: list of :class:`str`, optional
+            Replaces the existing component names in the new layer, if not :any:`None` (the default).
+        role: :class:`Role`, optional
+            Replaces the existing role in the new layer, if not :any:`None` (the default).
+
+        Returns
+        -------
+        layer: :class:`Layer`
+            The new layer instance with modifications.
+        """
         data = self.data if data is None else data
         components = self.components if components is None else components
         role = self.role if role is None else role
@@ -208,17 +229,30 @@ class Role(enum.Enum):
 
 
 def channels_to_layers(channels):
-     layers = [channel.rsplit(".", 1) for channel in channels]
-     #log.debug(f"layers: {layers}")
-     layers = [layer if len(layer) > 1 else ["", layer[0]] for layer in layers]
-     #log.debug(f"layers: {layers}")
-     layers = [(channel, layer, component) for channel, (layer, component) in zip(channels, layers)]
-     #log.debug(f"layers: {layers}")
-     groups = collections.defaultdict(list)
-     for channel, layer, component in layers:
-         groups[layer].append((channel, component))
-     layers = list(groups.items())
-     #log.debug(f"layers: {layers}")
+    """Convert a flat list of channel names into grouped layers compatible with Imagecat's data model.
+
+    Some file formats such as OpenEXR split an image into a flat collection of named `channels`, where
+    each channel is a 2D array and channels are implicitly grouped together by naming conventions, i.e.
+    the channel name "C.r" represents the red component of layer "C".  This function converts a collection
+    of channel names into layers with component names suitable for use in Imagecat, and also attempts to
+    infer a :class:`Role` for each layer.
+
+    Parameters
+    ----------
+    channels: sequence of :class:`str`, required
+        Sequence of string channel names to be grouped into layers.
+
+    Returns
+    -------
+    layers: sequence of (layer name, layer components, layer role) tuples
+    """
+    layers = [channel.rsplit(".", 1) for channel in channels]
+    layers = [layer if len(layer) > 1 else ["", layer[0]] for layer in layers]
+    layers = [(channel, layer, component) for channel, (layer, component) in zip(channels, layers)]
+    groups = collections.defaultdict(list)
+    for channel, layer, component in layers:
+        groups[layer].append((channel, component))
+    layers = list(groups.items())
 
  #    def split_layers(layers):
  #        for layer, channels in layers:
@@ -233,27 +267,25 @@ def channels_to_layers(channels):
  #                yield layer, [channel]
  #    layers = list(split_layers(layers))
 
-     def organize_layers(layers):
-         for layer, components in layers:
-             ci_components = [component.lower() for channel, component in components]
-             for collection in ["rgb", "hsv", "hsb", "xy", "xyz", "uv", "uvw"]:
-                 if sorted(ci_components) == sorted(collection):
-                     components = [components[ci_components.index(component)] for component in collection]
-             yield layer, components
-     layers = list(organize_layers(layers))
-     #log.debug(f"layers: {layers}")
+    def organize_layers(layers):
+        for layer, components in layers:
+            ci_components = [component.lower() for channel, component in components]
+            for collection in ["rgb", "hsv", "hsb", "xy", "xyz", "uv", "uvw"]:
+                if sorted(ci_components) == sorted(collection):
+                    components = [components[ci_components.index(component)] for component in collection]
+            yield layer, components
+    layers = list(organize_layers(layers))
 
-     def categorize_layers(layers):
-         for layer, components in layers:
-             ci_components = [component.lower() for channel, component in components]
-             if ci_components == ["r", "g", "b"]:
-                 yield layer, components, Role.RGB
-             else:
-                 yield layer, components, Role.NONE
-     layers = list(categorize_layers(layers))
-     #log.debug(f"layers: {layers}")
+    def categorize_layers(layers):
+        for layer, components in layers:
+            ci_components = [component.lower() for channel, component in components]
+            if ci_components == ["r", "g", "b"]:
+                yield layer, components, Role.RGB
+            else:
+                yield layer, components, Role.NONE
+    layers = list(categorize_layers(layers))
 
-     return layers
+    return layers
 
 
 def match_layer_names(names, patterns):

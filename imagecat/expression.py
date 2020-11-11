@@ -12,42 +12,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Helper functions providing Imagecat-specific functionality for expression tasks.
+
+The following builtin functions can be used in Imagecat expression tasks:
+
+.. py:function:: graph()
+
+.. py:function:: out(name)
+
+.. py:function:: res(name)
+
+.. py:function:: shape(name)
+
+"""
 
 import imagecat.data
 
 
-def _graph(graph):
-    def implementation():
-        return graph
-    return implementation
+def _graph(g):
+    def graph():
+        """Return the graph to which this task belongs."""
+        return g
+    return graph
 
 
 def _out(graph):
-    def implementation(name):
+    def out(name):
+        """Return the output of task `name`."""
         return graph.output(name)
-    return implementation
+    return out
 
 
 def _res(graph):
-    def implementation(name):
+    def res(name):
+        """Return a (width, height) tuple containing the resolution of the image output from task `name`."""
         image = graph.output(name)
         if not isinstance(image, imagecat.data.Image):
             raise ValueError(f"Not an image: {name}")
         for layer in image.layers.values():
             return layer.res
-    return implementation
+    return res
 
 def _shape(graph):
-    def implementation(name):
+    def shape(name):
         image = graph.output(name)
         if not isinstance(image, imagecat.data.Image):
             raise ValueError(f"Not an image: {name}")
         for layer in image.layers.values():
             return layer.shape
-    return implementation
+    return shape
 
 
 def builtins(graph):
+    """Return a dict containing functions that can be used in expressions.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        Graph that will contain the expression task to be executed.
+
+    Returns
+    -------
+    builtins: dict
+        Dict containing functions that can be used in expressions.
+    """
     return {
         "graph": _graph(graph),
         "out": _out(graph),
