@@ -18,9 +18,10 @@ Documentation
    compatibility.rst
    contributing.rst
    design.rst
-   release-notes.rst
+   gallery.rst
    reference.rst
    support.rst
+   release-notes.rst
    credits.rst
 
 Indices and tables

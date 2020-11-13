@@ -408,7 +408,7 @@ def text(graph, name, inputs):
     anchor = imagecat.operator.util.optional_input(name, inputs, "anchor", type=str, default="mm")
     fontindex = imagecat.operator.util.optional_input(name, inputs, "fontindex", type=int, default=0)
     fontname = imagecat.operator.util.optional_input(name, inputs, "fontname", type=str, default="Helvetica")
-    fontsize = imagecat.operator.util.optional_input(name, inputs, "fontsize", default="32px")
+    fontsize = imagecat.operator.util.optional_input(name, inputs, "fontsize", default="0.33h")
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="A")
     position = imagecat.operator.util.optional_input(name, inputs, "position", default=("0.5w", "0.5h"))
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])

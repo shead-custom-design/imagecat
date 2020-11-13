@@ -50,6 +50,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx_gallery.load_style",
 ]
 
 intersphinx_mapping = {
