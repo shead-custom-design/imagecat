@@ -209,7 +209,7 @@ def pil_saver(task, image, layers, path):
     if len(layers) == 1:
         layer = image.layers[layers[0]]
         if layer.data.shape[2] == 1:
-            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(layer.data), mode="L")
+            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(layer.data[:,:,0]), mode="L")
         elif layer.data.shape[2] == 3 and layer.role == Role.RGB:
             pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(linear_to_srgb(layer.data)), mode="RGB")
         else:
