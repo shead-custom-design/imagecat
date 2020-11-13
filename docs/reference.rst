@@ -19,4 +19,5 @@ Contents:
    imagecat.io.rst
    imagecat.notebook.rst
    imagecat.operator.rst
+   imagecat.operator.util.rst
    imagecat.units.rst

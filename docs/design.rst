@@ -26,7 +26,7 @@ and velocity information.
 
 Regardless, every image is an instance of :class:`imagecat.data.Image`
 containing a dict of :class:`str` layer names as keys, and instances of
-:class:`imagecat.util.Layer` containing the layer data as values.  Any string
+:class:`imagecat.data.Layer` containing the layer data as values.  Any string
 is a valid layer name, although some names are more common by convention, such
 as "C" for RGB color information and "A" for alpha channels.  Layer data is
 always stored using :class:`numpy.ndarray` instances, which always have three
