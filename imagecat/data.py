@@ -18,6 +18,7 @@
 import collections
 import enum
 import fnmatch
+import os
 
 import numpy
 
@@ -315,4 +316,9 @@ def match_layer_names(names, patterns):
                 output.append(name)
                 break
     return output
+
+
+def default_font():
+    data_dir = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(data_dir, "LeagueSpartan-SemiBold.ttf")
 

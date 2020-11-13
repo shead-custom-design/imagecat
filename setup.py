@@ -43,6 +43,9 @@ setup(
     maintainer="Timothy M. Shead",
     maintainer_email="tim@shead-custom-design.gov",
     packages=find_packages(),
+    package_data={
+        "imagecat": ["LeagueSpartan-SemiBold.ttf"],
+    },
     scripts=[
     ],
     url="http://imagecat.readthedocs.org",
