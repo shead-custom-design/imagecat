@@ -35,7 +35,6 @@ import test
 from imagecat.data import Role
 
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-artwork_dir = os.path.join(root_dir, "artwork")
 failed_dir = os.path.join(root_dir, "features", "failed")
 reference_dir = os.path.join(root_dir, "features", "reference")
 temp_dir = tempfile.mkdtemp()
@@ -203,11 +202,9 @@ def step_impl(context, task, order, res):
     imagecat.add_task(context.graph, task, imagecat.operator.resize, order=order, res=res)
 
 
-@given(u'a task {task} with operator text anchor {anchor} fontindex {fontindex} fontname {fontname} fontsize {fontsize} layer {layer} position {position} res {res} text {text}')
-def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, position, res, text):
+@given(u'a task {task} with operator text anchor {anchor} fontsize {fontsize} layer {layer} position {position} res {res} text {text}')
+def step_impl(context, task, anchor, fontsize, layer, position, res, text):
     anchor = eval(anchor)
-    fontindex = eval(fontindex)
-    fontname = eval(fontname)
     fontsize = eval(fontsize)
     layer = eval(layer)
     position = eval(position)
@@ -215,8 +212,7 @@ def step_impl(context, task, anchor, fontindex, fontname, fontsize, layer, posit
     task = eval(task)
     text = eval(text)
 
-    fontname = os.path.join(artwork_dir, fontname)
-    imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, res=res, text=text)
+    imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontsize=fontsize, layer=layer, position=position, res=res, text=text)
 
 
 @given(u'a task {task} with operator uniform layer {layer} res {res} components {components} role {role} seed {seed}')
