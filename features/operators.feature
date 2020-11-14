@@ -201,10 +201,11 @@ Feature: Operators
         Then the image should match the <reference> reference image
 
         Examples:
-            | anchor | fontsize | layer | position           | res       | text        | reference            |
-            | "mm"   | "0.33h" | "A"   | ("0.5w", "0.5h") | (256, 128) | "Imagecat!" | text                 |
-            | "lm"   | "0.33h" | "A"   | ("0.0w", "0.5h") | (256, 128) | "Imagecat!" | text-left-align      |
-            | "rm"   | "0.33h" | "A"   | ("1.0w", "0.5h") | (256, 128) | "Imagecat!" | text-right-align     |
+            | anchor | fontsize | layer | position         | res        | text        | reference            |
+            | "mm"   | "0.33h"  | "A"   | ("0.5w", "0.5h") | (256, 128) | "Imagecat!" | text                 |
+            | "mm"   | "0.33h"  | "A"   | ("0.5w", "0.75h")| (256, 128) | "Imagecat!" | text-y-axis          |
+            | "lm"   | "0.33h"  | "A"   | ("0.0w", "0.5h") | (256, 128) | "Imagecat!" | text-left-align      |
+            | "rm"   | "0.33h"  | "A"   | ("1.0w", "0.5h") | (256, 128) | "Imagecat!" | text-right-align     |
 
 
     Scenario Outline: uniform

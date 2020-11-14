@@ -512,7 +512,7 @@ def text(graph, name, inputs):
 
     fontsize_px = int(imagecat.units.length(fontsize, res))
     x = imagecat.units.length(position[0], res)
-    y = imagecat.units.length(position[1], res)
+    y = res[1] - imagecat.units.length(position[1], res) # +Y = up
 
     pil_image = PIL.Image.new("L", (res[0], res[1]), 0)
     font = PIL.ImageFont.truetype(fontname, fontsize_px, fontindex)
