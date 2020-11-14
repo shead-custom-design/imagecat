@@ -21,14 +21,15 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
-        "Intended Audience :: Information Technology",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
+        "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Topic :: Communications",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Utilities",
+        "Topic :: Artistic Software",
+        "Topic :: Multimedia :: Graphics",
+        "Topic :: Scientific/Engineering :: Image Processing",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     description="Simple, flexible tools for procedural image editing.",
     install_requires=[
@@ -36,19 +37,18 @@ setup(
         "graphcat>=0.7.0",
         "numpy>=1.17",
         "scikit-image",
-        "sphinx_rtd_theme",
     ],
-    long_description="""Imagecat provides simple, flexible tools for procedural image editing.
+    long_description="""Imagecat provides flexible, high-quality tools for procedural image editing.
     See the Imagecat documentation at http://imagecat.readthedocs.io, and the Imagecat sources at http://github.com/shead-custom-design/imagecat""",
     maintainer="Timothy M. Shead",
-    maintainer_email="tim@shead-custom-design.gov",
+    maintainer_email="tim@shead-custom-design.com",
     packages=find_packages(),
     package_data={
         "imagecat": ["LeagueSpartan-SemiBold.ttf"],
     },
     scripts=[
     ],
-    url="http://imagecat.readthedocs.org",
+    url="http://imagecat.readthedocs.io",
     version=re.search(
         r"^__version__ = ['\"]([^'\"]*)['\"]",
         open(
