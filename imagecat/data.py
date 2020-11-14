@@ -229,6 +229,18 @@ class Role(enum.Enum):
     converted to sRGB for display."""
 
 
+def default_font():
+    """Path to a default font file included with Imagecat.
+
+    Returns
+    -------
+    path: :class:`str`
+        Absolute path to the default Imagecat font.
+    """
+    data_dir = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(data_dir, "LeagueSpartan-SemiBold.ttf")
+
+
 def channels_to_layers(channels):
     """Convert a flat list of channel names into grouped layers compatible with Imagecat's data model.
 
@@ -316,9 +328,4 @@ def match_layer_names(names, patterns):
                 output.append(name)
                 break
     return output
-
-
-def default_font():
-    data_dir = os.path.abspath(os.path.dirname(__file__))
-    return os.path.join(data_dir, "LeagueSpartan-SemiBold.ttf")
 

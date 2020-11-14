@@ -29,6 +29,26 @@ log = logging.getLogger(__name__)
 
 
 def colormap(graph, name, inputs):
+    """Convert single-component layers to RGB layers using a colormap.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        Graph that owns this task.
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["image"][0]: :class:`imagecat.data.Image`, required. Image with layers to be color mapped.
+        :["layers"][0]: :class:`str`, optional. Pattern matching the image layers to be color mapped.  Default: `"*"`, which maps all single-component layers.
+        :["colormap"][0]: Python callable, optional.  Mapping function that accepts a (rows, columns, 1) array as input and produces an RGB (rows, columns, 3) array as output.  If :any:`None` (the default), a linear map with a Color Brewer 2 Blue-Red palette will be used.
+
+    Returns
+    -------
+    image: :class:`imagecat.data.Image`
+        A copy of the input image with some layers mapped.
+    """
     image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
     layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
     mapping = imagecat.operator.util.optional_input(name, inputs, "mapping", default=None)
@@ -44,12 +64,39 @@ def colormap(graph, name, inputs):
         if data.shape[2] != 1:
             continue
         data = mapping(data[:,:,0])
-        output.layers[layer_name] = imagecat.data.Layer(data=data)
+        output.layers[layer_name] = imagecat.data.Layer(data=data, components=["r", "g", "b"], role=imagecat.data.Role.RGB)
     imagecat.operator.util.log_result(log, name, "colormap", output, layers=layers, mapping=mapping)
     return output
 
 
 def composite(graph, name, inputs):
+    """Composite foreground and background layers using a mask and optional transformation.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        Graph that owns this task.
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["bglayer"][0]: :class:`str`, optional. Name of the background layer.  Defaults to `"C"`.
+        :["fglayer"][0]: :class:`str`, optional. Name of the foreground layer.  Defaults to `"C"`.
+        :["masklayer"][0]: :class:`str`, optional. Name of the mask layer.  Defaults to `"A"`.
+        :["orientation"][0]: number, optional. Rotation of the foreground layer for the composition.  Default: `0`.
+        :["pivot"][0]: (x, y) tuple, optional.  Position of the foreground pivot point.  All rotation and positioning is relative to this point.  Default: `["0.5w", "0.5h"]`, which is centered on the foreground.
+        :["position"][0]: (x, y) tuple, optional.  Position of the foreground layer over the background layer.  All rotation and positioning is relative to the pivot point.  Default: `["0.5w", "0.5h"]`, which is centered on the background.
+
+        :["foreground"][0]: :class:`imagecat.data.Image`, required. Image containing the foreground layer.
+        :["background"][0]: :class:`imagecat.data.Image`, required. Image containing the background layer.
+        :["mask"][0]: :class:`imagecat.data.Image`, required. Image containing the mask layer.
+
+    Returns
+    -------
+    image: :class:`imagecat.data.Image`
+        New image with a single solid-color layer.
+    """
     bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", index=0, type=str, default="C")
     fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
     masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
@@ -102,6 +149,28 @@ def delete(graph, name, inputs):
 
 
 def fill(graph, name, inputs):
+    """Generate a :ref:`image<images>` with a single solid-color layer.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        Graph that owns this task.
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["components"][0]: sequence of :class:`str`, optional. Component names for the new layer.  Defaults to `["r", "g", "b"]`.  The number of component names must match the number of values.
+        :["layer"][0]: :class:`str`, optional. New layer name.  Default: `"C"`.
+        :["res"][0]: (width, height) tuple, optional.  Resolution of the new image.  Default: [256, 256].
+        :["role"][0]: :class:`imagecat.data.Role`, optional.  Semantic role of the new layer.  Default: :class:`imagecat.data.Role.RGB`.
+        :["values"][0]: sequence of values, optional.  Solid color values for the new layer.  Default: [1, 1, 1].
+
+    Returns
+    -------
+    image: :class:`imagecat.data.Image`
+        New image with a single solid-color layer.
+    """
     components = imagecat.operator.util.optional_input(name, inputs, "components", default=["r", "g", "b"])
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="C")
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
@@ -401,6 +470,31 @@ def resize(graph, name, inputs):
 
 
 def text(graph, name, inputs):
+    """Generate an image containing text.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        Graph that owns this task.
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["anchor"][0]: :class:`str`, optional. Anchor point for text placement, defined at https://pillow.readthedocs.io/en/latest/handbook/text-anchors.html#text-anchors. Defaults to `"mm"`.
+        :["fontindex"][0]: integer, optional. Index of the font to use within a multi-font file.  Defaults to `0`.
+        :["fontname"][0]: :class:`str`, optional. Path to a font file.  Defaults to :func:`imagecat.data.default_font`.
+        :["fontsize"][0]: Size of the rendered font.  Default: `"0.33h"`, which is one-third the height of the output image.
+        :["layer"][0]: :class:`str`, optional.  Name of the generated layer.  Default: `["A"]`.
+        :["position"][0]: (x, y) tuple, optional.  Position of the text anchor relative to the output image.  Default: `["0.5w", "0.5h"]`, which is centered vertically and horizontally.
+        :["res"][0]: (width, height) tuple, optional. Resolution of the output image.  Default: [256, 256].
+        :["teext"][0]: :class:`str`, optional. Text to be rendered.  Default: `"Text!"`.
+
+    Returns
+    -------
+    image: :class:`imagecat.data.Image`
+        New image containing rendered text.
+    """
     import PIL.Image
     import PIL.ImageDraw
     import PIL.ImageFont
