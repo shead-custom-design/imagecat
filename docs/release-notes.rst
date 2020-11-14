@@ -10,4 +10,4 @@ Release Notes
 Imagecat 0.1.0 - November 13, 2020
 ----------------------------------
 
-* Initial Release
+* Initial Release.
