@@ -48,6 +48,16 @@ def log_result(log, name, operation, output, **parameters):
      log.info(f"  output: {output!r}")
 
 
+def optional_image(name, inputs, input, *, index=0):
+    image = optional_input(name, inputs, input, index=index)
+    if image is None:
+        return None
+    if not isinstance(image, imagecat.data.Image):
+        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover
+    # This ensures that we don't accidentally modify our inputs.
+    return imagecat.data.Image(layers=dict(image.layers))
+
+
 def optional_input(name, inputs, input, *, index=0, type=None, default=None):
     """Extract an optional parameter from task inputs.
 
@@ -77,6 +87,27 @@ def optional_input(name, inputs, input, *, index=0, type=None, default=None):
     if type is not None:
         value = type(value)
     return value
+
+
+def optional_layer(name, inputs, input, *, index=0, layer="C", components=None, dtype=None):
+    image = optional_image(name, inputs, input, index=index)
+    if image is None:
+        return None
+    if layer not in image.layers:
+        return  None
+    if components is not None and image.layers[layer].data.shape[2] != components:
+        raise RuntimeError(f"Expected a layer with {components} components.") # pragma: no cover
+    if dtype is not None and image.layers[layer].data.dtype != dtype:
+        raise RuntimeError(f"Expected a layer with dtype {dtype}.") # pragma: no cover
+    return image.layers[layer].copy() # This ensures that we don't modify our inputs.
+
+
+def require_image(name, inputs, input, *, index=0):
+    image = require_input(name, inputs, input, index=index)
+    if not isinstance(image, imagecat.data.Image):
+        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover
+    # This ensures that we don't accidentally our inputs.
+    return imagecat.data.Image(layers=dict(image.layers))
 
 
 def require_input(name, inputs, input, *, index=0, type=None):
@@ -124,14 +155,6 @@ def require_layer(name, inputs, input, *, index=0, layer="C", components=None, d
     if dtype is not None and image.layers[layer].data.dtype != dtype:
         raise RuntimeError(f"Expected a layer with dtype {dtype}.") # pragma: no cover
     return image.layers[layer].copy()
-
-
-def require_image(name, inputs, input, *, index=0):
-    image = require_input(name, inputs, input, index=index)
-    if not isinstance(image, imagecat.data.Image):
-        raise ValueError(f"Task {name} input {input!r} index {index} is not an image.") # pragma: no cover
-    # This ensures that we don't accidentally our inputs.
-    return imagecat.data.Image(layers=dict(image.layers))
 
 
 def transform(source, target_shape, *, pivot, position, orientation, scale, order):

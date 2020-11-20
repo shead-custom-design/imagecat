@@ -83,6 +83,7 @@ def composite(graph, name, inputs):
 
         :["bglayer"][0]: :class:`str`, optional. Name of the background layer.  Defaults to `"C"`.
         :["fglayer"][0]: :class:`str`, optional. Name of the foreground layer.  Defaults to `"C"`.
+        :["layer"][0]: :class:`str`, optional. Name of the output image layer.  Defaults to the value of `bglayer`.
         :["masklayer"][0]: :class:`str`, optional. Name of the mask layer.  Defaults to `"A"`.
         :["orientation"][0]: number, optional. Rotation of the foreground layer for the composition.  Default: `0`.
         :["pivot"][0]: (x, y) tuple, optional.  Position of the foreground pivot point.  All rotation and positioning is relative to this point.  Default: `["0.5w", "0.5h"]`, which is centered on the foreground.
@@ -90,7 +91,7 @@ def composite(graph, name, inputs):
 
         :["foreground"][0]: :class:`imagecat.data.Image`, required. Image containing the foreground layer.
         :["background"][0]: :class:`imagecat.data.Image`, required. Image containing the background layer.
-        :["mask"][0]: :class:`imagecat.data.Image`, required. Image containing the mask layer.
+        :["mask"][0]: :class:`imagecat.data.Image`, optional. Image containing the foreground layer mask.  If omitted, the foreground layer is assumed to be 100% opaque.
 
     Returns
     -------
@@ -99,6 +100,7 @@ def composite(graph, name, inputs):
     """
     bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", index=0, type=str, default="C")
     fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
+    layer = imagecat.operator.util.optional_input(name, inputs, "layer", index=0, type=str, default=bglayer)
     masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
     order = imagecat.operator.util.optional_input(name, inputs, "order", index=0, type=int, default=3)
     orientation = imagecat.operator.util.optional_input(name, inputs, "orientation", index=0, type=float, default=0)
@@ -108,7 +110,7 @@ def composite(graph, name, inputs):
 
     background = imagecat.operator.util.require_layer(name, inputs, "background", index=0, layer=bglayer)
     foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", index=0, layer=fglayer)
-    mask = imagecat.operator.util.require_layer(name, inputs, "mask", index=0, layer=masklayer, components=1)
+    mask = imagecat.operator.util.optional_layer(name, inputs, "mask", index=0, layer=masklayer, components=1)
 
 #    Mysteriously, this version is slightly *slower* than the below.
 #    data = numpy.dstack((foreground.data, mask.data))
@@ -117,14 +119,19 @@ def composite(graph, name, inputs):
 #    data = data[:,:,0:3]
 #    data = data * alpha + background.data * (1 - alpha)
 
+    if mask is None:
+        mask = numpy.ones((foreground.shape[0], foreground.shape[1], 1), dtype=numpy.float16)
+    else:
+        mask = mask.data
+
     transformed_foreground = imagecat.operator.util.transform(foreground.data, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
-    transformed_mask = imagecat.operator.util.transform(mask.data, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
+    transformed_mask = imagecat.operator.util.transform(mask, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
     alpha = transformed_mask
     one_minus_alpha = 1 - alpha
     data = transformed_foreground * alpha + background.data * one_minus_alpha
 
-    output = imagecat.data.Image(layers={"C": imagecat.data.Layer(data=data, components=background.components, role=background.role)})
-    imagecat.operator.util.log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, order=order, orientation=orientation, pivot=pivot, position=position, scale=scale)
+    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=background.components, role=background.role)})
+    imagecat.operator.util.log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, layer=layer, order=order, orientation=orientation, pivot=pivot, position=position, scale=scale)
     return output
 
 
