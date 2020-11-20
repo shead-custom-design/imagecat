@@ -100,22 +100,31 @@ def composite(graph, name, inputs):
     bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", index=0, type=str, default="C")
     fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
     masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
+    order = imagecat.operator.util.optional_input(name, inputs, "order", index=0, type=int, default=3)
     orientation = imagecat.operator.util.optional_input(name, inputs, "orientation", index=0, type=float, default=0)
     pivot = imagecat.operator.util.optional_input(name, inputs, "pivot", index=0, default=["0.5w", "0.5h"])
     position = imagecat.operator.util.optional_input(name, inputs, "position", index=0, default=["0.5w", "0.5h"])
+    scale = imagecat.operator.util.optional_input(name, inputs, "scale", index=0, default=[1, 1])
 
     background = imagecat.operator.util.require_layer(name, inputs, "background", index=0, layer=bglayer)
     foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", index=0, layer=fglayer)
     mask = imagecat.operator.util.require_layer(name, inputs, "mask", index=0, layer=masklayer, components=1)
 
-    transformed_foreground = imagecat.operator.util.transform(foreground.data, background.data.shape, pivot=pivot, orientation=orientation, position=position)
-    transformed_mask = imagecat.operator.util.transform(mask.data, background.data.shape, pivot=pivot, orientation=orientation, position=position)
+#    Mysteriously, this version is slightly *slower* than the below.
+#    data = numpy.dstack((foreground.data, mask.data))
+#    data = imagecat.operator.util.transform(data, background.data.shape, pivot=pivot, orientation=orientation, position=position)
+#    alpha = data[:,:,3:4]
+#    data = data[:,:,0:3]
+#    data = data * alpha + background.data * (1 - alpha)
+
+    transformed_foreground = imagecat.operator.util.transform(foreground.data, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
+    transformed_mask = imagecat.operator.util.transform(mask.data, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
     alpha = transformed_mask
     one_minus_alpha = 1 - alpha
     data = transformed_foreground * alpha + background.data * one_minus_alpha
 
     output = imagecat.data.Image(layers={"C": imagecat.data.Layer(data=data, components=background.components, role=background.role)})
-    imagecat.operator.util.log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, orientation=orientation, pivot=pivot, position=position)
+    imagecat.operator.util.log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, order=order, orientation=orientation, pivot=pivot, position=position, scale=scale)
     return output
 
 

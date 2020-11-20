@@ -22,6 +22,8 @@ import os
 
 import numpy
 
+import imagecat.color
+
 
 # Warning!  Moving this to another module will break *.icp file loading.
 class Image(object):
@@ -157,29 +159,10 @@ class Layer(object):
         self.components = components
         self.role = role
 
+
     def __repr__(self):
         return f"Layer({self.data.shape[1]}x{self.data.shape[0]}x{self.data.shape[2]} {self.data.dtype} {self.components} {self.role})"
 
-    @property
-    def res(self):
-        """Layer resolution in x and y.
-
-        Returns
-        -------
-        res: (width, height) :any:`tuple`
-            The resolution of the layer, ignoring the number of components.
-        """
-        return self.data.shape[1], self.data.shape[0]
-
-    @property
-    def shape(self):
-        """Shape of the underlying data array.
-
-        Returns
-        -------
-        shape: (rows, columns, components) :any:`tuple`
-        """
-        return self.data.shape
 
     def copy(self, data=None, components=None, role=None):
         """Return a shallow copy of the layer, with optional modifications.
@@ -207,6 +190,45 @@ class Layer(object):
         components = self.components if components is None else components
         role = self.role if role is None else role
         return Layer(data=data, components=components, role=role)
+
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+
+    @property
+    def res(self):
+        """Layer resolution in x and y.
+
+        Returns
+        -------
+        res: (width, height) :any:`tuple`
+            The resolution of the layer, ignoring the number of components.
+        """
+        return self.data.shape[1], self.data.shape[0]
+
+
+    @property
+    def shape(self):
+        """Shape of the underlying data array.
+
+        Returns
+        -------
+        shape: (rows, columns, components) :any:`tuple`
+        """
+        return self.data.shape
+
+
+    def to_pil(self):
+        import PIL.Image
+        data = self.data
+        if self.role == Role.RGB:
+            data = imagecat.color.linear_to_srgb(data)
+        pil_image = (data * 255.0).astype(numpy.ubyte)
+        pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
+        pil_image = PIL.Image.fromarray(pil_image)
+        return pil_image
 
 
 # Warning!  Moving this to another module will break *.icp file loading.
@@ -328,4 +350,5 @@ def match_layer_names(names, patterns):
                 output.append(name)
                 break
     return output
+
 

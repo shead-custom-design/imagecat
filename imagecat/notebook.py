@@ -22,8 +22,7 @@ import PIL.Image
 import numpy
 import skimage
 
-from imagecat.color import linear_to_srgb
-from imagecat.data import Image, Role, match_layer_names
+import imagecat.data
 
 
 def display(image, layers="*", width=None, height=None):
@@ -40,26 +39,20 @@ def display(image, layers="*", width=None, height=None):
     height: :class:`str`, optional
         Optional HTML height for each image.
     """
-    if not isinstance(image, Image):
+    if not isinstance(image, imagecat.data.Image):
         raise ValueError("Expected an instance of imagecat.Image.") # pragma: no cover
 
     markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
     for name in sorted(image.match_layer_names(layers)):
         layer = image.layers[name]
-        data = layer.data
-        if layer.role == Role.RGB:
-            data = linear_to_srgb(data)
 
         stream = io.BytesIO()
-        pil_image = skimage.img_as_ubyte(data)
-        pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
-        pil_image = PIL.Image.fromarray(pil_image)
-        pil_image.save(stream, "PNG")
+        layer.to_pil().save(stream, "PNG")
         uri = "data:image/png;base64," + base64.standard_b64encode(stream.getvalue()).decode("ascii")
 
         markup += f"<figure style='margin: 5px'>"
         markup += f"<image src='{uri}' style='width:{width}; height:{height}; box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5)'/>"
-        markup += f"<figcaption>{name} <small>{data.shape[1]}&times;{data.shape[0]}&times;{data.shape[2]} {data.dtype} {layer.role}</small></figcaption>"
+        markup += f"<figcaption>{name} <small>{layer.shape[1]}&times;{layer.shape[0]}&times;{layer.shape[2]} {layer.dtype} {layer.role}</small></figcaption>"
         markup += f"</figure>"
     markup += "</div>"
 

@@ -134,7 +134,7 @@ def require_image(name, inputs, input, *, index=0):
     return imagecat.data.Image(layers=dict(image.layers))
 
 
-def transform(source, target_shape, *, pivot, position, orientation):
+def transform(source, target_shape, *, pivot, position, orientation, scale, order):
     """Transform an image using an affine transformation.
 
     Parameters
@@ -147,11 +147,13 @@ def transform(source, target_shape, *, pivot, position, orientation):
         the output, cropped if necessary.
     pivot: 2-tuple of numbers, required
         Location of the point on the source image around which scaling and rotation takes place.
-    orientation: number, optional
+    orientation: number, required
         Rotation of the source around its pivot point, in degrees.  Positive
         angles lead to counter-clockwise rotation.
-    position: 2-tuple of numbers, optional
+    position: 2-tuple of numbers, required
         Position of the image pivot point relative to `target_shape`.
+    scale: 2-tuple of numbers, required
+        Scale of the source image around its pivot point.
 
     Returns
     -------
@@ -176,6 +178,10 @@ def transform(source, target_shape, *, pivot, position, orientation):
     offset = skimage.transform.AffineTransform(translation=(-pivotx, pivoty))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
+    # Scale the source.
+    scale = skimage.transform.AffineTransform(scale=scale)
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(scale.params, matrix.params))
+
     # Rotate the source.
     rotation = skimage.transform.AffineTransform(rotation=numpy.radians(-orientation)) # Positive = counter-clockwise
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(rotation.params, matrix.params))
@@ -192,6 +198,6 @@ def transform(source, target_shape, *, pivot, position, orientation):
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
     # Transform the image.
-    return skimage.transform.warp(skimage.img_as_float64(source), matrix.inverse, output_shape=target_shape, order=3, mode="constant", cval=0).astype(numpy.float16)
+    return skimage.transform.warp(skimage.img_as_float64(source), matrix.inverse, output_shape=target_shape, order=order, mode="constant", cval=0).astype(numpy.float16)
 
 
