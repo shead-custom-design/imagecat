@@ -31,7 +31,7 @@ setup(
         "Topic :: Scientific/Engineering :: Image Processing",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    description="Simple, flexible tools for procedural image editing.",
+    description="Flexible, high-quality tools for procedural image editing.",
     install_requires=[
         "Pillow>=8.0.0",
         "graphcat>=0.8.0",
