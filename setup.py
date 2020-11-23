@@ -34,7 +34,7 @@ setup(
     description="Simple, flexible tools for procedural image editing.",
     install_requires=[
         "Pillow>=8.0.0",
-        "graphcat>=0.7.0",
+        "graphcat>=0.8.0",
         "numpy>=1.17",
         "scikit-image",
     ],
