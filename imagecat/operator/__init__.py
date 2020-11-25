@@ -565,7 +565,9 @@ def uniform(graph, name, inputs):
         New image with one layer containing uniform noise.
     """
     components = imagecat.operator.util.optional_input(name, inputs, "components", default=None)
+    high = imagecat.operator.util.optional_input(name, inputs, "high", type=float, default=0)
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="A")
+    low = imagecat.operator.util.optional_input(name, inputs, "low", type=float, default=1)
     role = imagecat.operator.util.optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.NONE)
     seed = imagecat.operator.util.optional_input(name, inputs, "seed", type=int, default=1234)
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
@@ -574,9 +576,9 @@ def uniform(graph, name, inputs):
         components = [""]
 
     generator = numpy.random.default_rng(seed=seed)
-    data = generator.uniform(size=(res[1], res[0], len(components))).astype(numpy.float16)
+    data = generator.uniform(low=low, high=high, size=(res[1], res[0], len(components))).astype(numpy.float16)
     output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=components, role=role)})
-    imagecat.operator.util.log_result(log, name, "uniform", output, components=components, layer=layer, role=role, seed=seed, res=res)
+    imagecat.operator.util.log_result(log, name, "uniform", output, components=components, low=low, high=high, layer=layer, role=role, seed=seed, res=res)
     return output
 
 
