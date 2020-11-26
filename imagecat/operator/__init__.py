@@ -565,9 +565,9 @@ def uniform(graph, name, inputs):
         New image with one layer containing uniform noise.
     """
     components = imagecat.operator.util.optional_input(name, inputs, "components", default=None)
-    high = imagecat.operator.util.optional_input(name, inputs, "high", type=float, default=0)
+    high = imagecat.operator.util.optional_input(name, inputs, "high", type=float, default=1)
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="A")
-    low = imagecat.operator.util.optional_input(name, inputs, "low", type=float, default=1)
+    low = imagecat.operator.util.optional_input(name, inputs, "low", type=float, default=0)
     role = imagecat.operator.util.optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.NONE)
     seed = imagecat.operator.util.optional_input(name, inputs, "seed", type=int, default=1234)
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
