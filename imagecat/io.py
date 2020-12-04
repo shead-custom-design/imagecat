@@ -18,6 +18,7 @@
 
 import bz2
 import collections
+import json
 import logging
 import os
 import pickle
@@ -68,8 +69,26 @@ def openexr_loader(task, path, layers):
     width = header["dataWindow"].max.x - header["dataWindow"].min.x + 1
     height = header["dataWindow"].max.y - header["dataWindow"].min.y + 1
 
+    # Cleanup the OpenEXR header to use as the image metadata.
+    class CustomEncoder(json.JSONEncoder):
+        def default(self, o):
+            if isinstance(o, bytes):
+                return o.decode("UTF-8")
+            elif isinstance(o, Imath.Channel):
+                return (o.type, o.xSampling, o.ySampling)
+            elif isinstance(o, (Imath.Compression, Imath.LineOrder, Imath.PixelType)):
+                return str(o)
+            elif isinstance(o, (Imath.V2f, Imath.V2i, Imath.point)):
+                return (o.x, o.y)
+            elif isinstance(o, (Imath.Box, Imath.Box2f, Imath.Box2i)):
+                return (o.min.x, o.min.y, o.max.x, o.max.y)
+            return super().default(o)
+
+    metadata = json.dumps(header, cls=CustomEncoder)
+    metadata = json.loads(metadata)
+
     # Load each OpenEXR channel into a separate Imagecat Layer.
-    image = Image()
+    layers = {}
     for name, dtype in header["channels"].items():
         if dtype.type.v == Imath.PixelType.HALF:
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.float16).reshape((height, width, 1))
@@ -77,8 +96,9 @@ def openexr_loader(task, path, layers):
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.float32).reshape((height, width, 1))
         elif dtype.type.v == Imath.PixelType.INT:
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.int32).reshape((height, width, 1))
-        image.layers[name] = Layer(data=data, components=[""], role=Role.NONE)
-    return image
+        layers[name] = Layer(data=data, components=[""], role=Role.NONE)
+
+    return Image(layers=layers, metadata=metadata)
 
 
 def pickle_loader(task, path, layers):
