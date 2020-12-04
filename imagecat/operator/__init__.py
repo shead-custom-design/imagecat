@@ -112,23 +112,17 @@ def composite(graph, name, inputs):
     foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", layer=fglayer)
     mask = imagecat.operator.util.optional_layer(name, inputs, "mask", layer=masklayer, components=1)
 
-#    Mysteriously, this version is slightly *slower* than the below.
-#    data = numpy.dstack((foreground.data, mask.data))
-#    data = imagecat.operator.util.transform(data, background.data.shape, pivot=pivot, orientation=orientation, position=position)
-#    alpha = data[:,:,3:4]
-#    data = data[:,:,0:3]
-#    data = data * alpha + background.data * (1 - alpha)
-
     if mask is None:
         mask = numpy.ones((foreground.shape[0], foreground.shape[1], 1), dtype=numpy.float16)
     else:
         mask = mask.data
 
-    transformed_foreground = imagecat.operator.util.transform(foreground.data, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
-    transformed_mask = imagecat.operator.util.transform(mask, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
+    i1, i2, j1, j2, transformed_foreground = imagecat.operator.util.transform(foreground.data, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
+    i1, i2, j1, j2, transformed_mask = imagecat.operator.util.transform(mask, background.data.shape, pivot=pivot, orientation=orientation, position=position, scale=scale, order=order)
     alpha = transformed_mask
     one_minus_alpha = 1 - alpha
-    data = transformed_foreground * alpha + background.data * one_minus_alpha
+    data = background.data.copy()
+    data[i1:i2, j1:j2] = transformed_foreground * alpha + data[i1:i2, j1:j2] * one_minus_alpha
 
     output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=background.components, role=background.role)})
     imagecat.operator.util.log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, layer=layer, order=order, orientation=orientation, pivot=pivot, position=position, scale=scale)

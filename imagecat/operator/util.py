@@ -178,6 +178,10 @@ def transform(source, target_shape, *, pivot, position, orientation, scale, orde
 
     Returns
     -------
+    rowoffset: integer
+        Vertical offset of the returned array relative to the upper-left corner of `target_shape`
+    coloffset: integer
+        Horizontal offset of the returned array relative to the upper-left corner of `target_shape`
     image: :class:`numpy.ndarray`
         The transformed image.
     """
@@ -218,7 +222,19 @@ def transform(source, target_shape, *, pivot, position, orientation, scale, orde
     offset = skimage.transform.AffineTransform(translation=(positionx, -positiony))
     matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
 
+    # Identify the smallest region in target space that will completely contain
+    # the transformed source.  This will become "render space".
+    coords = [[0, 0], [sourcex, 0], [sourcex, sourcey], [0, sourcey]]
+    coords = matrix(coords)
+    minx, miny = numpy.max(numpy.row_stack((numpy.floor(numpy.min(coords, axis=0)), [0, 0])), axis=0).astype(numpy.int32)
+    maxx, maxy = numpy.min(numpy.row_stack((numpy.ceil(numpy.max(coords, axis=0)), [targetx, targety])), axis=0).astype(numpy.int32)
+
+    # Position the image relative to render space.
+    offset = skimage.transform.AffineTransform(translation=(-minx, -miny))
+    matrix = skimage.transform.AffineTransform(matrix=numpy.dot(offset.params, matrix.params))
+
     # Transform the image.
-    return skimage.transform.warp(skimage.img_as_float64(source), matrix.inverse, output_shape=target_shape, order=order, mode="constant", cval=0).astype(numpy.float16)
+    render_shape = (maxy - miny, maxx - minx) + target_shape[2:]
+    return miny, maxy, minx, maxx, skimage.transform.warp(skimage.img_as_float64(source), matrix.inverse, output_shape=render_shape, order=order, mode="constant", cval=0).astype(numpy.float16)
 
 
