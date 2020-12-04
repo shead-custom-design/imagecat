@@ -45,9 +45,12 @@ class Image(object):
     :ref:`images`
         For an in-depth discussion of how images are stored in Imagecat.
     """
-    def __init__(self, layers=None):
+    def __init__(self, layers=None, metadata=None):
         if layers is None:
             layers = {}
+        if metadata is None:
+            metadata = {}
+
         first_layer = None
         for key, layer in layers.items():
             if not isinstance(key, str):
@@ -59,11 +62,39 @@ class Image(object):
             else:
                 if layer.data.shape[:2] != first_layer.data.shape[:2]:
                     raise ValueError("All layers must have the same resolution.") # pragma: no cover
+
         self._layers = layers
+        self._metadata = metadata
+
 
     def __repr__(self):
         layers = (f"{k}: {v!r}" for k, v in self._layers.items())
         return f"Image({', '.join(layers)})"
+
+
+    def copy(self, layers=None, metadata=None):
+        """return a shallow copy of the image, with optional modifications.
+
+        Returns a new instance of :class:`Image` that can be altered without
+        modifying the original.  Note that the new image will references the
+        same `layers` as the original, unless a new set of layers are supplied
+        as an argument.
+
+        Parameters
+        ----------
+        layers: :class:`dict`, optional
+            Dictionary mapping :class:`str` layer names to :class:`Layer` instances that
+            contain the data for each layer.  Replaces the original layers if not :any:`None` (the default).
+
+        Returns
+        -------
+        image: :class:`Image`
+            The new image instance with optional modifications.
+        """
+        layers = self.layers if layers is None else layers
+        metadata = self.metadata if metadata is None else metadata
+        return Image(layers=layers, metadata=metadata)
+
 
     @property
     def layers(self):
@@ -76,6 +107,11 @@ class Image(object):
             contain the data for each layer.
         """
         return self._layers
+
+
+    @property
+    def metadata(self):
+        return self._metadata
 
 
     def match_layer_names(self, patterns):

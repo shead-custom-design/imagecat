@@ -16,6 +16,7 @@
 
 import base64
 import io
+import pprint
 
 import IPython.display
 import PIL.Image
@@ -42,7 +43,14 @@ def display(image, layers="*", width=None, height=None):
     if not isinstance(image, imagecat.data.Image):
         raise ValueError("Expected an instance of imagecat.Image.") # pragma: no cover
 
-    markup = "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
+    markup = ""
+    markup += "<div>"
+    markup += "<pre>"
+    for key, value in image.metadata.items():
+        markup += f"{key}: {value!r}\n"
+    markup += "</pre>"
+    markup += "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
+
     for name in sorted(image.match_layer_names(layers)):
         layer = image.layers[name]
 
@@ -54,6 +62,7 @@ def display(image, layers="*", width=None, height=None):
         markup += f"<image src='{uri}' style='width:{width}; height:{height}; box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5)'/>"
         markup += f"<figcaption>{name} <small>{layer.shape[1]}&times;{layer.shape[0]}&times;{layer.shape[2]} {layer.dtype} {layer.role}</small></figcaption>"
         markup += f"</figure>"
+    markup += "</div>"
     markup += "</div>"
 
     IPython.display.display(IPython.display.HTML(markup))
