@@ -7,6 +7,15 @@
 Release Notes
 =============
 
+Imagecat 0.3.0 - December 4, 2020
+---------------------------------
+
+* Add support for categorical color maps.
+* Added optional parameters to control the output range of imagecat.operator.uniform().
+* Updated the implementation for compatibility with graphcat >= 0.10.0.
+* Dramatically improved performance for imagecat.operator.composite().
+* OpenEXR loader generates simplified output.
+
 Imagecat 0.2.0 - November 23, 2020
 ----------------------------------
 
