@@ -49,7 +49,7 @@ def colormap(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         A copy of the input image with some layers mapped.
     """
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
+    image = imagecat.operator.util.require_image(name, inputs, "image")
     layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
     mapping = imagecat.operator.util.optional_input(name, inputs, "mapping", default=None)
 
@@ -98,19 +98,19 @@ def composite(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         New image with a single solid-color layer.
     """
-    bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", index=0, type=str, default="C")
-    fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", index=0, type=str, default="C")
-    layer = imagecat.operator.util.optional_input(name, inputs, "layer", index=0, type=str, default=bglayer)
-    masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", index=0, type=str, default="A")
-    order = imagecat.operator.util.optional_input(name, inputs, "order", index=0, type=int, default=3)
-    orientation = imagecat.operator.util.optional_input(name, inputs, "orientation", index=0, type=float, default=0)
-    pivot = imagecat.operator.util.optional_input(name, inputs, "pivot", index=0, default=["0.5w", "0.5h"])
-    position = imagecat.operator.util.optional_input(name, inputs, "position", index=0, default=["0.5w", "0.5h"])
-    scale = imagecat.operator.util.optional_input(name, inputs, "scale", index=0, default=[1, 1])
+    bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", type=str, default="C")
+    fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", type=str, default="C")
+    layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default=bglayer)
+    masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", type=str, default="A")
+    order = imagecat.operator.util.optional_input(name, inputs, "order", type=int, default=3)
+    orientation = imagecat.operator.util.optional_input(name, inputs, "orientation", type=float, default=0)
+    pivot = imagecat.operator.util.optional_input(name, inputs, "pivot", default=["0.5w", "0.5h"])
+    position = imagecat.operator.util.optional_input(name, inputs, "position", default=["0.5w", "0.5h"])
+    scale = imagecat.operator.util.optional_input(name, inputs, "scale", default=[1, 1])
 
-    background = imagecat.operator.util.require_layer(name, inputs, "background", index=0, layer=bglayer)
-    foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", index=0, layer=fglayer)
-    mask = imagecat.operator.util.optional_layer(name, inputs, "mask", index=0, layer=masklayer, components=1)
+    background = imagecat.operator.util.require_layer(name, inputs, "background", layer=bglayer)
+    foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", layer=fglayer)
+    mask = imagecat.operator.util.optional_layer(name, inputs, "mask", layer=masklayer, components=1)
 
 #    Mysteriously, this version is slightly *slower* than the below.
 #    data = numpy.dstack((foreground.data, mask.data))
@@ -155,7 +155,7 @@ def delete(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         A copy of the input image with some layers deleted.
     """
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
+    image = imagecat.operator.util.require_image(name, inputs, "image")
     layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
 
     remove = image.match_layer_names(layers)
@@ -225,7 +225,7 @@ def gaussian(graph, name, inputs):
     """
     import skimage.filters
 
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
+    image = imagecat.operator.util.require_image(name, inputs, "image")
     layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
     radius = imagecat.operator.util.optional_input(name, inputs, "radius", default=["5px", "5px"])
 
@@ -282,9 +282,9 @@ def merge(graph, name, inputs):
 
     This operator merges the layers from multiple images into a single image.
     The images must all have the same resolution.  Upstream inputs are merged
-    in order, sorted by input name and index.  Layter image layers with
-    duplicate names will overwrite earlier layers.  Callers can prevent this by
-    renaming layers upstream with the :func:`rename` operator.
+    in order, sorted by input name.  Later image layers with duplicate names
+    will overwrite earlier layers.  Callers can prevent this by renaming layers
+    upstream with the :func:`rename` operator.
 
     See Also
     --------
@@ -308,11 +308,10 @@ def merge(graph, name, inputs):
         New image containing the union of all input layers.
     """
     output = imagecat.data.Image()
-    for input in sorted(inputs.keys()):
-        for index in range(len(inputs[input])):
-            image = inputs[input][index]
-            if isinstance(image, imagecat.data.Image):
-                output.layers.update(image.layers)
+    for input, value in sorted(inputs.items()):
+        image = value()
+        if isinstance(image, imagecat.data.Image):
+            output.layers.update(image.layers)
     imagecat.operator.util.log_result(log, name, "merge", output)
     return output
 
@@ -338,9 +337,9 @@ def offset(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         A copy of the input image with some layers offset.
     """
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
-    layers = imagecat.operator.util.optional_input(name, inputs, "layers", index=0, type=str, default="*")
-    offset = imagecat.operator.util.optional_input(name, inputs, "offset", index=0, default=["0.5w", "0.5h"])
+    image = imagecat.operator.util.require_image(name, inputs, "image")
+    layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
+    offset = imagecat.operator.util.optional_input(name, inputs, "offset", default=["0.5w", "0.5h"])
 
     output = imagecat.data.Image()
     for layer_name in image.match_layer_names(layers):
@@ -403,7 +402,7 @@ def rgb2gray(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         A copy of the input image with some layers converted to grayscale.
     """
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
+    image = imagecat.operator.util.require_image(name, inputs, "image")
     layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
     weights = imagecat.operator.util.optional_input(name, inputs, "weights", type=imagecat.operator.util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
 
@@ -437,7 +436,7 @@ def save(graph, name, inputs):
         :["path"][0]: :class:`str`, required. Filesystem path of the file to be saved.
         :["layers"][0]: :class:`str`, optional. Pattern matching the layers to be saved.  Default: '*', which saves all layers.
     """
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
+    image = imagecat.operator.util.require_image(name, inputs, "image")
     path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
     layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
 
@@ -471,7 +470,7 @@ def resize(graph, name, inputs):
     """
     import skimage.transform
 
-    image = imagecat.operator.util.require_image(name, inputs, "image", index=0)
+    image = imagecat.operator.util.require_image(name, inputs, "image")
     order = imagecat.operator.util.optional_input(name, inputs, "order", type=int, default=3)
     res = imagecat.operator.util.optional_input(name, inputs, "res", default=("1w", "1h"))
 

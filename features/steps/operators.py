@@ -42,7 +42,7 @@ temp_dir = tempfile.mkdtemp()
 
 @given(u'an empty graph')
 def step_impl(context):
-    context.graph = graphcat.Graph()
+    context.graph = graphcat.DynamicGraph()
 
 
 @given(u'links {links}')
@@ -257,7 +257,7 @@ def step_impl(context, name):
         if not os.path.exists(reference_dir):
             os.mkdir(reference_dir)
 
-        graph = graphcat.Graph()
+        graph = graphcat.DynamicGraph()
         graph.set_task("/image", graphcat.constant(context.image))
         imagecat.add_task(graph, "/save", imagecat.operator.save, path=reference_file)
         imagecat.set_links(graph, "/image", ("/save", "image"))
@@ -268,7 +268,7 @@ def step_impl(context, name):
 
     try:
         # Load the reference for comparison
-        graph = graphcat.Graph()
+        graph = graphcat.DynamicGraph()
         imagecat.add_task(graph, "/load", imagecat.operator.load, path=reference_file)
         try:
             reference_image = graph.output("/load")
@@ -281,7 +281,7 @@ def step_impl(context, name):
         if not os.path.exists(failed_dir):
             os.mkdir(failed_dir)
 
-        graph = graphcat.Graph()
+        graph = graphcat.DynamicGraph()
         graph.set_task("/image", graphcat.constant(context.image))
         imagecat.add_task(graph, "/save", imagecat.operator.save, path=failed_file)
         imagecat.set_links(graph, "/image", ("/save", "image"))
