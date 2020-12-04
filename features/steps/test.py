@@ -48,6 +48,6 @@ def assert_image_equal(lhs, rhs):
     if not isinstance(rhs, imagecat.data.Image):
         raise ValueError("rhs must be an instance of imagecat.data.Image.")
     if sorted(lhs.layers.keys()) != sorted(rhs.layers.keys()):
-        raise ValueError("lhs channel names {lhs.layers.keys()} != rhs channel names {rhs.layers.keys()}")
+        raise ValueError(f"lhs channel names {lhs.layers.keys()} != rhs channel names {rhs.layers.keys()}")
     for name in lhs.layers.keys():
         assert_layer_equal(lhs.layers[name], rhs.layers[name])

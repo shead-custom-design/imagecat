@@ -263,66 +263,6 @@ def default_font():
     return os.path.join(data_dir, "LeagueSpartan-SemiBold.ttf")
 
 
-def channels_to_layers(channels):
-    """Convert a flat list of channel names into grouped layers compatible with Imagecat's data model.
-
-    Some file formats such as OpenEXR split an image into a flat collection of named `channels`, where
-    each channel is a 2D array and channels are implicitly grouped together by naming conventions, i.e.
-    the channel name "C.r" represents the red component of layer "C".  This function converts a collection
-    of channel names into layers with component names suitable for use in Imagecat, and also attempts to
-    infer a :class:`Role` for each layer.
-
-    Parameters
-    ----------
-    channels: sequence of :class:`str`, required
-        Sequence of string channel names to be grouped into layers.
-
-    Returns
-    -------
-    layers: sequence of (layer name, layer components, layer role) tuples
-    """
-    layers = [channel.rsplit(".", 1) for channel in channels]
-    layers = [layer if len(layer) > 1 else ["", layer[0]] for layer in layers]
-    layers = [(channel, layer, component) for channel, (layer, component) in zip(channels, layers)]
-    groups = collections.defaultdict(list)
-    for channel, layer, component in layers:
-        groups[layer].append((channel, component))
-    layers = list(groups.items())
-
- #    def split_layers(layers):
- #        for layer, channels in layers:
- #            if layer:
- #                yield (layer, channels)
- #                continue
- #            ci_components = [component.lower() for component, channel in channels]
- #            if "r" in ci_components and "g" in ci_components and "b" in ci_components:
- #                yield (layer, [channels[ci_components.index("r")], channels[ci_components.index("g")], channels[ci_components.index("b")]])
- #            channels = [channel for channel, ci_component in zip(channels, ci_components) if ci_component not in "rgb"]
- #            for channel in channels:
- #                yield layer, [channel]
- #    layers = list(split_layers(layers))
-
-    def organize_layers(layers):
-        for layer, components in layers:
-            ci_components = [component.lower() for channel, component in components]
-            for collection in ["rgb", "hsv", "hsb", "xy", "xyz", "uv", "uvw"]:
-                if sorted(ci_components) == sorted(collection):
-                    components = [components[ci_components.index(component)] for component in collection]
-            yield layer, components
-    layers = list(organize_layers(layers))
-
-    def categorize_layers(layers):
-        for layer, components in layers:
-            ci_components = [component.lower() for channel, component in components]
-            if ci_components == ["r", "g", "b"]:
-                yield layer, components, Role.RGB
-            else:
-                yield layer, components, Role.NONE
-    layers = list(categorize_layers(layers))
-
-    return layers
-
-
 def match_layer_names(names, patterns):
     """Match image layer names against a pattern.
 

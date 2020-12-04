@@ -27,7 +27,7 @@ import numpy
 import skimage
 
 from imagecat.color import linear_to_srgb, srgb_to_linear
-from imagecat.data import Image, Layer, Role, channels_to_layers
+from imagecat.data import Image, Layer, Role
 
 try:
     import Imath
@@ -68,20 +68,16 @@ def openexr_loader(task, path, layers):
     width = header["dataWindow"].max.x - header["dataWindow"].min.x + 1
     height = header["dataWindow"].max.y - header["dataWindow"].min.y + 1
 
+    # Load each OpenEXR channel into a separate Imagecat Layer.
     image = Image()
-    layers = channels_to_layers(header["channels"].keys())
-    for name, components, role in layers:
-        data = []
-        for channel, component in components:
-            dtype = header["channels"][channel]
-            if dtype.type.v == Imath.PixelType.HALF:
-                data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.float16).reshape((height, width)))
-            elif dtype.type.v == Imath.PixelType.FLOAT:
-                data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.float32).reshape((height, width)))
-            elif dtype.type.v == Imath.PixelType.INT:
-                data.append(numpy.frombuffer(reader.channel(channel), dtype=numpy.int32).reshape((height, width)))
-        data = numpy.dstack(data)
-        image.layers[name] = Layer(data=data, components=[component for channel, component in components], role=role)
+    for name, dtype in header["channels"].items():
+        if dtype.type.v == Imath.PixelType.HALF:
+            data = numpy.frombuffer(reader.channel(name), dtype=numpy.float16).reshape((height, width, 1))
+        elif dtype.type.v == Imath.PixelType.FLOAT:
+            data = numpy.frombuffer(reader.channel(name), dtype=numpy.float32).reshape((height, width, 1))
+        elif dtype.type.v == Imath.PixelType.INT:
+            data = numpy.frombuffer(reader.channel(name), dtype=numpy.int32).reshape((height, width, 1))
+        image.layers[name] = Layer(data=data, components=[""], role=Role.NONE)
     return image
 
 
