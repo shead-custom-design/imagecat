@@ -55,7 +55,7 @@ def optional_image(name, inputs, input):
     if not isinstance(image, imagecat.data.Image):
         raise ValueError(f"Task {name} input {input!r} is not an image.") # pragma: no cover
     # This ensures that we don't accidentally modify our inputs.
-    return imagecat.data.Image(layers=dict(image.layers))
+    return image.copy()
 
 
 def optional_input(name, inputs, input, *, type=None, default=None):
@@ -105,7 +105,7 @@ def require_image(name, inputs, input):
     if not isinstance(image, imagecat.data.Image):
         raise ValueError(f"Task {name} input {input!r} is not an image.") # pragma: no cover
     # This ensures that we don't accidentally modify our inputs.
-    return imagecat.data.Image(layers=dict(image.layers))
+    return image.copy()
 
 
 def require_input(name, inputs, input, *, type=None):

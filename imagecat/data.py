@@ -91,8 +91,8 @@ class Image(object):
         image: :class:`Image`
             The new image instance with optional modifications.
         """
-        layers = self.layers if layers is None else layers
-        metadata = self.metadata if metadata is None else metadata
+        layers = dict(self.layers) if layers is None else layers
+        metadata = dict(self.metadata) if metadata is None else metadata
         return Image(layers=layers, metadata=metadata)
 
 
