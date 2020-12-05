@@ -575,3 +575,4 @@ def uniform(graph, name, inputs):
     return output
 
 
+from imagecat.operator.remap import remap
