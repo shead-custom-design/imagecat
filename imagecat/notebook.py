@@ -19,9 +19,7 @@ import io
 import pprint
 
 import IPython.display
-import PIL.Image
-import numpy
-import skimage
+import ipywidgets
 
 import imagecat.data
 
@@ -43,27 +41,65 @@ def display(image, layers="*", width=None, height=None):
     if not isinstance(image, imagecat.data.Image):
         raise ValueError("Expected an instance of imagecat.Image.") # pragma: no cover
 
-    markup = ""
-    markup += "<div>"
-    markup += "<pre>"
-    for key, value in image.metadata.items():
-        markup += f"{key}: {value!r}\n"
-    markup += "</pre>"
-    markup += "<div style='display: flex; flex-flow: row wrap; text-align: center'>"
+    matched_layers = image.match_layer_names(layers)
 
-    for name in sorted(image.match_layer_names(layers)):
-        layer = image.layers[name]
+    # Setup a tab for each image layer.
+    def layer_generator(image, name):
+        def implementation():
+            layer = image.layers[name]
 
-        stream = io.BytesIO()
-        layer.to_pil().save(stream, "PNG")
-        uri = "data:image/png;base64," + base64.standard_b64encode(stream.getvalue()).decode("ascii")
+            stream = io.BytesIO()
+            layer.to_pil().save(stream, "PNG")
+            uri = "data:image/png;base64," + base64.standard_b64encode(stream.getvalue()).decode("ascii")
 
-        markup += f"<figure style='margin: 5px'>"
-        markup += f"<image src='{uri}' style='width:{width}; height:{height}; box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5)'/>"
-        markup += f"<figcaption>{name} <small>{layer.shape[1]}&times;{layer.shape[0]}&times;{layer.shape[2]} {layer.dtype} {layer.role}</small></figcaption>"
-        markup += f"</figure>"
-    markup += "</div>"
-    markup += "</div>"
+            markup = f"<figure style='margin: 5px; text-align: center'>"
+            markup += f"<image src='{uri}' style='width:{width}; height:{height}; box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5)'/>"
+            markup += f"<figcaption>{name} <small>{layer.shape[1]}&times;{layer.shape[0]}&times;{layer.shape[2]} {layer.dtype} {layer.role}</small></figcaption>"
+            markup += f"</figure>"
+            return markup
+        return implementation
 
-    IPython.display.display(IPython.display.HTML(markup))
+    tabs = []
+    titles = []
+    generators = []
+    for layer in matched_layers:
+        tabs.append(ipywidgets.HTML())
+        titles.append(f"Layer: {layer}")
+        generators.append(layer_generator(image, layer))
 
+    # Setup a tab for metadata.
+    def metadata_generator(image):
+        def implementation():
+            markup = "<pre>"
+            for key, value in image.metadata.items():
+                markup += f"{key}: {value!r}\n"
+            markup += "</pre>"
+            return markup
+        return implementation
+
+    if image.metadata:
+        tabs.append(ipywidgets.HTML())
+        titles.append("Metadata")
+        generators.append(metadata_generator(image))
+
+
+    def on_tab_changed(change):
+        index = change["new"]
+        if index is None:
+            return
+        widget = tabs[index]
+        generator = generators[index]
+        if not widget.value and generator is not None:
+            widget.value = generator()
+
+    # Display the UI.
+    tab_widget = ipywidgets.Accordion(children=tabs)
+    for index, title in enumerate(titles):
+        tab_widget.set_title(index, title)
+    tab_widget.observe(on_tab_changed, names='selected_index')
+
+    IPython.display.display(tab_widget)
+
+    # Generate content for the first tab.
+    if tabs:
+        on_tab_changed({"new": 0})
