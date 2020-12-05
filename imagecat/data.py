@@ -176,16 +176,30 @@ class Layer(object):
         if role is None:
             if data.shape[2] == 3:
                 role = Role.RGB
+            elif data.shape[2] == 2:
+                role = Role.RG
             else:
                 role = Role.NONE
         if not isinstance(role, Role):
-            raise ValueError("Layer role must be an instance of imagecat.storage.Role.") # pragma: no cover
+            raise ValueError("Layer role must be an instance of imagecat.data.Role.") # pragma: no cover
 
         if components is None:
-            if data.shape[2] == 1:
-                components = [""]
-            elif data.shape[2] == 3 and role == Role.RGB:
+            if data.shape[2] == 3 and role == Role.RGB:
                 components = ["r", "g", "b"]
+            elif data.shape[2] == 2 and role == Role.RG:
+                components = ["r", "g"]
+            elif data.shape[2] == 2 and role == Role.GB:
+                components = ["g", "b"]
+            elif data.shape[2] == 2 and role == Role.RB:
+                components = ["r", "b"]
+            elif data.shape[2] == 1 and role == Role.R:
+                components = ["r"]
+            elif data.shape[2] == 1 and role == Role.G:
+                components = ["g"]
+            elif data.shape[2] == 1 and role == Role.B:
+                components = ["b"]
+            elif data.shape[2] == 1:
+                components = [""]
             else:
                 components = []
         if len(components) != data.shape[2]:
@@ -259,8 +273,23 @@ class Layer(object):
     def to_pil(self):
         import PIL.Image
         data = self.data
-        if self.role == Role.RGB:
+        if self.role in [Role.RGB, Role.RG, Role.GB, Role.RB, Role.R, Role.G, Role.B]:
             data = imagecat.color.linear_to_srgb(data)
+            if self.role != Role.RGB:
+                black = numpy.zeros(data.shape[:2] + (1,))
+                if self.role == Role.RG:
+                    data = numpy.dstack((data[:,:,0], data[:,:,1], black))
+                elif self.role == Role.GB:
+                    data = numpy.dstack((black, data[:,:,0], data[:,:,1]))
+                elif self.role == Role.RB:
+                    data = numpy.dstack((data[:,:,0], black, data[:,:,1]))
+                elif self.role == Role.R:
+                    data = numpy.dstack((data[:,:,0], black, black))
+                elif self.role == Role.G:
+                    data = numpy.dstack((black, data[:,:,0], black))
+                elif self.role == Role.B:
+                    data = numpy.dstack((black, black, data[:,:,0]))
+
         pil_image = (data * 255.0).astype(numpy.ubyte)
         pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
         pil_image = PIL.Image.fromarray(pil_image)
@@ -283,7 +312,25 @@ class Role(enum.Enum):
     NONE = 0
     """General purpose catch-all for layers with no specific role."""
     RGB = 1
-    """Indicates that a layer contains RGB information that e.g. should be
+    """Indicates that a layer contains red-green-blue information that e.g. should be
+    converted to sRGB for display."""
+    RG = 2
+    """Indicates that a layer contains red-green information that e.g. should be
+    converted to sRGB for display."""
+    GB = 3
+    """Indicates that a layer contains green-blue information that e.g. should be
+    converted to sRGB for display."""
+    RB = 4
+    """Indicates that a layer contains red-blue information that e.g. should be
+    converted to sRGB for display."""
+    R = 5
+    """Indicates that a layer contains red information that e.g. should be
+    converted to sRGB for display."""
+    G = 6
+    """Indicates that a layer contains green information that e.g. should be
+    converted to sRGB for display."""
+    B = 7
+    """Indicates that a layer contains blue information that e.g. should be
     converted to sRGB for display."""
 
 
