@@ -576,3 +576,5 @@ def uniform(graph, name, inputs):
 
 
 from imagecat.operator.remap import remap
+import imagecat.operator.cryptomatte as cryptomatte
+
