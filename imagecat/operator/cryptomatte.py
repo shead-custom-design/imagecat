@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 # Adapted from the Cryptomatte 1.2 specification:
 # https://github.com/Psyop/Cryptomatte/blob/master/specification/cryptomatte_specification.pdf
 # Accessed December 5, 2020.
-def name_to_float32(name):
+def _name_to_float32(name):
     """Convert a string to an 8-digit hexadecimal Cryptomatte ID."""
     hash_32 = mmh3.hash(name, signed=False)
     exp = hash_32 >> 23 & 255
@@ -108,7 +108,7 @@ def decoder(graph, name, inputs):
                 data = numpy.zeros_like(rank_id)
 
             for matte in mattes:
-                selection = rank_id == name_to_float32(matte)
+                selection = rank_id == _name_to_float32(matte)
                 data[selection] += rank_coverage[selection]
 
     output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data)})
