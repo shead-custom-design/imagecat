@@ -1,8 +1,9 @@
 Pillow
 graphcat
+ipython
 mmh3
 nbsphinx
 numpy
 scikit-image
-sphinx_rtd_theme
 sphinx-gallery
+sphinx_rtd_theme
