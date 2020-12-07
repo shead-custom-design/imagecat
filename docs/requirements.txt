@@ -1,5 +1,6 @@
 Pillow
 graphcat
+mmh3
 nbsphinx
 numpy
 scikit-image
