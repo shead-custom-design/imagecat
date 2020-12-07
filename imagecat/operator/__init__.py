@@ -517,8 +517,6 @@ def text(graph, name, inputs):
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
     text = imagecat.operator.util.optional_input(name, inputs, "text", type=str, default="Text!")
 
-    log.info(f"Task {name} fontname: {fontname}")
-
     fontsize_px = int(imagecat.units.length(fontsize, res))
     x = imagecat.units.length(position[0], res)
     y = res[1] - imagecat.units.length(position[1], res) # +Y = up
