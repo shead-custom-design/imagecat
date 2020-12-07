@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Functionality for working with Cryptomattes, see https://github.com/Psyop/Cryptomatte."""
+
 import itertools
 import logging
 import re
