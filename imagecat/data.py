@@ -18,6 +18,7 @@
 import collections
 import enum
 import fnmatch
+import io
 import os
 
 import numpy
@@ -294,6 +295,11 @@ class Layer(object):
         pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
         pil_image = PIL.Image.fromarray(pil_image)
         return pil_image
+
+    def _repr_png_(self):
+        stream = io.BytesIO()
+        self.to_pil().save(stream, "PNG")
+        return stream.getvalue()
 
 
 # Warning!  Moving this to another module will break *.icp file loading.
