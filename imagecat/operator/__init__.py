@@ -537,18 +537,20 @@ def uniform(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
+    inputs: :ref:`named-inputs`, required
         Inputs for this function, containing:
 
-        :["components"][0]: sequence of :class:`str`, optional. Component names for the layer to be created, which also implicitly define the number of components.  Default: :any:`None`, which creates a single component named `""` (i.e. for use as a mask).
-        :["layer"][0]: :class:`str`, optional. Name of the layer to be created.  Default: 'A'.
-        :["role"][0]: :class:`imagecat.data.Role`. Role for the layer to be created. Default: :class:`imagecat.data.Role.NONE`.
-        :["seed"][0]: :any:`int`. Random seed for the random noise function. Default: 1234.
-        :["res"][0]: (width, height) tuple, optional. Resolution of the new image along each dimension.
+        :"components": sequence of :class:`str`, optional. Component names for the layer to be created, which also implicitly define the number of components.  Default: :any:`None`, which creates a single component named `""` (i.e. for use as a mask).
+        :"high": number, optional.  Highest value in the generated noise.  Default: 1.
+        :"layer": :class:`str`, optional. Name of the layer to be created.  Default: 'A'.
+        :"low": number, optional.  Lowest value for the generated noise.  Default: 0.
+        :"role": :class:`imagecat.data.Role`. Role for the layer to be created. Default: :class:`imagecat.data.Role.NONE`.
+        :"seed": :any:`int`. Random seed for the random noise function. Default: 1234.
+        :"res": (width, height) tuple, optional. Resolution of the new image along each dimension.  Default: [256, 256].
 
     Returns
     -------
