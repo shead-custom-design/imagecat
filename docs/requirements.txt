@@ -1,6 +1,7 @@
 Pillow
 graphcat
 ipython
+ipywidgets
 mmh3
 nbsphinx
 numpy
