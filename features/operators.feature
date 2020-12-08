@@ -67,7 +67,7 @@ Feature: Operators
         Given an empty graph
         And a task "/foreground" with operator fill layer "C" res [256, 128] values [0, 0, 0] components None role Role.RGB
         And a task "/background" with operator fill layer "C" res [512, 512] values [1, 0.5, 0] components None role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/comp" with operator composite pivot <pivot> position <position> orientation <orientation>
         And links [("/foreground", ("/comp", "foreground"))]
         And links [("/background", ("/comp", "background"))]
@@ -112,7 +112,7 @@ Feature: Operators
 
     Scenario Outline: gaussian
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/gaussian" with operator gaussian radius <radius>
         And links [("/text", ("/gaussian", "image"))]
         When retrieving the output image from task "/gaussian"
@@ -142,7 +142,7 @@ Feature: Operators
 
     Scenario Outline: offset
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/offset" with operator offset layers <layers> offset <offset>
         And links [("/text", ("/offset", "image"))]
         When retrieving the output image from task "/offset"
@@ -182,7 +182,7 @@ Feature: Operators
 
     Scenario Outline: resize
         Given an empty graph
-        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/resize" with operator resize order <order> res <res>
         And links [("/text", ("/resize", "image"))]
         When retrieving the output image from task "/resize"
@@ -196,12 +196,12 @@ Feature: Operators
 
     Scenario Outline: text
         Given an empty graph
-        And a task "/text" with operator text anchor <anchor> fontsize <fontsize> layer <layer> position <position> res <res> text <text>
+        And a task "/text" with operator text anchor <anchor> fontsize <fontsize> layer <layer> position <position> res <res> string <string>
         When retrieving the output image from task "/text"
         Then the image should match the <reference> reference image
 
         Examples:
-            | anchor | fontsize | layer | position         | res        | text        | reference            |
+            | anchor | fontsize | layer | position         | res        | string      | reference            |
             | "mm"   | "0.33h"  | "A"   | ("0.5w", "0.5h") | (256, 128) | "Imagecat!" | text                 |
             | "mm"   | "0.33h"  | "A"   | ("0.5w", "0.75h")| (256, 128) | "Imagecat!" | text-y-axis          |
             | "lm"   | "0.33h"  | "A"   | ("0.0w", "0.5h") | (256, 128) | "Imagecat!" | text-left-align      |
@@ -223,7 +223,7 @@ Feature: Operators
     Scenario: Notebook Display
         Given an empty graph
         And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) text "Imagecat!"
+        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
         And links [("/text", ("/merge", "image2"))]

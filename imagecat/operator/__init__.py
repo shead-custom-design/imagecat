@@ -483,21 +483,21 @@ def text(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
+    inputs: :ref:`named-inputs`, required
         Inputs for this function, containing:
 
-        :["anchor"][0]: :class:`str`, optional. Anchor point for text placement, defined at https://pillow.readthedocs.io/en/latest/handbook/text-anchors.html#text-anchors. Defaults to `"mm"`.
-        :["fontindex"][0]: integer, optional. Index of the font to use within a multi-font file.  Defaults to `0`.
-        :["fontname"][0]: :class:`str`, optional. Path to a font file.  Defaults to :func:`imagecat.data.default_font`.
-        :["fontsize"][0]: Size of the rendered font.  Default: `"0.33h"`, which is one-third the height of the output image.
-        :["layer"][0]: :class:`str`, optional.  Name of the generated layer.  Default: `["A"]`.
-        :["position"][0]: (x, y) tuple, optional.  Position of the text anchor relative to the output image.  Default: `["0.5w", "0.5h"]`, which is centered vertically and horizontally.
-        :["res"][0]: (width, height) tuple, optional. Resolution of the output image.  Default: [256, 256].
-        :["teext"][0]: :class:`str`, optional. Text to be rendered.  Default: `"Text!"`.
+        :"anchor": :class:`str`, optional. Anchor point for text placement, defined at https://pillow.readthedocs.io/en/latest/handbook/text-anchors.html#text-anchors. Defaults to `"mm"`.
+        :"fontindex": integer, optional. Index of the font to use within a multi-font file.  Defaults to `0`.
+        :"fontname": :class:`str`, optional. Path to a font file.  Defaults to :func:`imagecat.data.default_font`.
+        :"fontsize": Size of the rendered font.  Default: `"0.33h"`, which is one-third the height of the output image.
+        :"layer": :class:`str`, optional.  Name of the generated layer.  Default: `["A"]`.
+        :"position": (x, y) tuple, optional.  Position of the text anchor relative to the output image.  Default: `["0.5w", "0.5h"]`, which is centered vertically and horizontally.
+        :"res": (width, height) tuple, optional. Resolution of the output image.  Default: [256, 256].
+        :"string": :class:`str`, optional. String to be rendered.  Default: `"Text!"`.
 
     Returns
     -------
@@ -515,7 +515,7 @@ def text(graph, name, inputs):
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="A")
     position = imagecat.operator.util.optional_input(name, inputs, "position", default=("0.5w", "0.5h"))
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
-    text = imagecat.operator.util.optional_input(name, inputs, "text", type=str, default="Text!")
+    string = imagecat.operator.util.optional_input(name, inputs, "string", type=str, default="Text!")
 
     fontsize_px = int(imagecat.units.length(fontsize, res))
     x = imagecat.units.length(position[0], res)
@@ -524,11 +524,11 @@ def text(graph, name, inputs):
     pil_image = PIL.Image.new("L", (res[0], res[1]), 0)
     font = PIL.ImageFont.truetype(fontname, fontsize_px, fontindex)
     draw = PIL.ImageDraw.Draw(pil_image)
-    draw.text((x, y), text, font=font, fill=255, anchor=anchor)
+    draw.text((x, y), string, font=font, fill=255, anchor=anchor)
 
     data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
     output = imagecat.data.Image({layer: imagecat.data.Layer(data=data)})
-    imagecat.operator.util.log_result(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, res=res, text=text)
+    imagecat.operator.util.log_result(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, res=res, string=string)
     return output
 
 
