@@ -158,44 +158,6 @@ def delete(graph, name, inputs):
     return output
 
 
-def fill(graph, name, inputs):
-    """Generate a :ref:`image<images>` with a single solid-color layer.
-
-    Parameters
-    ----------
-    graph: :class:`graphcat.Graph`, required
-        Graph that owns this task.
-    name: hashable object, required
-        Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
-
-        :["components"][0]: sequence of :class:`str`, optional. Component names for the new layer.  Defaults to `["r", "g", "b"]`.  The number of component names must match the number of values.
-        :["layer"][0]: :class:`str`, optional. New layer name.  Default: `"C"`.
-        :["res"][0]: (width, height) tuple, optional.  Resolution of the new image.  Default: [256, 256].
-        :["role"][0]: :class:`imagecat.data.Role`, optional.  Semantic role of the new layer.  Default: :class:`imagecat.data.Role.RGB`.
-        :["values"][0]: sequence of values, optional.  Solid color values for the new layer.  Default: [1, 1, 1].
-
-    Returns
-    -------
-    image: :class:`imagecat.data.Image`
-        New image with a single solid-color layer.
-    """
-    components = imagecat.operator.util.optional_input(name, inputs, "components", default=["r", "g", "b"])
-    layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="C")
-    res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
-    role = imagecat.operator.util.optional_input(name, inputs, "role", type=imagecat.data.Role, default=imagecat.data.Role.RGB)
-    values = imagecat.operator.util.optional_input(name, inputs, "values", type=numpy.array, default=[1, 1, 1])
-
-    if components and len(components) != len(values):
-        raise ValueError("Number of components and number of values must match.") # pragma: no cover
-
-    data = numpy.full((res[1], res[0], len(values)), values, dtype=numpy.float16)
-    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=components, role=role)})
-    imagecat.operator.util.log_result(log, name, "fill", output, components=components, layer=layer, role=role, res=res, values=values)
-    return output
-
-
 def gaussian(graph, name, inputs):
     """Blur an :ref:`image<images>` using a Gaussian kernel.
 
@@ -575,6 +537,7 @@ def uniform(graph, name, inputs):
     return output
 
 
+from imagecat.operator.fill import fill
 from imagecat.operator.remap import remap
 import imagecat.operator.cryptomatte as cryptomatte
 
