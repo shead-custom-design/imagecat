@@ -223,7 +223,7 @@ def step_impl(context, task, layer, res, components, role, seed):
     seed = eval(seed)
     res = eval(res)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.uniform, components=components, layer=layer, role=role, seed=seed, res=res)
+    imagecat.add_task(context.graph, task, imagecat.operator.noise.uniform, components=components, layer=layer, role=role, seed=seed, res=res)
 
 
 @when(u'updating the task {task}')

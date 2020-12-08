@@ -22,6 +22,7 @@ Contents:
    imagecat.operator.blur.rst
    imagecat.operator.cryptomatte.rst
    imagecat.operator.fill.rst
+   imagecat.operator.noise.rst
    imagecat.operator.remap.rst
    imagecat.operator.util.rst
    imagecat.units.rst
