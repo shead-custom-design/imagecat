@@ -48,10 +48,18 @@ def remap(graph, name, inputs):
     mapping = imagecat.operator.util.optional_input(name, inputs, "mapping", type=dict, default={})
 
     layers = {}
-    for name, layer in mapping.items():
-        data=numpy.dstack([image.layers[channel].data for channel in layer.get("channels")])
-        components = layer.get("components", None)
-        role = layer.get("role", None)
+    for name, spec in mapping.items():
+        data = []
+        for layer in spec.get("selection"):
+            if isinstance(layer, str):
+                data.append(image.layers[layer].data)
+            elif isinstance(layer, tuple):
+                layer, component = layer
+                index = image.layers[layer].components.index(component)
+                data.append(image.layers[layer].data[:,:,index])
+        data=numpy.dstack(data)
+        components = spec.get("components", None)
+        role = spec.get("role", None)
         layers[name] = imagecat.data.Layer(data=data, components=components, role=role)
 
     output = imagecat.data.Image(layers=layers)
