@@ -19,6 +19,7 @@ Contents:
    imagecat.io.rst
    imagecat.notebook.rst
    imagecat.operator.rst
+   imagecat.operator.blur.rst
    imagecat.operator.cryptomatte.rst
    imagecat.operator.fill.rst
    imagecat.operator.remap.rst

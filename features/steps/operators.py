@@ -146,7 +146,7 @@ def step_impl(context, components, layer, res, role, task, values):
 def step_impl(context, task, radius):
     task = eval(task)
     radius = eval(radius)
-    imagecat.add_task(context.graph, task, imagecat.operator.gaussian, radius=radius)
+    imagecat.add_task(context.graph, task, imagecat.operator.blur.gaussian, radius=radius)
 
 
 @given(u'a task {task} with operator load path {path}')

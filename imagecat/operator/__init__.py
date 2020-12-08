@@ -158,47 +158,6 @@ def delete(graph, name, inputs):
     return output
 
 
-def gaussian(graph, name, inputs):
-    """Blur an :ref:`image<images>` using a Gaussian kernel.
-
-    Parameters
-    ----------
-    graph: :class:`graphcat.Graph`, required
-        Graph that owns this task.
-    name: hashable object, required
-        Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
-
-        :["image"][0]: :class:`imagecat.data.Image`, required. Image containing layers to be blurred.
-        :["layers"][0]: :class:`str`, optional. Pattern matching the layers to be blurred.  Default: '*', which blurs all layers.
-        :["sigma"][0]: (x, y) tuple, required. Width of the gaussian kernel in pixels along each dimension.
-
-    Returns
-    -------
-    image: :class:`imagecat.data.Image`
-        A copy of the input image with some layers blurred.
-    """
-    import skimage.filters
-
-    image = imagecat.operator.util.require_image(name, inputs, "image")
-    layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
-    radius = imagecat.operator.util.optional_input(name, inputs, "radius", default=["5px", "5px"])
-
-    output = imagecat.data.Image()
-    for layer_name in image.match_layer_names(layers):
-        layer = image.layers[layer_name]
-        data = layer.data
-        sigma = [
-            imagecat.units.length(radius[1], layer.res),
-            imagecat.units.length(radius[0], layer.res),
-            ]
-        data = numpy.atleast_3d(skimage.filters.gaussian(data, sigma=sigma, multichannel=True, preserve_range=True).astype(data.dtype))
-        output.layers[layer_name] = layer.copy(data=data)
-    imagecat.operator.util.log_result(log, name, "gaussian", output, layers=layers, radius=radius)
-    return output
-
-
 def load(graph, name, inputs):
     """Load an :ref:`image<images>` from a file.
 
@@ -539,5 +498,7 @@ def uniform(graph, name, inputs):
 
 from imagecat.operator.fill import fill
 from imagecat.operator.remap import remap
+
+import imagecat.operator.blur as blur
 import imagecat.operator.cryptomatte as cryptomatte
 
