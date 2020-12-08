@@ -121,7 +121,7 @@ def step_impl(context, task, pivot, position, orientation):
     pivot = eval(pivot)
     position = eval(position)
     orientation = eval(orientation)
-    imagecat.add_task(context.graph, task, imagecat.operator.composite, pivot=pivot, position=position, orientation=orientation)
+    imagecat.add_task(context.graph, task, imagecat.operator.transform.composite, pivot=pivot, position=position, orientation=orientation)
 
 
 @given(u'a task {task} with operator delete layers {layers}')
@@ -168,7 +168,7 @@ def step_impl(context, task, layers, offset):
     task = eval(task)
     layers = eval(layers)
     offset = eval(offset)
-    imagecat.add_task(context.graph, task, imagecat.operator.offset, layers=layers, offset=offset)
+    imagecat.add_task(context.graph, task, imagecat.operator.transform.offset, layers=layers, offset=offset)
 
 
 @given(u'a task {task} with operator rename changes {changes}')

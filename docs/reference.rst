@@ -24,5 +24,6 @@ Contents:
    imagecat.operator.fill.rst
    imagecat.operator.noise.rst
    imagecat.operator.remap.rst
+   imagecat.operator.transform.rst
    imagecat.operator.util.rst
    imagecat.units.rst
