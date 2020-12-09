@@ -75,6 +75,11 @@ master_doc = "index"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
+# -- nbsphinx options --------------------------------------------------------
+
+nbsphinx_execute = "always"
+
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

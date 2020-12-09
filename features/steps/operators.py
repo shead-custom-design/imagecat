@@ -105,14 +105,14 @@ def step_impl(context):
 def step_impl(context, task, layers):
     layers = eval(layers)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.colormap, layers=layers)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.colormap, layers=layers)
 
 
 @given(u'a task {task} with operator colormap layers {layers}')
 def step_impl(context, task, layers):
     layers = eval(layers)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.colormap, layers=layers, mapping=context.mapping)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.colormap, layers=layers, mapping=context.mapping)
 
 
 @given(u'a task {task} with operator composite pivot {pivot} position {position} orientation {orientation}')
@@ -183,7 +183,7 @@ def step_impl(context, task, layers, weights):
     task = eval(task)
     layers = eval(layers)
     weights = eval(weights)
-    imagecat.add_task(context.graph, task, imagecat.operator.rgb2gray, layers=layers, weights=weights)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.rgb2gray, layers=layers, weights=weights)
 
 
 @given(u'a task {task} with operator save path {path}')

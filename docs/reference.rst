@@ -20,6 +20,7 @@ Contents:
    imagecat.notebook.rst
    imagecat.operator.rst
    imagecat.operator.blur.rst
+   imagecat.operator.color.rst
    imagecat.operator.cryptomatte.rst
    imagecat.operator.fill.rst
    imagecat.operator.noise.rst
