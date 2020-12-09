@@ -199,7 +199,7 @@ def step_impl(context, task, order, res):
     order = eval(order)
     res = eval(res)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.resize, order=order, res=res)
+    imagecat.add_task(context.graph, task, imagecat.operator.transform.resize, order=order, res=res)
 
 
 @given(u'a task {task} with operator text anchor {anchor} fontsize {fontsize} layer {layer} position {position} res {res} string {string}')

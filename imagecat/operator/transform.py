@@ -121,3 +121,42 @@ def offset(graph, name, inputs):
         output.layers[layer_name] = layer.copy(data=data)
     imagecat.operator.util.log_result(log, name, "offset", output, layers=layers, offset=offset)
     return output
+
+
+def resize(graph, name, inputs):
+    """Resize an :ref:`image<images>` to a new resolution.
+
+    Parameters
+    ----------
+    graph: :class:`graphcat.Graph`, required
+        Graph that owns this task.
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :any:`dict`, required
+        Inputs for this function, containing:
+
+        :["image"][0]: :class:`imagecat.data.Image`, required. Image to be resized.
+        :["order"][0]: :any:`int`, optional.  Resampling filter order.  Default: '3' for bicubic resampling.
+        :["res"][0]: (width, height) tuple, optional. New resolution of the image along each dimension.
+
+    Returns
+    -------
+    image: :class:`imagecat.data.Image`
+        A copy of the input image that has been resized.
+    """
+    import skimage.transform
+
+    image = imagecat.operator.util.require_image(name, inputs, "image")
+    order = imagecat.operator.util.optional_input(name, inputs, "order", type=int, default=3)
+    res = imagecat.operator.util.optional_input(name, inputs, "res", default=("1w", "1h"))
+
+    output = imagecat.data.Image()
+    for layername, layer in image.layers.items():
+        width = int(imagecat.units.length(res[0], layer.res))
+        height = int(imagecat.units.length(res[1], layer.res))
+        data = skimage.transform.resize(layer.data.astype(numpy.float32), (height, width), anti_aliasing=True, order=order).astype(layer.data.dtype)
+        output.layers[layername] = layer.copy(data=data)
+    imagecat.operator.util.log_result(log, name, "resize", output, order=order, res=res)
+    return output
+
+
