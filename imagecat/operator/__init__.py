@@ -279,7 +279,6 @@ def text(graph, name, inputs):
     return output
 
 
-from imagecat.operator.fill import fill
 from imagecat.operator.remap import remap
 
 import imagecat.operator.blur as blur
