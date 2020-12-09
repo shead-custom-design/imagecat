@@ -212,7 +212,7 @@ def step_impl(context, task, anchor, fontsize, layer, position, res, string):
     task = eval(task)
     string = eval(string)
 
-    imagecat.add_task(context.graph, task, imagecat.operator.text, anchor=anchor, fontsize=fontsize, layer=layer, position=position, res=res, string=string)
+    imagecat.add_task(context.graph, task, imagecat.operator.render.text, anchor=anchor, fontsize=fontsize, layer=layer, position=position, res=res, string=string)
 
 
 @given(u'a task {task} with operator uniform layer {layer} res {res} components {components} role {role} seed {seed}')
