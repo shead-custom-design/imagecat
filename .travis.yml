@@ -7,7 +7,7 @@ addons:
         packages:
             - openexr
 install:
-    - pip install --upgrade behave coverage coveralls graphcat ipython ipywidgets mmh3 numpy OpenEXR Pillow scikit-image
+    - pip install --upgrade behave coverage coveralls graphcat ipython ipywidgets mmh3 nbformat numpy OpenEXR Pillow scikit-image
 script:
     - coverage run --source imagecat -m behave --tags ~wip
     - coverage report

@@ -157,7 +157,7 @@ def require_layer(name, inputs, input, *, layer=None, role=None, depth=None, dty
     if role is not None and image.layers[layer].role != role:
         raise RuntimeError(f"Task {name} input {input!r} layer {layer} expected role {role}.") # pragma: no cover
     if depth is not None and image.layers[layer].data.shape[2] != depth:
-        raise RuntimeError(f"Task {name} input {input!r} layer {layer} expected {components} components.") # pragma: no cover
+        raise RuntimeError(f"Task {name} input {input!r} layer {layer} expected {depth} components.") # pragma: no cover
     if dtype is not None and image.layers[layer].data.dtype != dtype:
         raise RuntimeError(f"Task {name} input {input!r} layer {layer} expected dtype {dtype}.") # pragma: no cover
     return layer, image.layers[layer].copy() # This ensures that we don't modify our inputs.

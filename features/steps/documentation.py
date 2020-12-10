@@ -14,13 +14,20 @@
 
 from behave import *
 
+import glob
 import os
 import pkgutil
 import subprocess
 import sys
 
+import IPython
+import nbformat
+
+
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 docs_dir = os.path.join(root_dir, "docs")
+gallery_dir = os.path.join(docs_dir, "gallery")
+notebook_dir = os.path.join(root_dir, "notebooks")
 package_dir = os.path.join(root_dir, "imagecat")
 
 
@@ -62,3 +69,54 @@ def step_impl(context):
     for reference in context.references:
         if reference not in modules:
             raise AssertionError("No matching module found for %s." % reference)
+
+
+@given(u'all documentation notebooks')
+def step_impl(context):
+    context.notebooks = sorted(glob.glob(os.path.join(docs_dir, "*.ipynb")))
+
+
+@given(u'all gallery notebooks')
+def step_impl(context):
+    context.notebooks = sorted(glob.glob(os.path.join(gallery_dir, "*.ipynb")))
+
+
+@given(u'all testing notebooks')
+def step_impl(context):
+    context.notebooks = sorted(glob.glob(os.path.join(notebook_dir, "*.ipynb")))
+
+
+@then(u'every notebook runs without error')
+def step_impl(context):
+    for notebook in context.notebooks:
+        context.execute_steps(f"Then notebook {notebook} runs without error")
+
+
+@then(u'notebook {notebook} runs without error')
+def step_impl(context, notebook):
+    notebook_dir = os.path.dirname(notebook)
+    working_dir = os.getcwd()
+
+    sys.path.append(notebook_dir)
+    os.chdir(notebook_dir)
+
+    exception = None
+    try:
+        with open(notebook) as stream:
+            notebook = nbformat.read(stream, as_version=4)
+
+        shell = IPython.core.interactiveshell.InteractiveShell.instance()
+        nblocals = dict()
+
+        for cell in notebook.cells:
+            if cell.cell_type == "code":
+                code = shell.input_transformer_manager.transform_cell(cell.source)
+                exec(code, nblocals)
+    except Exception as e:
+        exception = e
+
+    os.chdir(working_dir)
+    sys.path.remove(notebook_dir)
+
+    if exception is not None:
+        raise exception

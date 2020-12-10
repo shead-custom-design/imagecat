@@ -65,8 +65,8 @@ Feature: Operators
 
     Scenario Outline: composite
         Given an empty graph
-        And a task "/foreground" with operator fill layer "C" res [256, 128] values [0, 0, 0] components None role Role.RGB
-        And a task "/background" with operator fill layer "C" res [512, 512] values [1, 0.5, 0] components None role Role.RGB
+        And a task "/foreground" with operator fill layer "C" res [256, 128] values [0, 0, 0] role Role.RGB
+        And a task "/background" with operator fill layer "C" res [512, 512] values [1, 0.5, 0] role Role.RGB
         And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/comp" with operator composite pivot <pivot> position <position> orientation <orientation>
         And links [("/foreground", ("/comp", "foreground"))]
@@ -83,8 +83,8 @@ Feature: Operators
 
     Scenario Outline: delete
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/fill2" with operator fill layer "A" res (128, 128) values [1.0] components None role Role.NONE
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] role Role.RGB
+        And a task "/fill2" with operator fill layer "A" res (128, 128) values [1.0] role Role.NONE
         And a task "/merge" with operator merge
         And a task "/delete" with operator delete layers <layers>
         And links [("/fill1", ("/merge", "image1"))]
@@ -100,14 +100,14 @@ Feature: Operators
 
     Scenario Outline: fill
         Given an empty graph
-        And a task "/fill" with operator fill layer <layer> res <res> values <values> components <components> role <role>
+        And a task "/fill" with operator fill layer <layer> res <res> values <values> role <role>
         When retrieving the output image from task "/fill"
         Then the image should match the <reference> reference image
 
         Examples:
-            | layer  | res        | values          | components       | role               | reference          |
-            | "C"    | (128, 128)  | (1, 0.5, 0)     | ["r", "g", "b"]  | Role.RGB  | fill-color        |
-            | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | ["x", "y", "z"]  | Role.NONE | fill-vel          |
+            | layer  | res        | values           | role               | reference          |
+            | "C"    | (128, 128)  | (1, 0.5, 0)     | Role.RGB  | fill-color        |
+            | "vel"  | (128, 128)  | (0.0, 0.5, 1.0) | Role.NONE | fill-vel          |
 
 
     Scenario Outline: gaussian
@@ -127,8 +127,8 @@ Feature: Operators
 
     Scenario Outline: merge
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
-        And a task "/fill2" with operator fill layer "A" res (128, 128) values [1.0] components None role Role.NONE
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] role Role.RGB
+        And a task "/fill2" with operator fill layer "A" res (128, 128) values [1.0] role Role.NONE
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]
         And links [("/fill2", ("/merge", "image2"))]
@@ -156,7 +156,7 @@ Feature: Operators
 
     Scenario Outline: rename
         Given an empty graph
-        And a task "/fill" with operator fill layer "A" res (128, 128) values [1] components ["alpha"] role Role.NONE
+        And a task "/fill" with operator fill layer "A" res (128, 128) values [1] role Role.NONE
         And a task "/rename" with operator rename changes <changes>
         And links [("/fill", ("/rename", "image"))]
         When retrieving the output image from task "/rename"
@@ -222,7 +222,7 @@ Feature: Operators
 
     Scenario: Notebook Display
         Given an empty graph
-        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] components None role Role.RGB
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] role Role.RGB
         And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat!"
         And a task "/merge" with operator merge
         And links [("/fill1", ("/merge", "image1"))]

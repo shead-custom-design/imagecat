@@ -132,15 +132,14 @@ def step_impl(context, task, layers):
     imagecat.add_task(context.graph, task, imagecat.operator.delete, layers=layers)
 
 
-@given(u'a task {task} with operator fill layer {layer} res {res} values {values} components {components} role {role}')
-def step_impl(context, components, layer, res, role, task, values):
-    components = eval(components)
+@given(u'a task {task} with operator fill layer {layer} res {res} values {values} role {role}')
+def step_impl(context, layer, res, role, task, values):
     layer = eval(layer)
     role = eval(role)
     res = eval(res)
     task = eval(task)
     values = eval(values)
-    imagecat.add_task(context.graph, task, imagecat.operator.color.fill, components=components, layer=layer, res=res, values=values, role=role)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.fill, layer=layer, res=res, values=values, role=role)
 
 
 @given(u'a task {task} with operator gaussian radius {radius}')
