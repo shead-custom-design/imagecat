@@ -7,6 +7,20 @@
 Release Notes
 =============
 
+Imagecat 0.4.0 - December 9, 2020
+---------------------------------
+
+* Initial support for storing image metadata.
+* OpenEXR loader imports metadata.
+* imagecat.notebook.display() dynamically renders image layers using IPython widgets.
+* Added new imagecat.data.Role enumerations for varying subsets of RGB, alpha, matte, luminance, and depth data.
+* Added imagecat.operator.remap() for creating new images from arbitrary combinations of existing layers and components.
+* Added support for Cryptomatte decoding.
+* imagecat.data.Layer supports Jupyter rich output.
+* Expanded / cleaned-up the documentation.
+* Substantial reorganization of operators into separate modules.
+* Removed support for explicit layer component names.
+
 Imagecat 0.3.0 - December 4, 2020
 ---------------------------------
 

@@ -141,13 +141,13 @@ def remap(graph, name, inputs):
     inputs: :ref:`named-inputs`, required
         Inputs for this function, containing:
 
-        :"image": :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing image layers and components to be remapped.
+        :"image": :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing image layers and components to be mapped.
         :"mapping": :class:`dict`, optional. Maps existing layers and components to the output.  Default: {}, which returns an empty image.
 
     Returns
     -------
     image: :class:`imagecat.data.Image`
-        A copy of the input image with remapped layers and components.
+        A new image containing only the mapped layers and components.
     """
     image = imagecat.operator.util.require_image(name, inputs, "image")
     mapping = imagecat.operator.util.optional_input(name, inputs, "mapping", type=dict, default={})
