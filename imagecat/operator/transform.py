@@ -31,43 +31,43 @@ def composite(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
+    inputs: :ref:`named-inputs`, required
         Inputs for this function, containing:
 
-        :["bglayer"][0]: :class:`str`, optional. Name of the background layer.  Defaults to `"C"`.
-        :["fglayer"][0]: :class:`str`, optional. Name of the foreground layer.  Defaults to `"C"`.
-        :["layer"][0]: :class:`str`, optional. Name of the output image layer.  Defaults to the value of `bglayer`.
-        :["masklayer"][0]: :class:`str`, optional. Name of the mask layer.  Defaults to `"A"`.
-        :["orientation"][0]: number, optional. Rotation of the foreground layer for the composition.  Default: `0`.
-        :["pivot"][0]: (x, y) tuple, optional.  Position of the foreground pivot point.  All rotation and positioning is relative to this point.  Default: `["0.5w", "0.5h"]`, which is centered on the foreground.
-        :["position"][0]: (x, y) tuple, optional.  Position of the foreground layer over the background layer.  All rotation and positioning is relative to the pivot point.  Default: `["0.5w", "0.5h"]`, which is centered on the background.
-
-        :["foreground"][0]: :class:`imagecat.data.Image`, required. Image containing the foreground layer.
-        :["background"][0]: :class:`imagecat.data.Image`, required. Image containing the background layer.
-        :["mask"][0]: :class:`imagecat.data.Image`, optional. Image containing the foreground layer mask.  If omitted, the foreground layer is assumed to be 100% opaque.
+        :"bglayer": :class:`str`, optional. Name of the background layer.  Defaults to :any:`None`.
+        :"fglayer": :class:`str`, optional. Name of the foreground layer.  Defaults to :any:`None`.
+        :"layer": :class:`str`, optional. Name of the output image layer.  Defaults to the value of `bglayer`.
+        :"masklayer": :class:`str`, optional. Name of the mask layer.  Defaults to :any:`None`.
+        :"orientation": number, optional. Rotation of the foreground layer for the composition.  Default: `0`.
+        :"pivot": (x, y) tuple, optional.  Position of the foreground pivot point.  All rotation and positioning is relative to this point.  Default: `["0.5w", "0.5h"]`, which is centered on the foreground.
+        :"position": (x, y) tuple, optional.  Position of the foreground layer over the background layer.  All rotation and positioning is relative to the pivot point.  Default: `["0.5w", "0.5h"]`, which is centered on the background.
+        :"foreground": :class:`imagecat.data.Image`, required. Image containing the foreground layer.
+        :"background": :class:`imagecat.data.Image`, required. Image containing the background layer.
+        :"mask": :class:`imagecat.data.Image`, optional. Image containing the foreground layer mask.  If omitted, the foreground layer is assumed to be 100% opaque.
 
     Returns
     -------
     image: :class:`imagecat.data.Image`
         New image with a single solid-color layer.
     """
-    bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", type=str, default="C")
-    fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", type=str, default="C")
-    layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default=bglayer)
-    masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", type=str, default="A")
+    bglayer = imagecat.operator.util.optional_input(name, inputs, "bglayer", default=None)
+    fglayer = imagecat.operator.util.optional_input(name, inputs, "fglayer", default=None)
+    masklayer = imagecat.operator.util.optional_input(name, inputs, "masklayer", default=None)
+
+    background_name, background = imagecat.operator.util.require_layer(name, inputs, "background", layer=bglayer)
+    foreground_name, foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", layer=fglayer)
+    mask_name, mask = imagecat.operator.util.optional_layer(name, inputs, "mask", layer=masklayer, depth=1)
+
+    layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default=background_name)
     order = imagecat.operator.util.optional_input(name, inputs, "order", type=int, default=3)
     orientation = imagecat.operator.util.optional_input(name, inputs, "orientation", type=float, default=0)
     pivot = imagecat.operator.util.optional_input(name, inputs, "pivot", default=["0.5w", "0.5h"])
     position = imagecat.operator.util.optional_input(name, inputs, "position", default=["0.5w", "0.5h"])
     scale = imagecat.operator.util.optional_input(name, inputs, "scale", default=[1, 1])
-
-    background = imagecat.operator.util.require_layer(name, inputs, "background", layer=bglayer)
-    foreground = imagecat.operator.util.require_layer(name, inputs, "foreground", layer=fglayer)
-    mask = imagecat.operator.util.optional_layer(name, inputs, "mask", layer=masklayer, components=1)
 
     if mask is None:
         mask = numpy.ones((foreground.shape[0], foreground.shape[1], 1), dtype=numpy.float16)
@@ -81,7 +81,7 @@ def composite(graph, name, inputs):
     data = background.data.copy()
     data[i1:i2, j1:j2] = transformed_foreground * alpha + data[i1:i2, j1:j2] * one_minus_alpha
 
-    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, components=background.components, role=background.role)})
+    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=background.role)})
     imagecat.operator.util.log_result(log, name, "composite", output, bglayer=bglayer, fglayer=fglayer, masklayer=masklayer, layer=layer, order=order, orientation=orientation, pivot=pivot, position=position, scale=scale)
     return output
 

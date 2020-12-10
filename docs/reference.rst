@@ -26,4 +26,5 @@ Contents:
    imagecat.operator.render.rst
    imagecat.operator.transform.rst
    imagecat.operator.util.rst
+   imagecat.require.rst
    imagecat.units.rst

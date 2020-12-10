@@ -57,7 +57,7 @@ def step_impl(context, task):
     task = eval(task)
 
     data = skimage.img_as_float(skimage.data.chelsea()).astype(numpy.float16)
-    layer = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(data), components=["r", "g", "b"], role=imagecat.data.Role.RGB)
+    layer = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(data), role=imagecat.data.Role.RGB)
     image = imagecat.data.Image({"C": layer})
     context.graph.set_task(task, graphcat.constant(image))
 
@@ -101,18 +101,19 @@ def step_impl(context):
 	context.mapping = functools.partial(imagecat.color.linear_map, palette=context.palette)
 
 
-@given(u'a task {task} with operator colormap layers {layers} and default mapping')
-def step_impl(context, task, layers):
-    layers = eval(layers)
+@given(u'a task {task} with operator colormap inlayer {inlayer} and default mapping')
+def step_impl(context, task, inlayer):
+    inlayer = eval(inlayer)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.color.colormap, layers=layers)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.colormap, inlayer=inlayer)
 
 
-@given(u'a task {task} with operator colormap layers {layers}')
-def step_impl(context, task, layers):
-    layers = eval(layers)
+@given(u'a task {task} with operator colormap inlayer {inlayer} outlayer {outlayer}')
+def step_impl(context, task, inlayer, outlayer):
+    inlayer = eval(inlayer)
+    outlayer = eval(outlayer)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.color.colormap, layers=layers, mapping=context.mapping)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.colormap, inlayer=inlayer, outlayer=outlayer, mapping=context.mapping)
 
 
 @given(u'a task {task} with operator composite pivot {pivot} position {position} orientation {orientation}')
@@ -215,15 +216,14 @@ def step_impl(context, task, anchor, fontsize, layer, position, res, string):
     imagecat.add_task(context.graph, task, imagecat.operator.render.text, anchor=anchor, fontsize=fontsize, layer=layer, position=position, res=res, string=string)
 
 
-@given(u'a task {task} with operator uniform layer {layer} res {res} components {components} role {role} seed {seed}')
-def step_impl(context, task, layer, res, components, role, seed):
-    components = eval(components)
+@given(u'a task {task} with operator uniform layer {layer} res {res} role {role} seed {seed}')
+def step_impl(context, task, layer, res, role, seed):
     layer = eval(layer)
+    res = eval(res)
     role = eval(role)
     seed = eval(seed)
-    res = eval(res)
     task = eval(task)
-    imagecat.add_task(context.graph, task, imagecat.operator.noise.uniform, components=components, layer=layer, role=role, seed=seed, res=res)
+    imagecat.add_task(context.graph, task, imagecat.operator.noise.uniform, layer=layer, role=role, seed=seed, res=res)
 
 
 @when(u'updating the task {task}')

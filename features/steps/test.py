@@ -38,7 +38,6 @@ def assert_layer_equal(lhs, rhs):
         raise ValueError("Right operand must be an instance of imagecat.data.Layer.")
     assert_equal(lhs.data.dtype, rhs.data.dtype)
     numpy.testing.assert_allclose(lhs.data, rhs.data, rtol=0, atol=0.0005)
-    assert_equal(lhs.components, rhs.components)
     assert_equal(lhs.role, rhs.role)
 
 

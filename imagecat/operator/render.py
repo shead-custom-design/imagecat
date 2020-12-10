@@ -75,7 +75,7 @@ def text(graph, name, inputs):
     draw.text((x, y), string, font=font, fill=255, anchor=anchor)
 
     data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
-    output = imagecat.data.Image({layer: imagecat.data.Layer(data=data)})
+    output = imagecat.data.Image({layer: imagecat.data.Layer(data=data, role=imagecat.data.Role.ALPHA)})
     imagecat.operator.util.log_result(log, name, "text", output, anchor=anchor, fontindex=fontindex, fontname=fontname, fontsize=fontsize, layer=layer, position=position, res=res, string=string)
     return output
 

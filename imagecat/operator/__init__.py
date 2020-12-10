@@ -160,12 +160,10 @@ def remap(graph, name, inputs):
                 data.append(image.layers[layer].data)
             elif isinstance(layer, tuple):
                 layer, component = layer
-                index = image.layers[layer].components.index(component)
-                data.append(image.layers[layer].data[:,:,index])
+                data.append(image.layers[layer].data[:,:,component])
         data=numpy.dstack(data)
-        components = spec.get("components", None)
         role = spec.get("role", None)
-        layers[name] = imagecat.data.Layer(data=data, components=components, role=role)
+        layers[name] = imagecat.data.Layer(data=data, role=role)
 
     output = imagecat.data.Image(layers=layers)
     imagecat.operator.util.log_result(log, name, "remap", output, mapping=mapping)

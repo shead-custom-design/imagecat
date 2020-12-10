@@ -18,12 +18,19 @@
 import collections
 import enum
 import fnmatch
+import functools
 import io
 import os
 
 import numpy
 
+try:
+    import PIL.Image
+except:
+    pass
+
 import imagecat.color
+import imagecat.require
 
 
 # Warning!  Moving this to another module will break *.icp file loading.
@@ -151,14 +158,6 @@ class Layer(object):
         channels.  The array dtype should be `numpy.float16` for most data,
         with `numpy.float32` and `numpy.int32` reserved for special cases such
         as depth maps and object id maps, respectively.
-    components: sequence of :class:`str`, optional
-        Component names for each of the :math:`C` components in the data.  If
-        :any:`None` (the default), a set of component names will be inferred
-        from context, but this process may fail.  Component names can be any
-        strings, but good choices are `["r", "g", "b"]` for RGB color data,
-        `["x", "y", "z"]` for vector / normal information, `["u", "v"]` for
-        texture coordinates, and `[""]` for single-component layers like
-        alphas or masks.
     role: :class:`Role`, optional
         Semantic purpose of the layer.  If :any:`None` (the default), an
         attempt will be made to infer the role from context.
@@ -168,54 +167,59 @@ class Layer(object):
     :ref:`images`
         For an in-depth discussion of how images are stored in Imagecat.
     """
-    def __init__(self, *, data, components=None, role=None):
+    def __init__(self, *, data, role=None):
         if not isinstance(data, numpy.ndarray):
             raise ValueError("Layer data must be an instance of numpy.ndarray.") # pragma: no cover
         if data.ndim != 3:
             raise ValueError("Layer data must have three dimensions.") # pragma: no cover
 
         if role is None:
-            if data.shape[2] == 3:
-                role = Role.RGB
-            elif data.shape[2] == 2:
-                role = Role.RG
-            else:
-                role = Role.NONE
+            role = Role.NONE
         if not isinstance(role, Role):
             raise ValueError("Layer role must be an instance of imagecat.data.Role.") # pragma: no cover
 
-        if components is None:
-            if data.shape[2] == 3 and role == Role.RGB:
-                components = ["r", "g", "b"]
-            elif data.shape[2] == 2 and role == Role.RG:
-                components = ["r", "g"]
-            elif data.shape[2] == 2 and role == Role.GB:
-                components = ["g", "b"]
-            elif data.shape[2] == 2 and role == Role.RB:
-                components = ["r", "b"]
-            elif data.shape[2] == 1 and role == Role.R:
-                components = ["r"]
-            elif data.shape[2] == 1 and role == Role.G:
-                components = ["g"]
-            elif data.shape[2] == 1 and role == Role.B:
-                components = ["b"]
-            elif data.shape[2] == 1:
-                components = [""]
-            else:
-                components = []
-        if len(components) != data.shape[2]:
-            raise ValueError(f"Expected {data.shape[2]} layer components, received {len(components)}.") # pragma: no cover
+        role_depth = depth(role)
+        if role_depth is not None and data.shape[2] != role_depth:
+            raise ValueError(f"Expected {role_depth} components, received {data.shape[2]}.")
 
         self.data = data
-        self.components = components
         self.role = role
 
 
     def __repr__(self):
-        return f"Layer({self.data.shape[1]}x{self.data.shape[0]}x{self.data.shape[2]} {self.data.dtype} {self.components} {self.role})"
+        return f"Layer({self.role} {self.data.shape[1]}x{self.data.shape[0]}x{self.data.shape[2]} {self.data.dtype})"
 
 
-    def copy(self, data=None, components=None, role=None):
+    @property
+    def components(self):
+        if self.role == Role.RGB:
+            return ["R", "G", "B"]
+        elif self.role == Role.REDGREEN:
+            return ["R", "G"]
+        elif self.role == Role.GREENBLUE:
+            return ["G", "B"]
+        elif self.role == Role.REDBLUE:
+            return ["R", "B"]
+        elif self.role == Role.RED:
+            return ["R"]
+        elif self.role == Role.GREEN:
+            return ["G"]
+        elif self.role == Role.BLUE:
+            return ["B"]
+        elif self.role == Role.ALPHA:
+            return ["A"]
+        elif self.role == Role.MATTE:
+            return ["M"]
+        elif self.role == Role.LUMINANCE:
+            return ["Y"]
+        elif self.role == Role.DEPTH:
+            return ["Z"]
+        elif self.role == Role.NONE:
+            return [str(index) for index in range(self.data.shape[2])]
+        raise RuntimeError(f"Unknown role: {self.role}")
+
+
+    def copy(self, data=None, role=None):
         """Return a shallow copy of the layer, with optional modifications.
 
         This method returns a new instance of :class:`Layer` that can be altered
@@ -227,8 +231,6 @@ class Layer(object):
         ----------
         data: :class:`numpy.ndarray`, optional
             Replaces the existing data array in the new layer, if not :any:`None` (the default).
-        components: list of :class:`str`, optional
-            Replaces the existing component names in the new layer, if not :any:`None` (the default).
         role: :class:`Role`, optional
             Replaces the existing role in the new layer, if not :any:`None` (the default).
 
@@ -238,9 +240,8 @@ class Layer(object):
             The new layer instance with modifications.
         """
         data = self.data if data is None else data
-        components = self.components if components is None else components
         role = self.role if role is None else role
-        return Layer(data=data, components=components, role=role)
+        return Layer(data=data, role=role)
 
 
     @property
@@ -271,34 +272,9 @@ class Layer(object):
         return self.data.shape
 
 
-    def to_pil(self):
-        import PIL.Image
-        data = self.data
-        if self.role in [Role.RGB, Role.RG, Role.GB, Role.RB, Role.R, Role.G, Role.B]:
-            data = imagecat.color.linear_to_srgb(data)
-            if self.role != Role.RGB:
-                black = numpy.zeros(data.shape[:2] + (1,))
-                if self.role == Role.RG:
-                    data = numpy.dstack((data[:,:,0], data[:,:,1], black))
-                elif self.role == Role.GB:
-                    data = numpy.dstack((black, data[:,:,0], data[:,:,1]))
-                elif self.role == Role.RB:
-                    data = numpy.dstack((data[:,:,0], black, data[:,:,1]))
-                elif self.role == Role.R:
-                    data = numpy.dstack((data[:,:,0], black, black))
-                elif self.role == Role.G:
-                    data = numpy.dstack((black, data[:,:,0], black))
-                elif self.role == Role.B:
-                    data = numpy.dstack((black, black, data[:,:,0]))
-
-        pil_image = (data * 255.0).astype(numpy.ubyte)
-        pil_image = numpy.squeeze(pil_image, 2) if pil_image.shape[2] == 1 else pil_image
-        pil_image = PIL.Image.fromarray(pil_image)
-        return pil_image
-
     def _repr_png_(self):
         stream = io.BytesIO()
-        self.to_pil().save(stream, "PNG")
+        to_pil(self).save(stream, "PNG")
         return stream.getvalue()
 
 
@@ -318,26 +294,37 @@ class Role(enum.Enum):
     NONE = 0
     """General purpose catch-all for layers with no specific role."""
     RGB = 1
-    """Indicates that a layer contains red-green-blue information that e.g. should be
-    converted to sRGB for display."""
-    RG = 2
-    """Indicates that a layer contains red-green information that e.g. should be
-    converted to sRGB for display."""
-    GB = 3
-    """Indicates that a layer contains green-blue information that e.g. should be
-    converted to sRGB for display."""
-    RB = 4
-    """Indicates that a layer contains red-blue information that e.g. should be
-    converted to sRGB for display."""
-    R = 5
-    """Indicates that a layer contains red information that e.g. should be
-    converted to sRGB for display."""
-    G = 6
-    """Indicates that a layer contains green information that e.g. should be
-    converted to sRGB for display."""
-    B = 7
-    """Indicates that a layer contains blue information that e.g. should be
-    converted to sRGB for display."""
+    """Indicates that a layer contains red-green-blue color information."""
+    REDGREEN = 2
+    """Indicates that a layer contains red-green color information."""
+    GREENBLUE = 3
+    """Indicates that a layer contains green-blue color information."""
+    REDBLUE = 4
+    """Indicates that a layer contains red-blue color information."""
+    RED = 5
+    """Indicates that a layer contains red color information."""
+    GREEN = 6
+    """Indicates that a layer contains green color information."""
+    BLUE = 7
+    """Indicates that a layer contains blue color information."""
+    ALPHA = 8
+    """Indicates that a layer contains alpha (opacity) information."""
+    MATTE = 9
+    """Indicates that a layer contains matte (selection / mask) information."""
+    LUMINANCE = 10
+    """Indicates that a layer contains luminance (intensity) information."""
+    DEPTH = 11
+    """Indicates that a layer contains depth (distance from viewer) information."""
+
+
+def depth(role):
+    if role in [Role.RGB]:
+        return 3
+    elif role in [Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE]:
+        return 2
+    elif role in [Role.RED, Role.GREEN, Role.BLUE, Role.ALPHA, Role.MATTE, Role.LUMINANCE, Role.DEPTH]:
+        return 1
+    return None
 
 
 def default_font():
@@ -380,4 +367,44 @@ def match_layer_names(names, patterns):
                 break
     return output
 
+
+@imagecat.require.loaded_module("PIL.Image")
+def to_pil(layer):
+    if not isinstance(layer, Layer):
+        raise ValueError("Input must be an instance of imagecat.layer.Layer.")
+
+    data = layer.data
+    if layer.role in [Role.RGB, Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE, Role.RED, Role.GREEN, Role.BLUE]:
+        data = imagecat.color.linear_to_srgb(data)
+        if layer.role != Role.RGB:
+            black = numpy.zeros(data.shape[:2] + (1,))
+            if layer.role == Role.REDGREEN:
+                data = numpy.dstack((data[:,:,0], data[:,:,1], black))
+            elif layer.role == Role.GREENBLUE:
+                data = numpy.dstack((black, data[:,:,0], data[:,:,1]))
+            elif layer.role == Role.REDBLUE:
+                data = numpy.dstack((data[:,:,0], black, data[:,:,1]))
+            elif layer.role == Role.RED:
+                data = numpy.dstack((data[:,:,0], black, black))
+            elif layer.role == Role.GREEN:
+                data = numpy.dstack((black, data[:,:,0], black))
+            elif layer.role == Role.BLUE:
+                data = numpy.dstack((black, black, data[:,:,0]))
+        data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
+        return PIL.Image.fromarray(data)
+
+    elif layer.role in [Role.ALPHA, Role.MATTE]:
+        data = data[:,:,0]
+        data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
+        return PIL.Image.fromarray(data)
+
+    elif layer.role in [Role.LUMINANCE, Role.DEPTH]:
+        data = data[:,:,0]
+        data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
+        return PIL.Image.fromarray(data)
+
+    elif layer.role in [Role.NONE] and layer.data.shape[2] == 1:
+        data = data[:,:,0]
+        data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
+        return PIL.Image.fromarray(data)
 

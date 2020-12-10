@@ -40,24 +40,24 @@ Feature: Operators
 
     Scenario Outline: colormap
         Given an empty graph
-        And a task "/uniform" with operator uniform layer "L" res (128, 128) components None role Role.NONE seed 1234
+        And a task "/uniform" with operator uniform layer "Y" res (128, 128) role Role.LUMINANCE seed 1234
         And a <color module> <palette> palette reversed: <reversed>
         And a <colormap> colormap
-        And a task "/colormap" with operator colormap layers <layers>
+        And a task "/colormap" with operator colormap inlayer <inlayer> outlayer <outlayer>
         And links [("/uniform", ("/colormap", "image"))]
         When retrieving the output image from task "/colormap"
         Then the image should match the <reference> reference image
 
         Examples:
-            | color module | palette      | reversed  | colormap       | layers    | reference                           |
-            | basic        | "Blackbody"  | False     | linear         | "*"       | colormap-linear-basic-blackbody     |
-            | brewer       | "BlueRed"    | True      | linear         | "*"       | colormap-linear-brewer-bluered      |
+            | color module | palette      | reversed  | colormap       | inlayer   | outlayer    | reference                           |
+            | basic        | "Blackbody"  | False     | linear         | None      | "C"         | colormap-linear-basic-blackbody     |
+            | brewer       | "BlueRed"    | True      | linear         | None      | "C"         | colormap-linear-brewer-bluered      |
 
 
     Scenario: colormap default mapping
         Given an empty graph
-        And a task "/uniform" with operator uniform layer "L" res (128, 128) components None role Role.NONE seed 1234
-        And a task "/colormap" with operator colormap layers "*" and default mapping
+        And a task "/uniform" with operator uniform layer "Y" res (128, 128) role Role.LUMINANCE seed 1234
+        And a task "/colormap" with operator colormap inlayer None and default mapping
         And links [("/uniform", ("/colormap", "image"))]
         When retrieving the output image from task "/colormap"
         Then the image should match the colormap-default reference image
@@ -210,14 +210,14 @@ Feature: Operators
 
     Scenario Outline: uniform
         Given an empty graph
-        And a task "/uniform" with operator uniform layer <layer> res <res> components <components> role <role> seed <seed>
+        And a task "/uniform" with operator uniform layer <layer> res <res> role <role> seed <seed>
         When retrieving the output image from task "/uniform"
         Then the image should match the <reference> reference image
 
         Examples:
-            | layer  | res        | components       | role      | seed | reference         |
-            | "C"    | (128, 128)  | ["r", "g", "b"]  | Role.RGB  | 1234 | uniform-color     |
-            | "L"    | (128, 128)  | None             | Role.NONE | 1234 | uniform-gray      |
+            | layer  | res         | role           | seed | reference         |
+            | "C"    | (128, 128)  | Role.RGB       | 1234 | uniform-color     |
+            | "Y"    | (128, 128)  | Role.LUMINANCE | 1234 | uniform-gray      |
 
 
     Scenario: Notebook Display

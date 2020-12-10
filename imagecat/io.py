@@ -96,7 +96,7 @@ def openexr_loader(task, path, layers):
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.float32).reshape((height, width, 1))
         elif dtype.type.v == Imath.PixelType.INT:
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.int32).reshape((height, width, 1))
-        layers[name] = Layer(data=data, components=[""], role=Role.NONE)
+        layers[name] = Layer(data=data, role=Role.NONE)
 
     return Image(layers=layers, metadata=metadata)
 

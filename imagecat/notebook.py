@@ -49,12 +49,12 @@ def display(image, layers="*", width=None, height=None):
             layer = image.layers[name]
 
             stream = io.BytesIO()
-            layer.to_pil().save(stream, "PNG")
+            imagecat.data.to_pil(layer).save(stream, "PNG")
             uri = "data:image/png;base64," + base64.standard_b64encode(stream.getvalue()).decode("ascii")
 
             markup = f"<figure style='margin: 5px; text-align: center'>"
             markup += f"<image src='{uri}' style='width:{width}; height:{height}; box-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5)'/>"
-            markup += f"<figcaption>{name} <small>{layer.shape[1]}&times;{layer.shape[0]}&times;{layer.shape[2]} {layer.dtype} {layer.role}</small></figcaption>"
+            markup += f"<figcaption>{name} <small>role: {layer.role.name} {layer.shape[1]}&times;{layer.shape[0]}&times;{layer.shape[2]} {layer.dtype}</small></figcaption>"
             markup += f"</figure>"
             return markup
         return implementation
