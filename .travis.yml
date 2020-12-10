@@ -5,6 +5,7 @@ python:
 addons:
     apt:
         packages:
+            - graphviz
             - openexr
 install:
     - pip install --upgrade behave coverage coveralls graphcat ipython ipywidgets mmh3 nbformat numpy OpenEXR Pillow scikit-image
