@@ -85,7 +85,7 @@ def decoder(graph, name, inputs):
 
         # Identify and sort the layers containing Cryptomatte data.
         cryptomatte_layers = []
-        pattern = f"{image_cryptomatte}\\d{{2}}[.](red|green|blue|alpha|r|g|b|a)"
+        pattern = f"{image_cryptomatte}\\d{{2}}[.](red|green|blue|alpha|r|g|b|a|R|G|B|A)"
         for cryptomatte_layer in image.layers.keys():
             match = re.match(pattern, cryptomatte_layer)
             if match is not None:
@@ -93,7 +93,7 @@ def decoder(graph, name, inputs):
 
         def component_key(channel):
             component = channel.rsplit(".", 1)[1]
-            return {"red": 0, "r": 0, "green": 1, "g": 1, "blue": 2, "b": 2, "alpha": 3, "a": 3}.get(component.lower())
+            return {"red":0, "r":0, "R":0, "green":1, "g":1, "G":1, "blue":2, "b":2, "B":2, "alpha":3, "a":3, "A":3}.get(component)
 
         def layer_key(channel):
             return channel.rsplit(".", 1)[0]
