@@ -64,7 +64,7 @@ def decoder(graph, name, inputs):
         The extracted matte.
     """
     image = imagecat.operator.util.require_image(name, inputs, "image")
-    layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="matte")
+    layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="M")
     mattes = imagecat.operator.util.optional_input(name, inputs, "mattes", type=list, default=[])
     cryptomatte = imagecat.operator.util.optional_input(name, inputs, "cryptomatte", default=None)
 
@@ -93,7 +93,7 @@ def decoder(graph, name, inputs):
 
         def component_key(channel):
             component = channel.rsplit(".", 1)[1]
-            return {"red": 0, "r": 0, "green": 1, "g": 1, "blue": 2, "b": 2, "alpha": 3, "a": 3}.get(component)
+            return {"red": 0, "r": 0, "green": 1, "g": 1, "blue": 2, "b": 2, "alpha": 3, "a": 3}.get(component.lower())
 
         def layer_key(channel):
             return channel.rsplit(".", 1)[0]
@@ -113,7 +113,7 @@ def decoder(graph, name, inputs):
                 selection = rank_id == _name_to_float32(matte)
                 data[selection] += rank_coverage[selection]
 
-    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data)})
+    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=imagecat.data.Role.MATTE)})
     imagecat.operator.util.log_result(log, name, "cryptomatte.decode", output, layer=layer, mattes=mattes, cryptomatte=cryptomatte)
     return output
 
