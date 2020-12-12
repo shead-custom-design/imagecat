@@ -77,8 +77,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- nbsphinx options --------------------------------------------------------
 
-nbsphinx_execute = "always"
-
+nbsphinx_execute = "never" if "READTHEDOCS" in os.environ else "always"
 
 # -- Options for HTML output -------------------------------------------------
 
