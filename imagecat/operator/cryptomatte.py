@@ -41,6 +41,11 @@ def _name_to_float32(name):
     return struct.unpack("<f", packed)[0]
 
 
+def _float32_to_int32(value):
+    packed = struct.pack("<f", value)
+    return struct.unpack("<L", packed)[0]
+
+
 def decoder(graph, name, inputs):
     """Extract matte(s) from an :ref:`image<images>` containing Cryptomatte data.
 
@@ -53,67 +58,89 @@ def decoder(graph, name, inputs):
     inputs: :ref:`named-inputs`, required
         Inputs for this function, containing:
 
+        :"clown": :class:`bool`, optional.  If :any:`True`, extract a clown matte containing a unique color for the ID that has the greatest coverage in a given pixel.  Default: :any:`False`
         :"image": :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing Cryptomatte data to be decoded.
         :"layer": :class:`str`, optional.  Matte layer name.  Default: `"matte"`.
         :"mattes": :class:`list` of :class:`str`, optional.  List of mattes to extract.  The output will contain the union of all the given mattes.  Default: [], which returns an empty matte.
-        :"typename": :class:`str`, optional.  Name of the Cryptomatte data to extract.  Use this parameter to control which Cryptomatte to use, for images that contain multiple Cryptomattes.  Default: :any:`None`, which works with any image that contains one Cryptomatte.
+        :"cryptomatte": :class:`str`, optional.  Name of the Cryptomatte to extract.  Use this parameter to control which Cryptomatte to use, for images that contain multiple Cryptomattes.  Default: :any:`None`, which extracts mattes from the union of all Cryptomattes in the image.
 
     Returns
     -------
     matte: :class:`imagecat.data.Image`
         The extracted matte.
     """
+    clown = imagecat.operator.util.optional_input(name, inputs, "clown", type=bool, default=False)
     image = imagecat.operator.util.require_image(name, inputs, "image")
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="M")
     mattes = imagecat.operator.util.optional_input(name, inputs, "mattes", type=list, default=[])
     cryptomatte = imagecat.operator.util.optional_input(name, inputs, "cryptomatte", default=None)
 
     # Get the list of available Cryptomattes
-    image_cryptomattes = []
+    cryptomatte_names = []
     for key, value in image.metadata.items():
         match = re.fullmatch(r"cryptomatte/(.{7})/name", key)
         if match is not None:
-            image_cryptomattes.append(value)
+            cryptomatte_names.append(value)
 
-    data = None
+    # Filter the available Cryptomattes.
+    if cryptomatte is not None:
+        cryptomatte_names = [cryptomatte_name for cryptomatte_name in cryptomatte_names if cryptomatte_name == cryptomatte]
+    if not cryptomatte_names:
+        raise RuntimeError("No matching Cryptomattes were found.")
+    if len(cryptomatte_names) > 1:
+        raise ValueError("A specific Cryptomatte must be chosen.")
+    cryptomatte_name = cryptomatte_names[0]
 
-    # For each Cryptomatte:
-    for image_cryptomatte in image_cryptomattes:
-        # Skip Cryptomattes that don't match the caller's request.
-        if cryptomatte is not None and cryptomatte != image_cryptomatte:
-            continue
+    # Identify and sort the layers containing Cryptomatte data.
+    pattern = f"{cryptomatte_name}\\d{{2}}[.](red|green|blue|alpha|r|g|b|a|R|G|B|A)"
+    cryptomatte_layers = []
+    for cryptomatte_layer in image.layers.keys():
+        match = re.match(pattern, cryptomatte_layer)
+        if match is not None:
+            cryptomatte_layers.append(cryptomatte_layer)
 
-        # Identify and sort the layers containing Cryptomatte data.
-        cryptomatte_layers = []
-        pattern = f"{image_cryptomatte}\\d{{2}}[.](red|green|blue|alpha|r|g|b|a|R|G|B|A)"
-        for cryptomatte_layer in image.layers.keys():
-            match = re.match(pattern, cryptomatte_layer)
-            if match is not None:
-                cryptomatte_layers.append(cryptomatte_layer)
+    def component_key(channel):
+        component = channel.rsplit(".", 1)[1]
+        return {"red":0, "r":0, "R":0, "green":1, "g":1, "G":1, "blue":2, "b":2, "B":2, "alpha":3, "a":3, "A":3}.get(component)
 
-        def component_key(channel):
-            component = channel.rsplit(".", 1)[1]
-            return {"red":0, "r":0, "R":0, "green":1, "g":1, "G":1, "blue":2, "b":2, "B":2, "alpha":3, "a":3, "A":3}.get(component)
+    def layer_key(channel):
+        return channel.rsplit(".", 1)[0]
 
-        def layer_key(channel):
-            return channel.rsplit(".", 1)[0]
+    cryptomatte_layers = sorted(cryptomatte_layers, key=component_key)
+    cryptomatte_layers = sorted(cryptomatte_layers, key=layer_key)
 
-        cryptomatte_layers = sorted(cryptomatte_layers, key=component_key)
-        cryptomatte_layers = sorted(cryptomatte_layers, key=layer_key)
+    if not cryptomatte_layers:
+        raise RuntimeError("No matching Cryptomatte layers were found.")
 
-        # Extract the matte(s).
+    # Extract a clown matte.
+    if clown:
         for rank_id_layer, rank_coverage_layer in zip(cryptomatte_layers[0::2], cryptomatte_layers[1::2]):
-            rank_id = image.layers[rank_id_layer].data
+            rank_ids = image.layers[rank_id_layer].data
+            data = numpy.zeros((rank_ids.shape[0], rank_ids.shape[1], 3), dtype=numpy.float32)
+            for rank_id in numpy.unique(rank_ids):
+                selection = (rank_ids == rank_id)[:,:,0]
+                color = numpy.random.default_rng(_float32_to_int32(rank_id)).uniform(size=3)
+                data[selection] = color
+            output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=imagecat.data.Role.RGB)})
+            break
+
+    # Extract a regular matte.
+    else:
+        data = None
+
+        for rank_id_layer, rank_coverage_layer in zip(cryptomatte_layers[0::2], cryptomatte_layers[1::2]):
+            rank_ids = image.layers[rank_id_layer].data
             rank_coverage = image.layers[rank_coverage_layer].data
 
             if data is None:
-                data = numpy.zeros_like(rank_id)
+                data = numpy.zeros_like(rank_ids)
 
             for matte in mattes:
-                selection = rank_id == _name_to_float32(matte)
+                selection = rank_ids == _name_to_float32(matte)
                 data[selection] += rank_coverage[selection]
 
-    output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=imagecat.data.Role.MATTE)})
-    imagecat.operator.util.log_result(log, name, "cryptomatte.decode", output, layer=layer, mattes=mattes, cryptomatte=cryptomatte)
+        output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=imagecat.data.Role.MATTE)})
+
+    imagecat.operator.util.log_result(log, name, "cryptomatte.decode", output, clown=clown, layer=layer, mattes=mattes, cryptomatte=cryptomatte)
     return output
 
