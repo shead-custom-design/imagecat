@@ -18,15 +18,15 @@
 import functools
 import logging
 
-import PIL.Image
-import PIL.ImageDraw
-import PIL.ImageFont
 import numpy
-import skimage.filters
-import skimage.transform
+try:
+    import skimage.transform
+except:
+    pass
 
 import imagecat.data
 import imagecat.io
+import imagecat.require
 import imagecat.units
 
 log = logging.getLogger(__name__)
@@ -163,6 +163,7 @@ def require_layer(name, inputs, input, *, layer=None, role=None, depth=None, dty
     return layer, image.layers[layer].copy() # This ensures that we don't modify our inputs.
 
 
+@imagecat.require.loaded_module("skimage.transform")
 def transform(source, target_shape, *, pivot, position, orientation, scale, order):
     """Transform an image using an affine transformation.
 
