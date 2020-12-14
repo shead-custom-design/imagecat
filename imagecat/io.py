@@ -25,10 +25,9 @@ import pickle
 import sys
 
 import numpy
-import skimage
 
-from imagecat.color import linear_to_srgb, srgb_to_linear
-from imagecat.data import Image, Layer, Role
+import imagecat.color
+import imagecat.data
 
 try:
     import Imath
@@ -96,9 +95,9 @@ def openexr_loader(task, path, layers):
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.float32).reshape((height, width, 1))
         elif dtype.type.v == Imath.PixelType.INT:
             data = numpy.frombuffer(reader.channel(name), dtype=numpy.int32).reshape((height, width, 1))
-        layers[name] = Layer(data=data, role=Role.NONE)
+        layers[name] = imagecat.data.Layer(data=data, role=imagecat.data.Role.NONE)
 
-    return Image(layers=layers, metadata=metadata)
+    return imagecat.data.Image(layers=layers, metadata=metadata)
 
 
 def pickle_loader(task, path, layers):
@@ -119,7 +118,7 @@ def pickle_loader(task, path, layers):
 
     with bz2.open(path, "rb") as stream:
         image = pickle.load(stream)
-    if not isinstance(image, Image):
+    if not isinstance(image, imagecat.data.Image):
         raise RuntimeError("Not an Imagecat Pickle (*.icp) file.") # pragma: no cover
     return image
 
@@ -140,14 +139,14 @@ def pil_loader(task, path, layers):
     pil_image = PIL.Image.open(path)
     log.debug(pil_image.info)
 
-    image = Image()
+    image = imagecat.data.Image()
     if pil_image.mode == "L":
-        image.layers["Y"] = Layer(data=numpy.array(pil_image, dtype=numpy.float16) / 255.0)
+        image.layers["Y"] = imagecat.data.Layer(data=numpy.array(pil_image, dtype=numpy.float16) / 255.0)
     if pil_image.mode == "RGB":
-        image.layers["C"] = Layer(data=srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0), role=Role.RGB)
+        image.layers["C"] = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0), role=imagecat.data.Role.RGB)
     if pil_image.mode == "RGBA":
-        image.layers["C"] = Layer(data=srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0), role=Role.RGB)
-        image.layers["A"] = Layer(data=numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0)
+        image.layers["C"] = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0), role=imagecat.data.Role.RGB)
+        image.layers["A"] = imagecat.data.Layer(data=numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0)
     return image
 
 
@@ -222,21 +221,10 @@ def pil_saver(task, image, layers, path):
     if "PIL.Image" not in sys.modules:
         return False # pragma: no cover
 
-    if len(layers) == 1:
-        layer = image.layers[layers[0]]
-        if layer.data.shape[2] == 1:
-            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(layer.data[:,:,0]), mode="L")
-        elif layer.data.shape[2] == 3 and layer.role == Role.RGB:
-            pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(linear_to_srgb(layer.data)), mode="RGB")
-        else:
-            return False
-    elif len(layers) == 2 and "C" in layers and "A" in layers:
-        C = linear_to_srgb(image.layers["C"].data)
-        A = image.layers["A"].data
-        pil_image = PIL.Image.fromarray(skimage.img_as_ubyte(numpy.dstack((C, A))), mode="RGBA")
-    else:
+    if len(layers) != 1:
         return False
 
+    pil_image = imagecat.data.to_pil(image.layers[layers[0]])
     pil_image.save(path)
     return True
 
