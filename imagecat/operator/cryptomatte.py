@@ -116,11 +116,14 @@ def decoder(graph, name, inputs):
     if clown:
         for rank_id_layer, rank_coverage_layer in zip(cryptomatte_layers[0::2], cryptomatte_layers[1::2]):
             rank_ids = image.layers[rank_id_layer].data
+
             data = numpy.zeros((rank_ids.shape[0], rank_ids.shape[1], 3), dtype=numpy.float32)
-            for rank_id in numpy.unique(rank_ids):
-                selection = (rank_ids == rank_id)[:,:,0]
-                color = numpy.random.default_rng(_float32_to_int32(rank_id)).uniform(size=3)
+
+            for matte in mattes:
+                selection = (rank_ids == _name_to_float32(matte))[:,:,0]
+                color = numpy.random.default_rng(_float32_to_int32(_name_to_float32(matte))).uniform(size=3)
                 data[selection] = color
+
             output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=imagecat.data.Role.RGB)})
             break
 
