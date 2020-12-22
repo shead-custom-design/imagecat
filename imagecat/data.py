@@ -144,23 +144,23 @@ class Image(object):
 class Layer(object):
     """Storage for one layer in a bitmap image.
 
-    An Imagecat :class:`Layer` contains the data and metadata that describe
-    a single layer in an Imagecat :class:`Image`.  This includes the raw
-    data itself, a set of names for each component in the data, and a role
-    enumeration that describes the semantic purpose of the layer.
+    An Imagecat :class:`Layer` contains the data and metadata that describe a
+    single layer in an Imagecat :class:`Image`.  This includes the raw data
+    itself, plus an enumerated role that describes the semantic purpose of the
+    layer.
 
     Parameters
     ----------
     data: :class:`numpy.ndarray`, required
         A three dimensional :math:`M \\times N \\times C` array containing the
         layer data, organized into :math:`M` rows in top-to-bottom order,
-        :math:`N` columns in left-to-right order, and :math:`C` components or
-        channels.  The array dtype should be `numpy.float16` for most data,
+        :math:`N` columns in left-to-right order, and :math:`C` channels.
+        The array dtype should be `numpy.float16` for most data,
         with `numpy.float32` and `numpy.int32` reserved for special cases such
         as depth maps and object id maps, respectively.
     role: :class:`Role`, optional
-        Semantic purpose of the layer.  If :any:`None` (the default), an
-        attempt will be made to infer the role from context.
+        Semantic purpose of the layer.  If :any:`None` (the default), the
+        role will default to ``Role.NONE``.
 
     See Also
     --------
@@ -180,7 +180,7 @@ class Layer(object):
 
         role_depth = depth(role)
         if role_depth is not None and data.shape[2] != role_depth:
-            raise ValueError(f"Expected {role_depth} components, received {data.shape[2]}.")
+            raise ValueError(f"Expected {role_depth} channels, received {data.shape[2]}.")
 
         self.data = data
         self.role = role
@@ -188,35 +188,6 @@ class Layer(object):
 
     def __repr__(self):
         return f"Layer({self.role} {self.data.shape[1]}x{self.data.shape[0]}x{self.data.shape[2]} {self.data.dtype})"
-
-
-    @property
-    def components(self):
-        if self.role == Role.RGB:
-            return ["R", "G", "B"]
-        elif self.role == Role.REDGREEN:
-            return ["R", "G"]
-        elif self.role == Role.GREENBLUE:
-            return ["G", "B"]
-        elif self.role == Role.REDBLUE:
-            return ["R", "B"]
-        elif self.role == Role.RED:
-            return ["R"]
-        elif self.role == Role.GREEN:
-            return ["G"]
-        elif self.role == Role.BLUE:
-            return ["B"]
-        elif self.role == Role.ALPHA:
-            return ["A"]
-        elif self.role == Role.MATTE:
-            return ["M"]
-        elif self.role == Role.LUMINANCE:
-            return ["Y"]
-        elif self.role == Role.DEPTH:
-            return ["Z"]
-        elif self.role == Role.NONE:
-            return [str(index) for index in range(self.data.shape[2])]
-        raise RuntimeError(f"Unknown role: {self.role}")
 
 
     def copy(self, data=None, role=None):
@@ -256,7 +227,7 @@ class Layer(object):
         Returns
         -------
         res: (width, height) :any:`tuple`
-            The resolution of the layer, ignoring the number of components.
+            The resolution of the layer, ignoring the number of channels.
         """
         return self.data.shape[1], self.data.shape[0]
 
@@ -267,7 +238,7 @@ class Layer(object):
 
         Returns
         -------
-        shape: (rows, columns, components) :any:`tuple`
+        shape: (rows, columns, channels) :any:`tuple`
         """
         return self.data.shape
 
@@ -282,9 +253,11 @@ class Layer(object):
 class Role(enum.Enum):
     """Semantic description of how :class:`Layer` data should be interpreted.
 
-    Because Imagecat allows an image to contain many types of data - not just
-    colors - :class:`Role` is used to indicate how a given layer should be
-    treated for operations such as visualization and file IO.
+    Because Imagecat allows an image to contain an arbitrary number of layers
+    with arbitray names, and a layer can contain one of many different types of
+    data - not just color information - :class:`Role` is used to indicate how
+    the data in a given layer will be used.  The layer role can influence many
+    operations in Imagecat, including  visualization and file IO.
 
     See Also
     --------
@@ -292,29 +265,57 @@ class Role(enum.Enum):
         For an in-depth discussion of how images are stored in Imagecat.
     """
     NONE = 0
-    """General purpose catch-all for layers with no specific role."""
+    """General purpose layer with an unknown role and any number of channels."""
     RGB = 1
-    """Indicates that a layer contains red-green-blue color information."""
+    """Layer with three channels of red-green-blue color information."""
     REDGREEN = 2
-    """Indicates that a layer contains red-green color information."""
+    """Layer with two channels of red-green color information."""
     GREENBLUE = 3
-    """Indicates that a layer contains green-blue color information."""
+    """Layer with two channels of green-blue color information."""
     REDBLUE = 4
-    """Indicates that a layer contains red-blue color information."""
+    """Layer with two channels of red-blue color information."""
     RED = 5
-    """Indicates that a layer contains red color information."""
+    """Layer with one channel of red color information."""
     GREEN = 6
-    """Indicates that a layer contains green color information."""
+    """Layer with one channel of green color information."""
     BLUE = 7
-    """Indicates that a layer contains blue color information."""
+    """Layer with one channel of blue color information."""
     ALPHA = 8
-    """Indicates that a layer contains alpha (opacity) information."""
+    """Layer with one channel of alpha (opacity) information."""
     MATTE = 9
-    """Indicates that a layer contains matte (selection / mask) information."""
+    """Layer with one channel of matte (selection / mask) information."""
     LUMINANCE = 10
-    """Indicates that a layer contains luminance (intensity) information."""
+    """Layer with one channel of luminance (intensity) information."""
     DEPTH = 11
-    """Indicates that a layer contains depth (distance from viewer) information."""
+    """Layer with one channel of depth (distance from viewer) information."""
+
+
+def channels(role):
+    if role == Role.RGB:
+        return ["R", "G", "B"]
+    elif role == Role.REDGREEN:
+        return ["R", "G"]
+    elif role == Role.GREENBLUE:
+        return ["G", "B"]
+    elif role == Role.REDBLUE:
+        return ["R", "B"]
+    elif role == Role.RED:
+        return ["R"]
+    elif role == Role.GREEN:
+        return ["G"]
+    elif role == Role.BLUE:
+        return ["B"]
+    elif role == Role.ALPHA:
+        return ["A"]
+    elif role == Role.MATTE:
+        return ["M"]
+    elif role == Role.LUMINANCE:
+        return ["Y"]
+    elif role == Role.DEPTH:
+        return ["Z"]
+    elif role == Role.NONE:
+        return [str(index) for index in range(self.data.shape[2])]
+    raise RuntimeError(f"Unknown role: {role}")
 
 
 def depth(role):

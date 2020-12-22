@@ -167,28 +167,28 @@ def openexr_saver(task, image, layers, path):
     if extension != ".exr":
         return False
 
-    channels = {}
-    pixels = {}
+    exr_channels = {}
+    exr_pixels = {}
     for layer_name in layers:
         layer = image.layers[layer_name]
         dtype = layer.data.dtype
         shape = layer.data.shape
-        for index, component in enumerate(layer.components):
-            channel_name = f"{layer_name}.{component}" if component else f"{layer_name}"
+        for index, channel in enumerate(imagecat.data.channels(layer.role)):
+            channel_name = f"{layer_name}.{channel}" if channel else f"{layer_name}"
             if dtype == numpy.float16:
-                channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
+                exr_channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.HALF))
             elif dtype == numpy.float32:
-                channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.FLOAT))
+                exr_channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.FLOAT))
             elif dtype == numpy.int32:
-                channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.INT))
+                exr_channels[channel_name] = Imath.Channel(Imath.PixelType(Imath.PixelType.INT))
             else:
                 raise ValueError(f"Unsupported dtype: {dtype}")
-            pixels[channel_name] = layer.data[:,:,index].tobytes()
+            exr_pixels[channel_name] = layer.data[:,:,index].tobytes()
 
-    header = OpenEXR.Header(shape[1], shape[0])
-    header["channels"] = channels
-    writer = OpenEXR.OutputFile(path, header)
-    writer.writePixels(pixels)
+    exr_header = OpenEXR.Header(shape[1], shape[0])
+    exr_header["channels"] = exr_channels
+    exr_writer = OpenEXR.OutputFile(path, exr_header)
+    exr_writer.writePixels(exr_pixels)
 
     return True
 

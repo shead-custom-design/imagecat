@@ -141,13 +141,13 @@ def remap(graph, name, inputs):
     inputs: :ref:`named-inputs`, required
         Inputs for this function, containing:
 
-        :"image": :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing image layers and components to be mapped.
-        :"mapping": :class:`dict`, optional. Maps existing layers and components to the output.  Default: {}, which returns an empty image.
+        :"image": :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing image layers and channels to be mapped.
+        :"mapping": :class:`dict`, optional. Maps existing layers and channels to the output.  Default: {}, which returns an empty image.
 
     Returns
     -------
     image: :class:`imagecat.data.Image`
-        A new image containing only the mapped layers and components.
+        A new image containing only the mapped layers and channels.
     """
     image = imagecat.operator.util.require_image(name, inputs, "image")
     mapping = imagecat.operator.util.optional_input(name, inputs, "mapping", type=dict, default={})
@@ -159,8 +159,8 @@ def remap(graph, name, inputs):
             if isinstance(layer, str):
                 data.append(image.layers[layer].data)
             elif isinstance(layer, tuple):
-                layer, component = layer
-                data.append(image.layers[layer].data[:,:,component])
+                layer, channel = layer
+                data.append(image.layers[layer].data[:,:,channel])
         data=numpy.dstack(data)
         role = spec.get("role", None)
         layers[name] = imagecat.data.Layer(data=data, role=role)

@@ -99,14 +99,14 @@ def decoder(graph, name, inputs):
         if match is not None:
             cryptomatte_layers.append(cryptomatte_layer)
 
-    def component_key(channel):
-        component = channel.rsplit(".", 1)[1]
-        return {"red":0, "r":0, "R":0, "green":1, "g":1, "G":1, "blue":2, "b":2, "B":2, "alpha":3, "a":3, "A":3}.get(component)
+    def channel_key(channel):
+        channel = channel.rsplit(".", 1)[1]
+        return {"red":0, "r":0, "R":0, "green":1, "g":1, "G":1, "blue":2, "b":2, "B":2, "alpha":3, "a":3, "A":3}.get(channel)
 
     def layer_key(channel):
         return channel.rsplit(".", 1)[0]
 
-    cryptomatte_layers = sorted(cryptomatte_layers, key=component_key)
+    cryptomatte_layers = sorted(cryptomatte_layers, key=channel_key)
     cryptomatte_layers = sorted(cryptomatte_layers, key=layer_key)
 
     if not cryptomatte_layers:

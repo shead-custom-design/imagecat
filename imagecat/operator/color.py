@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 
 
 def colormap(graph, name, inputs):
-    """Convert single-component layers to RGB layers using a colormap.
+    """Convert single-channel layers to RGB layers using a colormap.
 
     Parameters
     ----------
@@ -37,7 +37,7 @@ def colormap(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function.
+        Inputs for this operator.
 
     Named Inputs
     ------------
@@ -46,10 +46,10 @@ def colormap(graph, name, inputs):
     inlayer: :class:`str`, optional.
         `image` layer to be color mapped.  Default: :any:`None`.
     outlayer: :class:`str`, optional.
-        Name of the output image layer.  Default: "C".
+        Name of the output image layer.  Default: ``"C"``.
     mapping: Python callable, optional.
-        Mapping function that accepts a (rows, columns, 1) array as input and
-        produces an RGB (rows, columns, 3) array as output.  If :any:`None`
+        Mapping function that accepts a shape `(rows, columns, 1)` array as input and
+        produces an RGB `(rows, columns, 3)` shaped array as output.  If :any:`None`
         (the default), a linear map with a Color Brewer 2 Blue-Red palette will
         be used.
 
@@ -83,12 +83,19 @@ def fill(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this operator.
 
-        :"layer": :class:`str`, optional. New layer name.  Default: `"C"`.
-        :"res": (width, height) tuple, optional.  Resolution of the new image.  Default: [256, 256].
-        :"role": :class:`imagecat.data.Role`, optional.  Semantic role of the new layer.  Default: :class:`imagecat.data.Role.RGB`.
-        :"values": sequence of values, optional.  Values for the new layer.  The number of values must be appropriate for `role`.  Default: [1, 1, 1].
+    Named Inputs
+    ------------
+
+    layer: :class:`str`, optional.
+        New layer name.  Default: `"C"`.
+    res: (width, height) tuple, optional.
+        Resolution of the new image.  Default: `(256, 256)`.
+    role: :class:`imagecat.data.Role`, optional.
+        Semantic role of the new layer.  Default: :class:`imagecat.data.Role.RGB`.
+    values: sequence of values, optional.
+        Values for the new layer.  The number of values must be appropriate for `role`.  Default: [1, 1, 1].
 
     Returns
     -------
@@ -121,7 +128,7 @@ def rgb2gray(graph, name, inputs):
         :"image": :class:`imagecat.data.Image`, required. Image containing layers to be converted.
         :"inlayer": :class:`str`, optional. Layer to be converted.  Default: None.
         :"outlayer": :class:`str`, optional. Output layer.  Default: "Y".
-        :"weights": (red weight, green weight, blue weight) tuple, optional. Weights controlling how much each RGB component in a layer contributes to the output.
+        :"weights": (red weight, green weight, blue weight) tuple, optional. Weights controlling how much each RGB channel in a layer contributes to the output.
 
     Returns
     -------

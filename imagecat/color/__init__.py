@@ -33,8 +33,8 @@ class Palette(object):
     ----------
     colors: :class:`numpy.ndarray`, required
         :math:`M \\times N` matrix containing :math:`M` colors with :math:`N`
-        components each.  Note that while three components for colors is
-        typical, any number of components is allowed.  The color components
+        channels each.  Note that while three channels for colors is
+        typical, any number of channels is allowed.  The color channels
         *must* be in linear space, not sRGB.
     reverse: boolean, optional
         If `True`, reverse the order of `colors`.
@@ -53,7 +53,7 @@ class Palette(object):
         -------
         :class:`numpy.ndarray`
             :math:`M \\times N` matrix containing :math:`M` colors with :math:`N`
-            components each.
+            channels each.
         """
         return self._colors
 
@@ -85,7 +85,7 @@ def categorical_map(data, palette):
     colors = palette.colors
     flat = numpy.reshape(data, -1) % len(colors)
     mapped = numpy.empty((len(flat), colors.shape[1]), dtype=numpy.float)
-    for index, component in enumerate(colors.T):
+    for index, channel in enumerate(colors.T):
         mapped[:,index] = colors[flat][:,index]
     return mapped.reshape((*data.shape, colors.shape[1]))
 
@@ -125,8 +125,8 @@ def linear_map(data, palette, min=None, max=None):
 
     flat = numpy.reshape(data, -1)
     mapped = numpy.empty((len(flat), colors.shape[1]), dtype=numpy.float)
-    for index, component in enumerate(colors.T):
-        mapped[:,index] = numpy.interp(flat, stops, component)
+    for index, channel in enumerate(colors.T):
+        mapped[:,index] = numpy.interp(flat, stops, channel)
     return mapped.reshape((*data.shape, colors.shape[1]))
 
 
