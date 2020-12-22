@@ -37,12 +37,21 @@ def colormap(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this function.
 
-        :"image": :class:`imagecat.data.Image`, required. Image with layer to be color mapped.
-        :"inlayer": :class:`str`, optional. Input image layer to be color mapped.  Default: :any:`None`.
-        :"outlayer": :class:`str`, optional. Name of the output image layer.  Default: "C".
-        :"mapping": Python callable, optional.  Mapping function that accepts a (rows, columns, 1) array as input and produces an RGB (rows, columns, 3) array as output.  If :any:`None` (the default), a linear map with a Color Brewer 2 Blue-Red palette will be used.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image with layer to be color mapped.
+    inlayer: :class:`str`, optional.
+        `image` layer to be color mapped.  Default: :any:`None`.
+    outlayer: :class:`str`, optional.
+        Name of the output image layer.  Default: "C".
+    mapping: Python callable, optional.
+        Mapping function that accepts a (rows, columns, 1) array as input and
+        produces an RGB (rows, columns, 3) array as output.  If :any:`None`
+        (the default), a linear map with a Color Brewer 2 Blue-Red palette will
+        be used.
 
     Returns
     -------

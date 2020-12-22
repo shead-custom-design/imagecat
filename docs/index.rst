@@ -18,7 +18,7 @@ Documentation
    compatibility.rst
    contributing.rst
    design.rst
-   gallery.rst
+   user-guide.rst
    reference.rst
    support.rst
    release-notes.rst

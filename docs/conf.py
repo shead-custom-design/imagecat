@@ -63,6 +63,8 @@ intersphinx_mapping = {
     "graphcat": ("https://graphcat.readthedocs.io/en/stable", None),
     }
 
+napoleon_custom_sections = ["Named Inputs"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
