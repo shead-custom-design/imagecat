@@ -36,11 +36,16 @@ def gaussian(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this operator.
 
-        :"image": :class:`imagecat.data.Image`, required. Image containing layers to be blurred.
-        :"layer": :class:`str`, optional. Name of the layer to be blurred.  Default: :any:`None`.
-        :"sigma": (x, y) tuple, required. Width of the gaussian kernel in pixels along each dimension.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image containing layer to be blurred.
+    layer: :class:`str`, optional.
+        Name of the layer to be blurred.  Default: :any:`None`.
+    sigma: (x, y) tuple, required.
+        Width of the gaussian kernel in pixels along each dimension.
 
     Returns
     -------

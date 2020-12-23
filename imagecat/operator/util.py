@@ -65,7 +65,7 @@ def optional_input(name, inputs, input, *, type=None, default=None):
     ----------
     name: hashable object, required
         The name of the task being executed.
-    inputs: :class:`dict`, required
+    inputs: :ref:`named-inputs`, required
         Input dict containing task function arguments.
     input: hashable object, required
         Name of the input parameter.
@@ -119,7 +119,7 @@ def require_input(name, inputs, input, *, type=None):
     ----------
     name: hashable object, required
         The name of the task being executed.
-    inputs: :class:`dict`, required
+    inputs: :ref:`named-inputs`, required
         Input dict containing task function arguments.
     input: hashable object, required
         Name of the input parameter.

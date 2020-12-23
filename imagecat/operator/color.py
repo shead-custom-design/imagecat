@@ -123,12 +123,18 @@ def rgb2gray(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this operator.
 
-        :"image": :class:`imagecat.data.Image`, required. Image containing layers to be converted.
-        :"inlayer": :class:`str`, optional. Layer to be converted.  Default: None.
-        :"outlayer": :class:`str`, optional. Output layer.  Default: "Y".
-        :"weights": (red weight, green weight, blue weight) tuple, optional. Weights controlling how much each RGB channel in a layer contributes to the output.
+    Named Inputs
+    ------------
+    image :class:`imagecat.data.Image`, required.
+        Image containing layer to be converted.
+    inlayer :class:`str`, optional.
+        Layer to be converted.  Default: None.
+    outlayer :class:`str`, optional.
+        Output layer.  Default: "Y".
+    weights (red weight, green weight, blue weight) tuple, optional.
+        Weights controlling how much each RGB channel in a layer contributes to the output.
 
     Returns
     -------

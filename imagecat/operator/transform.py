@@ -36,18 +36,35 @@ def composite(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this operator.
 
-        :"bglayer": :class:`str`, optional. Name of the background layer.  Defaults to :any:`None`.
-        :"fglayer": :class:`str`, optional. Name of the foreground layer.  Defaults to :any:`None`.
-        :"layer": :class:`str`, optional. Name of the output image layer.  Defaults to the value of `bglayer`.
-        :"masklayer": :class:`str`, optional. Name of the mask layer.  Defaults to :any:`None`.
-        :"orientation": number, optional. Rotation of the foreground layer for the composition.  Default: `0`.
-        :"pivot": (x, y) tuple, optional.  Position of the foreground pivot point.  All rotation and positioning is relative to this point.  Default: `["0.5w", "0.5h"]`, which is centered on the foreground.
-        :"position": (x, y) tuple, optional.  Position of the foreground layer over the background layer.  All rotation and positioning is relative to the pivot point.  Default: `["0.5w", "0.5h"]`, which is centered on the background.
-        :"foreground": :class:`imagecat.data.Image`, required. Image containing the foreground layer.
-        :"background": :class:`imagecat.data.Image`, required. Image containing the background layer.
-        :"mask": :class:`imagecat.data.Image`, optional. Image containing the foreground layer mask.  If omitted, the foreground layer is assumed to be 100% opaque.
+    Named Inputs
+    ------------
+    background: :class:`imagecat.data.Image`,
+        required. Image containing the background layer.
+    bglayer: :class:`str`, optional.
+        Name of the background layer.  Defaults to :any:`None`.
+    fglayer: :class:`str`, optional.
+        Name of the foreground layer.  Defaults to :any:`None`.
+    foreground: :class:`imagecat.data.Image`, required.
+        Image containing the foreground layer.
+    layer: :class:`str`, optional.
+        Name of the output image layer.  Defaults to the value of `bglayer`.
+    mask: :class:`imagecat.data.Image`, optional.
+        Image containing the foreground layer mask.  If omitted, the foreground
+        layer is assumed to be 100% opaque.
+    masklayer: :class:`str`, optional.
+        Name of the mask layer.  Defaults to :any:`None`.
+    orientation: number, optional.
+        Rotation of the foreground layer for the composition.  Default: `0`.
+    pivot: (x, y) tuple, optional.
+        Position of the foreground pivot point.  All rotation and positioning
+        is relative to this point.  Default: `["0.5w", "0.5h"]`, which is
+        centered on the foreground.
+    position: (x, y) tuple, optional.
+        Position of the foreground layer over the background layer.  All
+        rotation and positioning is relative to the pivot point.  Default:
+        `["0.5w", "0.5h"]`, which is centered on the background.
 
     Returns
     -------
@@ -95,12 +112,17 @@ def offset(graph, name, inputs):
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
 
-        :["image"][0]: :class:`imagecat.data.Image`, required. Image containing layers to be offset.
-        :["layers"][0]: :class:`str`, optional. Pattern matching the layers to be offset.  Default: '*', which offsets all layers.
-        :["offset"][0]: (x, y) tuple, required. Distance to offset layers along each dimension.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image containing layers to be offset.
+    layers: :class:`str`, optional.
+        Pattern matching the layers to be offset.  Default: '*', which offsets all layers.
+    offset: (x, y) tuple, required.
+        Distance to offset layers along each dimension.
 
     Returns
     -------
@@ -132,12 +154,17 @@ def resize(graph, name, inputs):
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
 
-        :["image"][0]: :class:`imagecat.data.Image`, required. Image to be resized.
-        :["order"][0]: :any:`int`, optional.  Resampling filter order.  Default: '3' for bicubic resampling.
-        :["res"][0]: (width, height) tuple, optional. New resolution of the image along each dimension.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image to be resized.
+    order: :any:`int`, optional.
+        Resampling filter order.  Default: '3' for bicubic resampling.
+    res: (width, height) tuple, optional.
+        New resolution of the image along each dimension.
 
     Returns
     -------

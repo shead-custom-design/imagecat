@@ -35,14 +35,22 @@ def uniform(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this operator.
 
-        :"high": number, optional.  Highest value in the generated noise.  Default: 1.
-        :"layer": :class:`str`, optional. Name of the layer to be created.  Default: 'Y'.
-        :"low": number, optional.  Lowest value for the generated noise.  Default: 0.
-        :"role": :class:`imagecat.data.Role`. Role for the layer to be created. Default: :class:`imagecat.data.Role.LUMINANCE`.
-        :"seed": :any:`int`. Random seed for the random noise function. Default: 1234.
-        :"res": (width, height) tuple, optional. Resolution of the new image along each dimension.  Default: [256, 256].
+    Named Inputs
+    ------------
+    high: number, optional.
+        Highest value in the generated noise.  Default: 1.
+    layer: :class:`str`, optional.
+        Name of the layer to be created.  Default: 'Y'.
+    low: number, optional.
+        Lowest value for the generated noise.  Default: 0.
+    role: :class:`imagecat.data.Role`, optional.
+        Role for the layer to be created. Default: :class:`imagecat.data.Role.LUMINANCE`.
+    seed: :any:`int`, optional.
+        Random seed for the random noise function. Default: 1234.
+    res: (width, height) tuple, optional.
+        Resolution of the new image along each dimension.  Default: [256, 256].
 
     Returns
     -------

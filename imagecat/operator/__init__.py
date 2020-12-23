@@ -32,15 +32,20 @@ def delete(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
 
-        :["image"][0]: :class:`imagecat.data.Image`, required. Image with layers to be deleted.
-        :["layers"][0]: :class:`str`, optional. Pattern matching the image layers are deleted.  Default: `"*"`, which deletes all layers.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image with layers to be deleted.
+    layers: :class:`str`, optional.
+        Pattern matching the image layers are deleted.  Default: `"*"`, which
+        deletes all layers.
 
     Returns
     -------
@@ -65,14 +70,17 @@ def load(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :class:`dict`, required
-        Inputs for this function, including:
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
 
-        :["path"][0]: :class:`str`, required. Filesystem path of the file to be loaded.
+    Named Inputs
+    ------------
+    path: :class:`str`, required.
+        Filesystem path of the file to be loaded.
 
     Returns
     -------
@@ -106,14 +114,17 @@ def merge(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
 
-        :[...][...]: :class:`imagecat.data.Image`, optional. Images to be merged.
+    Named Inputs
+    ------------
+    every input: :class:`imagecat.data.Image`, optional.
+        Images to be merged.
 
     Returns
     -------
@@ -139,10 +150,14 @@ def remap(graph, name, inputs):
     name: hashable object, required
         Name of the task executing this function.
     inputs: :ref:`named-inputs`, required
-        Inputs for this function, containing:
+        Inputs for this operator.
 
-        :"image": :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing image layers and channels to be mapped.
-        :"mapping": :class:`dict`, optional. Maps existing layers and channels to the output.  Default: {}, which returns an empty image.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        :ref:`Image<images>` containing image layers and channels to be mapped.
+    mapping: :class:`dict`, optional.
+        Maps existing layers and channels to the output.  Default: {}, which returns an empty image.
 
     Returns
     -------
@@ -160,7 +175,7 @@ def remap(graph, name, inputs):
                 data.append(image.layers[layer].data)
             elif isinstance(layer, tuple):
                 layer, channel = layer
-                data.append(image.layers[layer].data[:,:,channel])
+                gata.append(image.layers[layer].data[:,:,channel])
         data=numpy.dstack(data)
         role = spec.get("role", None)
         layers[name] = imagecat.data.Layer(data=data, role=role)
@@ -175,15 +190,19 @@ def rename(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :any:`dict`, required
-        Inputs for this function, containing:
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
 
-        :["image"][0]: :class:`imagecat.data.Image`, required. :ref:`Image<images>` containing image planes to be renamed.
-        :["changes"][0]: :class:`dict`, optional. Maps existing names to new names.  Default: {}, which does nothing.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        :ref:`Image<images>` containing layers to be renamed.
+    changes: :class:`dict`, optional.
+        Maps existing names to new names.  Default: {}, which does nothing.
 
     Returns
     -------
@@ -207,16 +226,21 @@ def save(graph, name, inputs):
 
     Parameters
     ----------
-    graph: :class:`graphcat.Graph`, required
+    graph: :ref:`graph`, required
         Graph that owns this task.
     name: hashable object, required
         Name of the task executing this function.
-    inputs: :class:`dict`, required
+    inputs: :ref:`named-inputs`, required
         Inputs for this function, including:
 
-        :["image"][0]: :class:`imagecat.data.Image`, required. Image to be saved.
-        :["path"][0]: :class:`str`, required. Filesystem path of the file to be saved.
-        :["layers"][0]: :class:`str`, optional. Pattern matching the layers to be saved.  Default: '*', which saves all layers.
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image to be saved.
+    path": :class:`str`, required.
+        Filesystem path of the file to be saved.
+    layers: :class:`str`, optional.
+        Pattern matching the layers to be saved.  Default: '*', which saves all layers.
     """
     image = imagecat.operator.util.require_image(name, inputs, "image")
     path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
