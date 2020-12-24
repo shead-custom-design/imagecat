@@ -175,7 +175,7 @@ def remap(graph, name, inputs):
                 data.append(image.layers[layer].data)
             elif isinstance(layer, tuple):
                 layer, channel = layer
-                gata.append(image.layers[layer].data[:,:,channel])
+                data.append(image.layers[layer].data[:,:,channel])
         data=numpy.dstack(data)
         role = spec.get("role", None)
         layers[name] = imagecat.data.Layer(data=data, role=role)
