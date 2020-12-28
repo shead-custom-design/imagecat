@@ -178,12 +178,14 @@ def step_impl(context, task, changes):
     imagecat.add_task(context.graph, task, imagecat.operator.rename, changes=changes)
 
 
-@given(u'a task {task} with operator rgb2gray layers {layers} weights {weights}')
-def step_impl(context, task, layers, weights):
+@given(u'a task {task} with operator dot inlayer {inlayer} outlayer {outlayer} outrole {outrole} matrix {matrix}')
+def step_impl(context, task, inlayer, outlayer, outrole, matrix):
     task = eval(task)
-    layers = eval(layers)
-    weights = eval(weights)
-    imagecat.add_task(context.graph, task, imagecat.operator.color.rgb2gray, layers=layers, weights=weights)
+    inlayer = eval(inlayer)
+    outlayer = eval(outlayer)
+    outrole = eval(outrole)
+    matrix = eval(matrix)
+    imagecat.add_task(context.graph, task, imagecat.operator.color.dot, inlayer=inlayer, outlayer=outlayer, outrole=outrole, matrix=matrix)
 
 
 @given(u'a task {task} with operator save path {path}')

@@ -73,6 +73,57 @@ def colormap(graph, name, inputs):
     return output
 
 
+def dot(graph, name, inputs):
+    """Compute the dot product of a :class:`image.data.Layer` and a matrix.
+
+    This is most commonly used to convert an RGB layer to grayscale, but the
+    operator is capable of converting any depth :math:`M` layer to depth
+    :math:`N` using an :math:`M \\times N` matrix.  The values in each output
+    channel will be a weighted sum of the input channels, using weights
+    stored in the corresponding matrix column.
+
+    Parameters
+    ----------
+    graph: :ref:`graph`, required
+        Graph that owns this task.
+    name: hashable object, required
+        Name of the task executing this function.
+    inputs: :ref:`named-inputs`, required
+        Inputs for this operator.
+
+    Named Inputs
+    ------------
+    image: :class:`imagecat.data.Image`, required.
+        Image containing layer to be converted.
+    inlayer: :class:`str`, optional.
+        Layer to be converted.  Default: None.
+    outlayer: :class:`str`, optional.
+        Output layer.  Default: "Y".
+    outrole: :class:`imagecat.data.Role`, optional.
+        Role for the new layer.  Defaults to :class:`imagecat.data.role.LUMINANCE`.
+    matrix: :math:`M \\times N` :class:`numpy.ndarray` matrix, optional.
+        Matrix controlling how much each input channel contributes to each output channel.
+        Defaults to an RGB-to-grayscale matrix.  :math:`M` must match the depth of the
+        input layer, and :math:`N` must match the expected depth of the output role.
+
+    Returns
+    -------
+    image: :class:`imagecat.data.Image`
+        Image containing the new layer.
+    """
+    inlayer = imagecat.operator.util.optional_input(name, inputs, "inlayer", default=None)
+    layer_name, layer = imagecat.operator.util.require_layer(name, inputs, "image", layer=inlayer)
+    outdtype = imagecat.operator.util.optional_input(name, inputs, "outdtype", type=numpy.dtype, default=numpy.float16)
+    outlayer = imagecat.operator.util.optional_input(name, inputs, "outlayer", type=str, default="Y")
+    outrole = imagecat.operator.util.optional_input(name, inputs, "outrole", type=imagecat.data.Role, default=imagecat.data.Role.LUMINANCE)
+    matrix = imagecat.operator.util.optional_input(name, inputs, "matrix", type=imagecat.operator.util.array(ndim=2), default=[[0.2125], [0.7154], [0.0721]])
+
+    data = numpy.dot(layer.data, matrix).astype(outdtype)
+    image = imagecat.data.Image(layers={outlayer: imagecat.data.Layer(data=data, role=outrole)})
+    imagecat.operator.util.log_result(log, name, "dot", image, inlayer=inlayer, outdtype=outdtype, outlayer=outlayer, outrole=outrole, matrix=matrix)
+    return image
+
+
 def fill(graph, name, inputs):
     """Generate an :ref:`image<images>` with a single solid-color layer.
 
@@ -111,43 +162,3 @@ def fill(graph, name, inputs):
     output = imagecat.data.Image(layers={layer: imagecat.data.Layer(data=data, role=role)})
     imagecat.operator.util.log_result(log, name, "fill", output, layer=layer, role=role, res=res, values=values)
     return output
-
-
-def rgb2gray(graph, name, inputs):
-    """Convert :ref:`image<images>` layers from RGB color to grayscale.
-
-    Parameters
-    ----------
-    graph: :ref:`graph`, required
-        Graph that owns this task.
-    name: hashable object, required
-        Name of the task executing this function.
-    inputs: :ref:`named-inputs`, required
-        Inputs for this operator.
-
-    Named Inputs
-    ------------
-    image :class:`imagecat.data.Image`, required.
-        Image containing layer to be converted.
-    inlayer :class:`str`, optional.
-        Layer to be converted.  Default: None.
-    outlayer :class:`str`, optional.
-        Output layer.  Default: "Y".
-    weights (red weight, green weight, blue weight) tuple, optional.
-        Weights controlling how much each RGB channel in a layer contributes to the output.
-
-    Returns
-    -------
-    image: :class:`imagecat.data.Image`
-        A copy of the input image containing a grayscale layer.
-    """
-    inlayer = imagecat.operator.util.optional_input(name, inputs, "inlayer", default=None)
-    layer_name, layer = imagecat.operator.util.require_layer(name, inputs, "image", layer=inlayer, depth=3, role=imagecat.data.Role.RGB)
-    outlayer = imagecat.operator.util.optional_input(name, inputs, "inlayer", type=str, default="Y")
-    weights = imagecat.operator.util.optional_input(name, inputs, "weights", type=imagecat.operator.util.array(shape=(3,)), default=[0.2125, 0.7154, 0.0721])
-
-    data = numpy.dot(layer.data, weights)[:,:,None]
-    image = imagecat.data.Image(layers={outlayer: imagecat.data.Layer(data=data, role=imagecat.data.Role.LUMINANCE)})
-    imagecat.operator.util.log_result(log, name, "rgb2gray", image, inlayer=inlayer, outlayer=outlayer, weights=weights)
-    return image
-

@@ -32,23 +32,66 @@ import imagecat.units
 log = logging.getLogger(__name__)
 
 
-def array(shape, dtype=numpy.float16):
+def array(ndim=None, shape=None, dtype=None):
+    """Factory for parameter converters that return arrays.
+
+    Parameters
+    ----------
+    ndim: integer, optional
+        Raise exceptions if the number of value dimensions don't match.
+    shape: integer or tuple of integers, optional
+        Raise exceptions if the value shape doesn't match.
+    dtype: :class:`numpy.dtype`, optional
+        If specified, the returned array will be coerced to the given dtype.
+
+    Returns
+    -------
+    converter: callable
+         Callable that takes a single value as input and produces a
+         :class:`numpy.ndarray` as output.
+    """
     def implementation(value):
-        value = numpy.array(value, dtype=dtype)
-        if value.shape != shape:
+        value = numpy.array(value)
+        if ndim is not None and value.ndim != ndim:
+            raise ValueError(f"Expected array with {ndim} dimensions, received {value.ndim}.") # pragma: no cover
+        if shape is not None and value.shape != shape:
             raise ValueError(f"Expected array with shape {shape}, received {value.shape}.") # pragma: no cover
+        if dtype is not None:
+            value = value.astype(dtype)
         return value
     return implementation
 
 
 def log_result(log, name, operation, output, **parameters):
-     log.info(f"Task {name} {operation}:")
-     for name, parameter in sorted(parameters.items()):
-         log.info(f"  {name}: {parameter}")
-     log.info(f"  output: {output!r}")
+    """Standard logging output for operators when they're executed."""
+    log.info(f"Task {name} {operation}:")
+    for name, parameter in sorted(parameters.items()):
+        log.info(f"  {name}: {parameter}")
+    log.info(f"  output: {output!r}")
 
 
 def optional_image(name, inputs, input):
+    """Extract an optional image from task inputs.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        The name of the task being executed.
+    inputs: :ref:`named-inputs`, required
+        Named inputs containing task function arguments.
+    input: hashable object, required
+        Name of the optional input image.
+
+    Raises
+    ------
+    :class:`RuntimeError`
+        If `inputs` contains `input`, but it isn't a :class:`imagecat.data.Image`.
+
+    Returns
+    -------
+    image: class:`imagecat.data.Image` or :any:`None`
+        The optional image from `inputs`.
+    """
     image = optional_input(name, inputs, input)
     if image is None:
         return None
@@ -66,20 +109,18 @@ def optional_input(name, inputs, input, *, type=None, default=None):
     name: hashable object, required
         The name of the task being executed.
     inputs: :ref:`named-inputs`, required
-        Input dict containing task function arguments.
+        Named inputs containing task function arguments.
     input: hashable object, required
         Name of the input parameter.
-    index: integer, required
-        Integer index of the input parameter.
     type: callable, optional
         Function for testing / converting the parameter value.
     default: Any python object, optional.
-        Default value that will be returned if `input` or `index` aren't matched from the `inputs` :class:`dict`.
+        Default value that will be returned if `inputs` doesn't contain `input`.
 
     Returns
     -------
     parameter: Any python object.
-        The request parameter from `inputs`, or the `default` value.
+        The optional parameter from `inputs`, or the `default` value.
     """
     value = inputs.get(input, default=default)
     if type is not None:
@@ -88,6 +129,33 @@ def optional_input(name, inputs, input, *, type=None, default=None):
 
 
 def optional_layer(name, inputs, input, *, layer=None, role=None, depth=None, dtype=None):
+    """Extract an optional layer from task inputs.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        The name of the task being executed.
+    inputs: :ref:`named-inputs`, required
+        Named inputs containing task function arguments.
+    input: hashable object, required
+        Name of the optional input image.
+    layer: :class:`str`, optional
+        The name of the optional layer.  If :any:`None` (the default) and the image only
+        contains one layer, use it.
+    role: :class:`imagecat.data.Role`, optional
+        If specified, the layer must have a matching role.
+    depth: int, optional
+        If specified, the layer must have a matching depth (number of channels).
+    dtype: :class:`numpy.dtype`, optional
+        If specified, the layer must have a matching dtype.
+
+    Returns
+    -------
+    layername: :class:`str` or :any:`None`
+        The name of the matching layer.
+    layer: :class:`imagecat.data.Layer` or :any:`None`
+        The matching layer.
+    """
     image = optional_image(name, inputs, input)
     if image is None:
         return None, None
@@ -105,6 +173,27 @@ def optional_layer(name, inputs, input, *, layer=None, role=None, depth=None, dt
 
 
 def require_image(name, inputs, input):
+    """Extract an image from task inputs.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        The name of the task being executed.
+    inputs: :ref:`named-inputs`, required
+        Named inputs containing task function arguments.
+    input: hashable object, required
+        Name of the required input image.
+
+    Raises
+    ------
+    :class:`RuntimeError`
+        If `inputs` doesn't contain the required `input`.
+
+    Returns
+    -------
+    image: class:`imagecat.data.Image`
+        The required image from `inputs`.
+    """
     image = require_input(name, inputs, input)
     if not isinstance(image, imagecat.data.Image):
         raise ValueError(f"Task {name} input {input!r} is not an image.") # pragma: no cover
@@ -113,31 +202,28 @@ def require_image(name, inputs, input):
 
 
 def require_input(name, inputs, input, *, type=None):
-    """Extract a required parameter from task inputs.
+    """Extract a parameter from task inputs.
 
     Parameters
     ----------
     name: hashable object, required
         The name of the task being executed.
     inputs: :ref:`named-inputs`, required
-        Input dict containing task function arguments.
+        Named inputs containing task function arguments.
     input: hashable object, required
-        Name of the input parameter.
-    index: integer, required
-        Integer index of the input parameter.
+        Name of the required input parameter.
     type: callable, optional
-        Function for testing / converting the input parameter value.
+        Function for testing / converting the type of the input parameter value.
 
     Raises
     ------
     :class:`RuntimeError`
-        If the `inputs` :class:`dict` doesn't contain the required `input`
-        or `index`.
+        If `inputs` doesn't contain the required `input`.
 
     Returns
     -------
     parameter: Any python object.
-        The request parameter from `inputs`, or the `default` value.
+        The required parameter from `inputs`.
     """
     try:
         value = inputs.getone(input)
@@ -149,6 +235,38 @@ def require_input(name, inputs, input, *, type=None):
 
 
 def require_layer(name, inputs, input, *, layer=None, role=None, depth=None, dtype=None):
+    """Extract a layer from task inputs.
+
+    Parameters
+    ----------
+    name: hashable object, required
+        The name of the task being executed.
+    inputs: :ref:`named-inputs`, required
+        Named inputs containing task function arguments.
+    input: hashable object, required
+        Name of the required input image.
+    layer: :class:`str`, optional
+        The name of the required layer.  If :any:`None` (the default) and the image only
+        contains one layer, use it.
+    role: :class:`imagecat.data.Role`, optional
+        If specified, the layer must have a matching role.
+    depth: int, optional
+        If specified, the layer must have a matching depth (number of channels).
+    dtype: :class:`numpy.dtype`, optional
+        If specified, the layer must have a matching dtype.
+
+    Raises
+    ------
+    :class:`RuntimeError`
+        If a layer matching all of the criteria can't be found.
+
+    Returns
+    -------
+    layername: :class:`str`
+        The name of the matching layer.
+    layer: :class:`imagecat.data.Layer`
+        The matching layer.
+    """
     image = require_image(name, inputs, input)
     if layer is None and len(image.layers) == 1:
         layer = next(iter(image.layers.keys()))

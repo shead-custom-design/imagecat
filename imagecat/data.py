@@ -43,10 +43,15 @@ class Image(object):
 
     Parameters
     ----------
-    layers: :class:`dict`, required
+    layers: :class:`dict`, optional
         Dictionary mapping :class:`str` layer names to :class:`Layer` instances that
         contain the data for each layer.  If :any:`None` (the default), creates
         an empty (no layers) image.
+    metadata: :class:`dict`, optional
+        Arbitrary user-defined metadata for the image.  This could be populated
+        by image loaders, modified in operators, and subsets saved by writers.
+        An example of real-world metadata is Cryptomatte information loaded
+        from an EXR file.
 
     See Also
     --------
@@ -106,7 +111,7 @@ class Image(object):
 
     @property
     def layers(self):
-        """Access the :class:`dict` containing layers.
+        """:class:`dict` containing image layers.
 
         Returns
         -------
@@ -119,6 +124,13 @@ class Image(object):
 
     @property
     def metadata(self):
+        """:class:`dict` containing image metadata.
+
+        Returns
+        -------
+        metadata: :class:`dict`
+            Dictionary containing arbitrary image metadata.
+        """
         return self._metadata
 
 
@@ -217,6 +229,12 @@ class Layer(object):
 
     @property
     def dtype(self):
+        """Numpy :class:`dtype<numpy.dtype>` of the underlying data array.
+
+        Returns
+        -------
+        dtype: :class:`numpy.dtype`
+        """
         return self.data.dtype
 
 
@@ -291,6 +309,16 @@ class Role(enum.Enum):
 
 
 def channels(role):
+    """Return a set of standard channel names for a given role.
+
+    Parameters
+    ----------
+    role: :class:`Role`, required.
+
+    Returns
+    -------
+    channels: list of :class:`str`
+    """
     if role == Role.RGB:
         return ["R", "G", "B"]
     elif role == Role.REDGREEN:
@@ -319,6 +347,16 @@ def channels(role):
 
 
 def depth(role):
+    """Returns the number of channels (depth) for the given role.
+
+    Parameters
+    ----------
+    role: :class:`Role`, required
+
+    Returns
+    -------
+    depth: :class:`int`
+    """
     if role in [Role.RGB]:
         return 3
     elif role in [Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE]:
@@ -371,6 +409,20 @@ def match_layer_names(names, patterns):
 
 @imagecat.require.loaded_module("PIL.Image")
 def to_pil(layer):
+    """Convert a :class:`Layer` to a :class:`PIL.Image`.
+
+    This is useful for visualization and disk IO.
+
+    Parameters
+    ----------
+    layer: :class:`Layer`, required
+        The layer to be converted
+
+    Returns
+    -------
+    pil_image: :class:`PIL.Image`
+        PIL image containing the layer data.
+    """
     if not isinstance(layer, Layer):
         raise ValueError("Input must be an instance of imagecat.layer.Layer.")
 

@@ -167,17 +167,17 @@ Feature: Operators
             | {"A": "mask"}            | rename            |
 
 
-    Scenario Outline: rgb2gray
+    Scenario Outline: dot
         Given an empty graph
         And a task "/sample" which outputs the chelsea sample image
-        And a task "/rgb2gray" with operator rgb2gray layers <layers> weights <weights>
-        And links [("/sample", ("/rgb2gray", "image"))]
-        When retrieving the output image from task "/rgb2gray"
+        And a task "/dot" with operator dot inlayer <inlayer> outlayer <outlayer> outrole <outrole> matrix <matrix>
+        And links [("/sample", ("/dot", "image"))]
+        When retrieving the output image from task "/dot"
         Then the image should match the <reference> reference image
 
         Examples:
-            | layers   | weights                  | reference         |
-            | "*"      | [0.33, 0.33, 0.33]       | rgb2gray          |
+            | inlayer   | outlayer | outrole                      | matrix                         | reference    |
+            | None      | "Y"      | imagecat.data.Role.LUMINANCE | [[0.33], [0.33], [0.33]]       | dot          |
 
 
     Scenario Outline: resize
