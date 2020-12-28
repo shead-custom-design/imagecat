@@ -26,7 +26,7 @@ import numpy
 
 try:
     import PIL.Image
-except:
+except: # pragma: no cover
     pass
 
 import imagecat.color
@@ -192,7 +192,7 @@ class Layer(object):
 
         role_depth = depth(role)
         if role_depth is not None and data.shape[2] != role_depth:
-            raise ValueError(f"Expected {role_depth} channels, received {data.shape[2]}.")
+            raise ValueError(f"Expected {role_depth} channels, received {data.shape[2]}.") # pragma: no cover
 
         self.data = data
         self.role = role
@@ -306,6 +306,17 @@ class Role(enum.Enum):
     """Layer with one channel of luminance (intensity) information."""
     DEPTH = 11
     """Layer with one channel of depth (distance from viewer) information."""
+    RGBA = 12
+    """Layer with three channels of red-green-blue color and one channel of alpha (opacity) information."""
+    UV = 13
+    """Layer with two channels of texture coordinate information."""
+    XYZ = 14
+    """Layer with three channels of position information."""
+    VELOCITY = 15
+    """Layer with three channels of velocity information."""
+    NORMAL = 16
+    """Layer with three channels of normal vector information."""
+
 
 
 def channels(role):
@@ -319,7 +330,9 @@ def channels(role):
     -------
     channels: list of :class:`str`
     """
-    if role == Role.RGB:
+    if role == Role.RGBA:
+        return ["R", "G", "B", "A"]
+    elif role == Role.RGB:
         return ["R", "G", "B"]
     elif role == Role.REDGREEN:
         return ["R", "G"]
@@ -341,6 +354,14 @@ def channels(role):
         return ["Y"]
     elif role == Role.DEPTH:
         return ["Z"]
+    elif role == Role.UV:
+        return ["U", "V"]
+    elif role == Role.XYZ:
+        return ["X", "Y", "Z"]
+    elif role == Role.VELOCITY:
+        return ["X", "Y", "Z"]
+    elif role == Role.NORMAL:
+        return ["X", "Y", "Z"]
     elif role == Role.NONE:
         return [str(index) for index in range(self.data.shape[2])]
     raise RuntimeError(f"Unknown role: {role}")
@@ -357,9 +378,11 @@ def depth(role):
     -------
     depth: :class:`int`
     """
-    if role in [Role.RGB]:
+    if role in [Role.RGBA]:
+        return 4
+    elif role in [Role.RGB, Role.XYZ, Role.VELOCITY, Role.NORMAL]:
         return 3
-    elif role in [Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE]:
+    elif role in [Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE, Role.UV]:
         return 2
     elif role in [Role.RED, Role.GREEN, Role.BLUE, Role.ALPHA, Role.MATTE, Role.LUMINANCE, Role.DEPTH]:
         return 1
@@ -424,7 +447,7 @@ def to_pil(layer):
         PIL image containing the layer data.
     """
     if not isinstance(layer, Layer):
-        raise ValueError("Input must be an instance of imagecat.layer.Layer.")
+        raise ValueError("Input must be an instance of imagecat.layer.Layer.") # pragma: no cover
 
     data = layer.data
     if layer.role in [Role.RGB, Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE, Role.RED, Role.GREEN, Role.BLUE]:
