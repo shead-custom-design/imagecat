@@ -31,6 +31,7 @@ log = logging.getLogger(__name__)
 # Adapted from the Cryptomatte 1.2 specification:
 # https://github.com/Psyop/Cryptomatte/blob/master/specification/cryptomatte_specification.pdf
 # Accessed December 5, 2020.
+
 def _name_to_float32(name):
     """Convert a string to an 8-digit hexadecimal Cryptomatte ID."""
     hash_32 = mmh3.hash(name, signed=False)
@@ -67,15 +68,15 @@ def decoder(graph, name, inputs):
     image: :class:`imagecat.data.Image`, required.
         :ref:`Image<images>` containing Cryptomatte data to be decoded.
     layer: :class:`str`, optional.
-        Output matte layer name.  Default: `"matte"`.
+        Output matte layer name.  Default: `"M"`.
     mattes: :class:`list` of :class:`str`, optional.
         List of mattes to extract.  The output will contain the union of all
         the given mattes.  Default: [], which returns an empty matte.
     cryptomatte: :class:`str`, optional.
         Name of the Cryptomatte to extract.  Use this parameter to control
         which Cryptomatte to use, for images that contain multiple
-        Cryptomattes.  Default: :any:`None`, which extracts mattes from the
-        union of all Cryptomattes in the image.
+        Cryptomattes.  Default: :any:`None`, which will match one Cryptomatte
+        or raise an exception if there is more than one.
 
     Returns
     -------
@@ -105,16 +106,16 @@ def decoder(graph, name, inputs):
     cryptomatte_name = cryptomatte_names[0]
 
     # Identify and sort the layers containing Cryptomatte data.
-    pattern = f"{cryptomatte_name}\\d{{2}}[.](red|green|blue|alpha|r|g|b|a|R|G|B|A)"
+    pattern = f"{cryptomatte_name}\\d{{2}}[.](red|green|blue|alpha|r|g|b|a)"
     cryptomatte_layers = []
     for cryptomatte_layer in image.layers.keys():
-        match = re.match(pattern, cryptomatte_layer)
+        match = re.match(pattern, cryptomatte_layer, re.IGNORECASE)
         if match is not None:
             cryptomatte_layers.append(cryptomatte_layer)
 
     def channel_key(channel):
-        channel = channel.rsplit(".", 1)[1]
-        return {"red":0, "r":0, "R":0, "green":1, "g":1, "G":1, "blue":2, "b":2, "B":2, "alpha":3, "a":3, "A":3}.get(channel)
+        channel = channel.rsplit(".", 1)[1].lower()
+        return {"red":0, "r":0, "green":1, "g":1, "blue":2, "b":2, "alpha":3, "a":3}.get(channel)
 
     def layer_key(channel):
         return channel.rsplit(".", 1)[0]
