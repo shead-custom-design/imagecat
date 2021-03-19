@@ -7,6 +7,16 @@
 Release Notes
 =============
 
+Imagecat 0.5.0 - March 19, 2020
+-------------------------------
+
+* Cryptomatte operator works with a wider range of files, and better matches the behavior of other implementations.
+* Added an option to extract clown mattes from the Cryptomatte operator, with caller control over which mattes to include.
+* Missing dependencies cause failures at run time instead of import time.
+* Replaced the `rgb2gray` operator with `dot`, which can created weighted combinations of layers with any depth.
+* Added new layer roles for RGBA, matte, luminance, depth, UV, position, velocity, and normal data, and subsets of RGB channels.
+* Substantial reorganization and cleanup of the documentation.
+
 Imagecat 0.4.0 - December 9, 2020
 ---------------------------------
 
