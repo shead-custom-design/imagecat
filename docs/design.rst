@@ -71,6 +71,7 @@ or :class:`graphcat.streaming.NamedInputs`, which all have compatible APIs.
 
 .. note::
 
-    The reference documentation for each operator lists the expected
-    named inputs under "Other Parameters".
+    Since every Graphcat task has the same parameters, the reference
+    documentation for each Imagecat operator lists the named input parameters
+    in a separate "Named Inputs" section.
 
