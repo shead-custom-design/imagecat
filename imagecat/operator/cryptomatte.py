@@ -61,18 +61,18 @@ def decoder(graph, name, inputs):
 
     Named Inputs
     ------------
-    clown: :class:`bool`, optional.
+    clown: :class:`bool`, optional
         If :any:`True`, extract a clown matte containing a unique color for the
         ID that has the greatest coverage in a given pixel.  Default:
         :any:`False`
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         :ref:`Image<images>` containing Cryptomatte data to be decoded.
-    layer: :class:`str`, optional.
+    layer: :class:`str`, optional
         Output matte layer name.  Default: `"M"`.
-    mattes: :class:`list` of :class:`str`, optional.
+    mattes: :class:`list` of :class:`str`, optional
         List of mattes to extract.  The output will contain the union of all
         the given mattes.  Default: [], which returns an empty matte.
-    cryptomatte: :class:`str`, optional.
+    cryptomatte: :class:`str`, optional
         Name of the Cryptomatte to extract.  Use this parameter to control
         which Cryptomatte to use, for images that contain multiple
         Cryptomattes.  Default: :any:`None`, which will match one Cryptomatte

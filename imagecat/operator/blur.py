@@ -40,11 +40,11 @@ def gaussian(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image containing layer to be blurred.
-    layer: :class:`str`, optional.
+    layer: :class:`str`, optional
         Name of the layer to be blurred.  Default: :any:`None`.
-    sigma: (x, y) tuple, required.
+    sigma: (x, y) tuple, required
         Width of the gaussian kernel in pixels along each dimension.
 
     Returns

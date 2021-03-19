@@ -41,13 +41,13 @@ def colormap(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image with layer to be color mapped.
-    inlayer: :class:`str`, optional.
+    inlayer: :class:`str`, optional
         `image` layer to be color mapped.  Default: :any:`None`.
-    outlayer: :class:`str`, optional.
+    outlayer: :class:`str`, optional
         Name of the output image layer.  Default: ``"C"``.
-    mapping: Python callable, optional.
+    mapping: Python callable, optional
         Mapping function that accepts a shape `(rows, columns, 1)` array as input and
         produces an RGB `(rows, columns, 3)` shaped array as output.  If :any:`None`
         (the default), a linear map with a Color Brewer 2 Blue-Red palette will
@@ -93,15 +93,15 @@ def dot(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image containing layer to be converted.
-    inlayer: :class:`str`, optional.
+    inlayer: :class:`str`, optional
         Layer to be converted.  Default: None.
-    outlayer: :class:`str`, optional.
+    outlayer: :class:`str`, optional
         Output layer.  Default: "Y".
-    outrole: :class:`imagecat.data.Role`, optional.
+    outrole: :class:`imagecat.data.Role`, optional
         Role for the new layer.  Defaults to :class:`imagecat.data.role.LUMINANCE`.
-    matrix: :math:`M \\times N` :class:`numpy.ndarray` matrix, optional.
+    matrix: :math:`M \\times N` :class:`numpy.ndarray` matrix, optional
         Matrix controlling how much each input channel contributes to each output channel.
         Defaults to an RGB-to-grayscale matrix.  :math:`M` must match the depth of the
         input layer, and :math:`N` must match the expected depth of the output role.
@@ -139,13 +139,13 @@ def fill(graph, name, inputs):
     Named Inputs
     ------------
 
-    layer: :class:`str`, optional.
+    layer: :class:`str`, optional
         New layer name.  Default: `"C"`.
-    res: (width, height) tuple, optional.
+    res: (width, height) tuple, optional
         Resolution of the new image.  Default: `(256, 256)`.
-    role: :class:`imagecat.data.Role`, optional.
+    role: :class:`imagecat.data.Role`, optional
         Semantic role of the new layer.  Default: :class:`imagecat.data.Role.RGB`.
-    values: sequence of values, optional.
+    values: sequence of values, optional
         Values for the new layer.  The number of values must be appropriate for `role`.  Default: [1, 1, 1].
 
     Returns

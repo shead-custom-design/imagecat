@@ -40,22 +40,22 @@ def text(graph, name, inputs):
 
     Named Inputs
     ------------
-    anchor: :class:`str`, optional.
+    anchor: :class:`str`, optional
         Anchor point for text placement, defined at https://pillow.readthedocs.io/en/latest/handbook/text-anchors.html#text-anchors. Defaults to `"mm"`.
-    fontindex: integer, optional.
+    fontindex: integer, optional
         Index of the font to use within a multi-font file.  Defaults to `0`.
-    fontname: :class:`str`, optional.
+    fontname: :class:`str`, optional
         Path to a font file.  Defaults to :func:`imagecat.data.default_font`.
-    fontsize: Size of the rendered font, optional.
+    fontsize: Size of the rendered font, optional
         Default: `"0.33h"`, which is one-third the height of the output image.
-    layer: :class:`str`, optional.
+    layer: :class:`str`, optional
         Name of the generated layer.  Default: `["A"]`.
-    position: (x, y) tuple, optional.
+    position: (x, y) tuple, optional
         Position of the text anchor relative to the output image.  Default:
         `["0.5w", "0.5h"]`, which is centered vertically and horizontally.
-    res: (width, height) tuple, optional.
+    res: (width, height) tuple, optional
         Resolution of the output image.  Default: [256, 256].
-    string: :class:`str`, optional.
+    string: :class:`str`, optional
         String to be rendered.  Default: `"Text!"`.
 
     Returns

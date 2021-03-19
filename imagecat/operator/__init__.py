@@ -41,9 +41,9 @@ def delete(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image with layers to be deleted.
-    layers: :class:`str`, optional.
+    layers: :class:`str`, optional
         Pattern matching the image layers are deleted.  Default: `"*"`, which
         deletes all layers.
 
@@ -79,7 +79,7 @@ def load(graph, name, inputs):
 
     Named Inputs
     ------------
-    path: :class:`str`, required.
+    path: :class:`str`, required
         Filesystem path of the file to be loaded.
 
     Returns
@@ -109,7 +109,7 @@ def merge(graph, name, inputs):
 
     See Also
     --------
-    :func:`composite`
+    :func:`imagecat.operator.transform.composite`
         Composites one image over another using a mask.
 
     Parameters
@@ -123,7 +123,7 @@ def merge(graph, name, inputs):
 
     Named Inputs
     ------------
-    every input: :class:`imagecat.data.Image`, optional.
+    every input: :class:`imagecat.data.Image`, optional
         Images to be merged.
 
     Returns
@@ -154,9 +154,9 @@ def remap(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         :ref:`Image<images>` containing image layers and channels to be mapped.
-    mapping: :class:`dict`, optional.
+    mapping: :class:`dict`, optional
         Maps existing layers and channels to the output.  Default: {}, which returns an empty image.
 
     Returns
@@ -199,9 +199,9 @@ def rename(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         :ref:`Image<images>` containing layers to be renamed.
-    changes: :class:`dict`, optional.
+    changes: :class:`dict`, optional
         Maps existing names to new names.  Default: {}, which does nothing.
 
     Returns
@@ -235,11 +235,11 @@ def save(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image to be saved.
-    path": :class:`str`, required.
+    path": :class:`str`, required
         Filesystem path of the file to be saved.
-    layers: :class:`str`, optional.
+    layers: :class:`str`, optional
         Pattern matching the layers to be saved.  Default: '*', which saves all layers.
     """
     image = imagecat.operator.util.require_image(name, inputs, "image")

@@ -324,7 +324,7 @@ def channels(role):
 
     Parameters
     ----------
-    role: :class:`Role`, required.
+    role: :class:`Role`, required
 
     Returns
     -------

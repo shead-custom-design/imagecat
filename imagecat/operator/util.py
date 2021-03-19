@@ -114,7 +114,7 @@ def optional_input(name, inputs, input, *, type=None, default=None):
         Name of the input parameter.
     type: callable, optional
         Function for testing / converting the parameter value.
-    default: Any python object, optional.
+    default: Any python object, optional
         Default value that will be returned if `inputs` doesn't contain `input`.
 
     Returns

@@ -40,28 +40,28 @@ def composite(graph, name, inputs):
 
     Named Inputs
     ------------
-    background: :class:`imagecat.data.Image`,
-        required. Image containing the background layer.
-    bglayer: :class:`str`, optional.
+    background: :class:`imagecat.data.Image`, required
+        Image containing the background layer.
+    bglayer: :class:`str`, optional
         Name of the background layer.  Defaults to :any:`None`.
-    fglayer: :class:`str`, optional.
+    fglayer: :class:`str`, optional
         Name of the foreground layer.  Defaults to :any:`None`.
-    foreground: :class:`imagecat.data.Image`, required.
+    foreground: :class:`imagecat.data.Image`, required
         Image containing the foreground layer.
-    layer: :class:`str`, optional.
+    layer: :class:`str`, optional
         Name of the output image layer.  Defaults to the value of `bglayer`.
-    mask: :class:`imagecat.data.Image`, optional.
+    mask: :class:`imagecat.data.Image`, optional
         Image containing the foreground layer mask.  If omitted, the foreground
         layer is assumed to be 100% opaque.
-    masklayer: :class:`str`, optional.
+    masklayer: :class:`str`, optional
         Name of the mask layer.  Defaults to :any:`None`.
-    orientation: number, optional.
+    orientation: number, optional
         Rotation of the foreground layer for the composition.  Default: `0`.
-    pivot: (x, y) tuple, optional.
+    pivot: (x, y) tuple, optional
         Position of the foreground pivot point.  All rotation and positioning
         is relative to this point.  Default: `["0.5w", "0.5h"]`, which is
         centered on the foreground.
-    position: (x, y) tuple, optional.
+    position: (x, y) tuple, optional
         Position of the foreground layer over the background layer.  All
         rotation and positioning is relative to the pivot point.  Default:
         `["0.5w", "0.5h"]`, which is centered on the background.
@@ -117,11 +117,11 @@ def offset(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image containing layers to be offset.
-    layers: :class:`str`, optional.
+    layers: :class:`str`, optional
         Pattern matching the layers to be offset.  Default: '*', which offsets all layers.
-    offset: (x, y) tuple, required.
+    offset: (x, y) tuple, required
         Distance to offset layers along each dimension.
 
     Returns
@@ -159,11 +159,11 @@ def resize(graph, name, inputs):
 
     Named Inputs
     ------------
-    image: :class:`imagecat.data.Image`, required.
+    image: :class:`imagecat.data.Image`, required
         Image to be resized.
-    order: :any:`int`, optional.
+    order: :any:`int`, optional
         Resampling filter order.  Default: '3' for bicubic resampling.
-    res: (width, height) tuple, optional.
+    res: (width, height) tuple, optional
         New resolution of the image along each dimension.
 
     Returns
