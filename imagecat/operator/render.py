@@ -56,7 +56,7 @@ def text(graph, name, inputs):
     res: (width, height) tuple, optional
         Resolution of the output image.  Default: [256, 256].
     string: :class:`str`, optional
-        String to be rendered.  Default: `"Text!"`.
+        String to be rendered.  Default: `"Text"`.
 
     Returns
     -------
@@ -74,7 +74,7 @@ def text(graph, name, inputs):
     layer = imagecat.operator.util.optional_input(name, inputs, "layer", type=str, default="A")
     position = imagecat.operator.util.optional_input(name, inputs, "position", default=("0.5w", "0.5h"))
     res = imagecat.operator.util.optional_input(name, inputs, "res", type=imagecat.operator.util.array(shape=(2,), dtype=int), default=[256, 256])
-    string = imagecat.operator.util.optional_input(name, inputs, "string", type=str, default="Text!")
+    string = imagecat.operator.util.optional_input(name, inputs, "string", type=str, default="Text")
 
     fontsize_px = int(imagecat.units.length(fontsize, res))
     x = imagecat.units.length(position[0], res)
