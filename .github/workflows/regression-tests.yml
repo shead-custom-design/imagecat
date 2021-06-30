@@ -29,10 +29,10 @@ jobs:
     - name: Run tests
       run: coverage run --source imagecat -m behave
     - name: Archive failed tests
-        uses: actions/upload-artifact@v2
-        with:
-          name: failures
-          path: features/failed
+      uses: actions/upload-artifact@v2
+      with:
+        name: failures
+        path: features/failed
     - name: Coverage report
       run: coverage report
     - name: Upload coverage to Coveralls
