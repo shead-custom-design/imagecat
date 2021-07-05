@@ -14,12 +14,12 @@ Documentation
    :maxdepth: 2
 
    installation.rst
-   dependencies.rst
-   compatibility.rst
-   contributing.rst
    design.rst
    user-guide.rst
    reference.rst
+   compatibility.rst
+   dependencies.rst
+   developers.rst
    support.rst
    release-notes.rst
    credits.rst
