@@ -15,6 +15,7 @@
 from behave import *
 
 import functools
+import glob
 import logging
 import os
 import tempfile
@@ -246,37 +247,51 @@ def step_impl(context):
 
 @then(u'the image should match the {name} reference image')
 def step_impl(context, name):
-    reference_file = os.path.join(reference_dir, f"{name}.icp")
+    reference_files = glob.glob(os.path.join(reference_dir, f"{name}.icp"))
+    reference_files += glob.glob(os.path.join(reference_dir, "**", f"{name}.icp"))
+
+    new_reference_file = os.path.join(reference_dir, f"{name}.icp")
     failed_file = os.path.join(failed_dir, f"{name}.icp")
 
     # Get rid of past failures.
     if os.path.exists(failed_file):
         os.remove(failed_file)
 
-    # If the reference for this test doesn't exist, create it.
-    if not os.path.exists(reference_file):
+    # If a reference for this test doesn't exist, create it.
+    if not reference_files:
         if not os.path.exists(reference_dir):
             os.mkdir(reference_dir)
 
         graph = graphcat.DynamicGraph()
         graph.set_task("/image", graphcat.constant(context.image))
-        imagecat.add_task(graph, "/save", imagecat.operator.save, path=reference_file)
+        imagecat.add_task(graph, "/save", imagecat.operator.save, path=new_reference_file)
         imagecat.set_links(graph, "/image", ("/save", "image"))
         graph.update("/save")
 
-        raise AssertionError(f"Created new reference file {reference_file} ... verify its contents before re-running the test.")
+        raise AssertionError(f"Created new reference file {new_reference_file} ... verify its contents before re-running the test.")
 
 
+    # The context image should match at least one reference.
     try:
-        # Load the reference for comparison
-        graph = graphcat.DynamicGraph()
-        imagecat.add_task(graph, "/load", imagecat.operator.load, path=reference_file)
-        try:
-            reference_image = graph.output("/load")
-        except Exception as e:
-            raise AssertionError(f"Unable to load reference file {reference_file} ... verify its contents and replace as-needed.")
+        matched = False
+        for reference_file in reference_files:
+            # Load a reference for comparison
+            graph = graphcat.DynamicGraph()
+            imagecat.add_task(graph, "/load", imagecat.operator.load, path=reference_file)
+            try:
+                reference_image = graph.output("/load")
+            except Exception as e:
+                raise AssertionError(f"Unable to load reference file {reference_file} ... verify its contents and replace as-needed.")
 
-        test.assert_image_equal(context.image, reference_image)
+            try:
+                test.assert_image_equal(context.image, reference_image)
+                matched = True
+                break
+            except Exception as e:
+                pass
+        if not matched:
+            raise AssertionError(f"Test image did not match reference files {reference_files}.")
+
     except Exception as e:
         # Save the failed file for later examination.
         if not os.path.exists(failed_dir):
