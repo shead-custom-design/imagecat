@@ -141,7 +141,7 @@ def pil_loader(task, path, layers):
 
     image = imagecat.data.Image()
     if pil_image.mode == "L":
-        image.layers["Y"] = imagecat.data.Layer(data=numpy.array(pil_image, dtype=numpy.float16) / 255.0)
+        image.layers["Y"] = imagecat.data.Layer(data=numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0, role=imagecat.data.Role.LUMINANCE)
     if pil_image.mode == "RGB":
         image.layers["C"] = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0), role=imagecat.data.Role.RGB)
     if pil_image.mode == "RGBA":
