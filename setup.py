@@ -37,6 +37,7 @@ setup(
         "graphcat>=1.0.0",
         "mmh3",
         "numpy>=1.17",
+        "OpenEXR",
         "scikit-image",
     ],
     long_description="""Imagecat provides flexible, high-quality tools for procedural image editing.
