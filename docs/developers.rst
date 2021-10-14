@@ -22,7 +22,7 @@ If you haven't already, you'll want to get familiar with the Imagecat repository
 at http://github.com/shead-custom-design/imagecat ... there, you'll find the Imagecat
 sources, issue tracker, and wiki.
 
-Next, you'll need to install Imagecat's :ref:`dependencies`.  Then, you'll be
+Next, you'll need to install Imagecat's dependencies, listed in setup.py.  Then, you'll be
 ready to get Imagecat's source code and use setuptools to install it. To do
 this, you'll almost certainly want to use "develop mode".  Develop mode is a a
 feature provided by setuptools that links the Imagecat source code into the

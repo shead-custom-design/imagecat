@@ -18,7 +18,6 @@ Documentation
    user-guide.rst
    reference.rst
    compatibility.rst
-   dependencies.rst
    developers.rst
    support.rst
    release-notes.rst
