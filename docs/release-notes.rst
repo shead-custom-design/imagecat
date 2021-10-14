@@ -7,7 +7,16 @@
 Release Notes
 =============
 
-Imagecat 0.5.0 - March 19, 2020
+Imagecat 0.6.0 - October 13, 2021
+---------------------------------
+
+* PIL reader didn't handle luma-only images correctly.
+* Incorporate platform-specific regression test reference images.
+* Reorganize and streamline the documentation.
+* Switch from Travis-CI to GitHub Actions for continuous integration.
+* Clarify where named inputs are documented.
+
+Imagecat 0.5.0 - March 19, 2021
 -------------------------------
 
 * Cryptomatte operator works with a wider range of files, and better matches the behavior of other implementations.

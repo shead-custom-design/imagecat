@@ -48,6 +48,14 @@ setup(
     package_data={
         "imagecat": ["LeagueSpartan-SemiBold.ttf"],
     },
+    project_urls={
+        "Chat": "https://imagecat.zulipchat.com",
+        "Coverage": "https://coveralls.io/r/shead-custom-design/imagecat",
+        "Documentation": "https://imagecat.readthedocs.io",
+        "Issue Tracker": "https://github.com/shead-custom-design/imagecat/issues",
+        "Regression Tests": "https://github.com/shead-custom-design/imagecat/actions",
+        "Source": "https://github.com/shead-custom-design/imagecat",
+    },
     scripts=[
     ],
     url="http://imagecat.readthedocs.io",
