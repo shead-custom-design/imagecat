@@ -27,16 +27,17 @@ jobs:
         pip install behave coverage coveralls ipython ipywidgets mmh3 nbformat numpy OpenEXR Pillow pygraphviz scikit-image
         python setup.py develop
     - name: Run tests
-      run: coverage run --source imagecat -m behave
+      run: |
+        coverage run --parallel-mode --source imagecat -m behave
+        coverage combine
+        coverage report
+    - name: Upload coverage to Coveralls
+      run: coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Archive failed tests
       if: ${{ always() }}
       uses: actions/upload-artifact@v2
       with:
         name: failed
         path: features/failed
-    - name: Coverage report
-      run: coverage report
-    - name: Upload coverage to Coveralls
-      run: coveralls --service=github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
