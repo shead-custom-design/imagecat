@@ -152,6 +152,11 @@ class Image(object):
         return match_layer_names(self.layers.keys(), patterns)
 
 
+    def _repr_png_(self):
+        for key in self.layers.keys():
+            return self.layers[key]._repr_png_()
+
+
 # Warning!  Moving this to another module will break *.icp file loading.
 class Layer(object):
     """Storage for one layer in a bitmap image.
