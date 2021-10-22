@@ -19,7 +19,7 @@ Our coverage statistics are updated automatically when modifications are committ
 
 For Imagecat questions, comments, or suggestions, get in touch with the team at:
 
-* https://imagecat.zulipchat.com
+* https://github.com/shead-custom-design/imagecat/discussions
 
 Otherwise, you can contact Tim directly:
 

@@ -6,7 +6,7 @@ Welcome to Imagecat ... the lightweight, flexible Python toolkit for interactive
 
 You can see the full Imagecat documentation with tutorials at
 https://imagecat.readthedocs.io ... for questions, comments, or suggestions, get
-in touch with our team at https://imagecat.zulipchat.com.
+in touch with our team at https://github.com/shead-custom-design/imagecat/discussions.
 
 License
 =======
