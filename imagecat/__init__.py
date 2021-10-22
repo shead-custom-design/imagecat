@@ -16,7 +16,7 @@
 """Image processing functionality based on Graphcat computational graphs, http://graphcat.readthedocs.io.
 """
 
-__version__ = "0.6.1"
+__version__ = "0.7.0-dev"
 
 import itertools
 import logging
