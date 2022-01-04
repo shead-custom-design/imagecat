@@ -24,13 +24,12 @@ import os
 
 import numpy
 
-try:
-    import PIL.Image
-except: # pragma: no cover
-    pass
-
 import imagecat.color
+import imagecat.optional
 import imagecat.require
+
+
+PIL = imagecat.optional.module("PIL.Image")
 
 
 # Warning!  Moving this to another module will break *.icp file loading.

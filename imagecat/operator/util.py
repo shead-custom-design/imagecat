@@ -19,15 +19,16 @@ import functools
 import logging
 
 import numpy
-try:
-    import skimage.transform
-except:
-    pass
 
 import imagecat.data
 import imagecat.io
+import imagecat.optional
 import imagecat.require
 import imagecat.units
+
+
+skimage = imagecat.optional.module("skimage.transform")
+
 
 log = logging.getLogger(__name__)
 
