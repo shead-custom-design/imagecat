@@ -7,6 +7,13 @@
 Release Notes
 =============
 
+Imagecat 0.6.1 - October 21, 2021
+---------------------------------
+
+* Make it easier to display single-layer images in Jupyter notebooks.
+* Updated the way we collect code coverage data.
+* Switched from Zulip to Github Discussions for support.
+
 Imagecat 0.6.0 - October 13, 2021
 ---------------------------------
 

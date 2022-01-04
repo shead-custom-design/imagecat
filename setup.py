@@ -18,7 +18,7 @@ import re
 setup(
     name="imagecat",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
@@ -49,7 +49,7 @@ setup(
         "imagecat": ["LeagueSpartan-SemiBold.ttf"],
     },
     project_urls={
-        "Chat": "https://imagecat.zulipchat.com",
+        "Chat": "https://github.com/shead-custom-design/imagecat/discussions",
         "Coverage": "https://coveralls.io/r/shead-custom-design/imagecat",
         "Documentation": "https://imagecat.readthedocs.io",
         "Issue Tracker": "https://github.com/shead-custom-design/imagecat/issues",
