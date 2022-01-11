@@ -15,9 +15,15 @@
 """Functionality for working with Color Brewer color maps, https://colorbrewer2.org.
 """
 
+import functools
+
 import numpy
 
-from imagecat.color import Palette, srgb_to_linear
+from imagecat.color import Palette, linear_map as linmap, srgb_to_linear
+
+
+def linear_map(name, count=None, reverse=False):
+    return functools.partial(linmap, palette=palette(name=name, count=count, reverse=reverse))
 
 
 def palette(name, count=None, reverse=False):
