@@ -405,6 +405,30 @@ def default_font():
     return os.path.join(data_dir, "LeagueSpartan-SemiBold.ttf")
 
 
+def from_array(data, role=None, name=None):
+    data = numpy.atleast_3d(data)
+
+    if role is None:
+        if data.shape[2] == 1:
+            role = Role.LUMINANCE
+        elif data.shape[2] == 2:
+            role = Role.UV
+        elif data.shape[2] == 3:
+            role = Role.RGB
+        elif data.shape[2] == 4:
+            role = Role.RGBA
+        else:
+            role = Role.NONE
+
+    if name is None:
+        if role == Role.NONE:
+            name = ""
+        else:
+            name = "".join(channels(role))
+
+    return Image(layers={name: Layer(data=data, role=role)})
+
+
 def match_layer_names(names, patterns):
     """Match image layer names against a pattern.
 
