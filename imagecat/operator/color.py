@@ -20,6 +20,7 @@ import logging
 
 import numpy
 
+import imagecat.color.brewer
 import imagecat.data
 import imagecat.operator.util
 import imagecat.units
