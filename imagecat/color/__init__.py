@@ -93,7 +93,7 @@ def categorical_map(data, palette):
 def linear_map(data, palette, min=None, max=None):
     """Convert scalar data to color data using a linear map.
 
-    Input values from `min` and `max` will be linearly mapped
+    Input values between `min` and `max` will be linearly mapped
     to the colors in `palette`.  If `min` or `max` are :any:`None`,
     the corresponding value will be computed from the data.
 

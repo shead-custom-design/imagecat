@@ -237,7 +237,7 @@ def save(graph, name, inputs):
     ------------
     image: :class:`imagecat.data.Image`, required
         Image to be saved.
-    path": :class:`str`, required
+    path: :class:`str`, required
         Filesystem path of the file to be saved.
     layers: :class:`str`, optional
         Pattern matching the layers to be saved.  Default: '*', which saves all layers.
