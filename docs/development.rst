@@ -14,6 +14,18 @@ If you haven't already, you'll want to get familiar with the Imagecat repository
 at http://github.com/shead-custom-design/imagecat ... there, you'll find the Imagecat
 source code, issue tracker, discussions, and wiki.
 
+You'll need to install `Graphviz <https://graphviz.org>`_ and `pandoc <https://pandoc.org>`_,
+neither of which can be installed via pip.  If you use `Conda <https://docs.conda.io/en/latest/>`_
+(which we strongly recommend), you can install them as follows::
+
+    $ conda install graphviz pandoc
+
+You'll also need `OpenEXR <https://github.com/AcademySoftwareFoundation/openexr>`_
+which also can't be installed via
+pip.  With `Conda <https://docs.conda.io/en/latest/>`_ (again - strongly recommended), do the following::
+
+    $ conda install -c conda-forge openexr-python
+
 Next, you'll need to install all of the extra dependencies needed for Imagecat development::
 
     $ pip install imagecat[all]

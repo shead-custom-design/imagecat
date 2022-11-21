@@ -16,6 +16,22 @@ To install the latest stable version of Imagecat and its dependencies, use `pip`
 
 ... once it completes, you'll be able to use all of Imagecat's core features.
 
+OpenEXR
+-------
+
+To work with `OpenEXR <https://github.com/AcademySoftwareFoundation/openexr>`_
+images, you'll need to have the OpenEXR library, which can't be installed via
+pip.  If you use `Conda <https://docs.conda.io/en/latest/>`_ (which we strongly
+recommend), you can install it as follows::
+
+    $ conda install -c conda-forge openexr-python
+
+Once you have OpenEXR, you can install Imagecat with the necessary dependencies::
+
+    $ pip install imagecat[exr]
+
+.. _documentation:
+
 Documentation
 -------------
 
