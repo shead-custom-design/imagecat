@@ -1,0 +1,66 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+authors = [{name="Timothy M. Shead", email="tim@shead-custom-design"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Artistic Software",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "Pillow>=8.0.0",
+    "graphcat>=1.0.0",
+    "mmh3",
+    "numpy>=1.17",
+    "OpenEXR",
+    "scikit-image",
+]
+description = "Flexible, high-quality tools for procedural image editing."
+dynamic = ["version"]
+maintainers = [{name="Timothy M. Shead", email="tim@shead-custom-design"}]
+name = "imagecat"
+python_requires = ">=3.7"
+
+[project.optional-dependencies]
+all = [
+    "IPython",
+    "behave",
+    "coverage",
+    "ipywidgets",
+    "nbformat",
+    "nbsphinx",
+    "pygraphviz",
+    "sphinx >= 3.5",
+    "sphinx-gallery < 0.11",
+    "sphinx_rtd_theme",
+]
+doc = [
+    "nbsphinx",
+    "pygraphviz",
+    "sphinx >= 3.5",
+    "sphinx-gallery < 0.11",
+    "sphinx_rtd_theme",
+]
+
+[project.readme]
+text = """Imagecat provides flexible, high-quality tools for procedural image editing. See the Imagecat documentation at http://imagecat.readthedocs.io, and the Imagecat sources at http://github.com/shead-custom-design/imagecat"""
+content-type = "text/plain"
+
+[project.urls]
+"Chat" = "https://github.com/shead-custom-design/imagecat/discussions"
+"Coverage" = "https://coveralls.io/r/shead-custom-design/imagecat"
+"Documentation" = "https://imagecat.readthedocs.io"
+"Issue Tracker" = "https://github.com/shead-custom-design/imagecat/issues"
+"Regression Tests" = "https://github.com/shead-custom-design/imagecat/actions"
+"Source" = "https://github.com/shead-custom-design/imagecat"

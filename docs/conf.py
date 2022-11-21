@@ -63,6 +63,8 @@ intersphinx_mapping = {
     "graphcat": ("https://graphcat.readthedocs.io/en/stable", None),
     }
 
+tls_verify = False
+
 napoleon_custom_sections = [("Named Inputs", "params_style")]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -79,7 +81,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- nbsphinx options --------------------------------------------------------
 
-nbsphinx_execute = "never" if "READTHEDOCS" in os.environ else "always"
+nbsphinx_execute = "never"
 
 # -- Options for HTML output -------------------------------------------------
 
