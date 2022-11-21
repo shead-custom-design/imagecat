@@ -14,6 +14,3 @@ Feature: Documentation
         Given all gallery notebooks
         Then every notebook runs without error
 
-    Scenario: Testing notebooks
-        Given all testing notebooks
-        Then every notebook runs without error

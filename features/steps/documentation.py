@@ -27,7 +27,6 @@ import nbformat
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 docs_dir = os.path.join(root_dir, "docs")
 gallery_dir = os.path.join(docs_dir, "gallery")
-notebook_dir = os.path.join(root_dir, "notebooks")
 package_dir = os.path.join(root_dir, "imagecat")
 
 
@@ -79,11 +78,6 @@ def step_impl(context):
 @given(u'all gallery notebooks')
 def step_impl(context):
     context.notebooks = sorted(glob.glob(os.path.join(gallery_dir, "*.ipynb")))
-
-
-@given(u'all testing notebooks')
-def step_impl(context):
-    context.notebooks = sorted(glob.glob(os.path.join(notebook_dir, "*.ipynb")))
 
 
 @then(u'every notebook runs without error')
