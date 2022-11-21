@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-authors = [{name="Timothy M. Shead", email="tim@shead-custom-design"}]
+authors = [{name="Timothy M. Shead", email="tim@shead-custom-design.com"}]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -27,7 +27,7 @@ dependencies = [
 ]
 description = "Flexible, high-quality tools for procedural image editing."
 dynamic = ["version"]
-maintainers = [{name="Timothy M. Shead", email="tim@shead-custom-design"}]
+maintainers = [{name="Timothy M. Shead", email="tim@shead-custom-design.com"}]
 name = "imagecat"
 requires-python = ">=3.7"
 
