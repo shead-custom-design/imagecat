@@ -16,11 +16,11 @@ Documentation
    installation.rst
    design.rst
    user-guide.rst
+   development.rst
    reference.rst
    compatibility.rst
-   developers.rst
-   support.rst
    release-notes.rst
+   support.rst
    credits.rst
 
 Indices and tables

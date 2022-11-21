@@ -7,29 +7,39 @@
 Installation
 ============
 
-Using Pip
----------
+Imagecat
+--------
 
-Unless your package manager supports Imagecat, your default option for
-installation should be Python setup tools like `pip`.  You can always install
-the latest stable version of Imagecat and its required dependencies using::
+To install the latest stable version of Imagecat and its dependencies, use `pip`::
 
     $ pip install imagecat
 
-... following that, you'll be able to use all of Imagecat's features.
+... once it completes, you'll be able to use all of Imagecat's core features.
 
-.. _From Source:
+Documentation
+-------------
 
-From Source
------------
+We assume that you'll normally access this documentation online, but if you
+want a local copy on your own computer, do the following:
 
-Finally, if you want to work with the latest, bleeding-edge Imagecat goodness,
-you can install it using the source code::
+First, you'll need the `pandoc <https://pandoc.org>`_ universal document
+converter, which can't be installed with pip ... if you use `Conda <https://docs.conda.io/en/latest/>`_
+(which we strongly recommend), you can install it with the following::
 
-    $ git clone https://github.com/shead-custom-design/imagecat
-    $ cd imagecat
-    $ sudo python setup.py install
+    $ conda install pandoc
 
-The setup script installs Imagecat's required dependencies and copies Imagecat into
-your Python site-packages directory, ready to go.
+Once you have pandoc, install Imagecat along with all of the dependencies needed to build the docs::
 
+    $ pip install imagecat[doc]
+
+Next, do the following to download a tarball to the current directory
+containing all of the Imagecat source code, which includes the documentation::
+
+    $ pip download imagecat --no-binary=:all: --no-deps
+
+Now, you can extract the tarball contents and build the documentation (adjust the
+following for the version you downloaded)::
+
+    $ tar xzvf imagecat-0.6.1.tar.gz
+    $ cd imagecat-0.6.1/docs
+    $ make html

@@ -2,37 +2,31 @@
   :width: 200px
   :align: right
 
-.. _developers:
+.. _development:
 
-Developers
-==========
-
-Even if you're not in a position to contribute code to Imagecat, there are many
-ways you can help the project out:
-
-* Tell us about your tool that uses Imagecat.
-* Contribute written documentation.
-* Let us know about bugs.
-* Spread the word!
+Development
+===========
 
 Getting Started
 ---------------
 
 If you haven't already, you'll want to get familiar with the Imagecat repository
 at http://github.com/shead-custom-design/imagecat ... there, you'll find the Imagecat
-sources, issue tracker, and wiki.
+source code, issue tracker, discussions, and wiki.
 
-Next, you'll need to install Imagecat's dependencies, listed in setup.py.  Then, you'll be
-ready to get Imagecat's source code and use setuptools to install it. To do
-this, you'll almost certainly want to use "develop mode".  Develop mode is a a
-feature provided by setuptools that links the Imagecat source code into the
-install directory instead of copying it ... that way you can edit the source
-code in your git sandbox, and you don't have to re-install it to test your
-changes::
+Next, you'll need to install all of the extra dependencies needed for Imagecat development::
 
-    $ git clone https://github.com/shead-custom-design/imagecat.git
-    $ cd imagecat
-    $ python setup.py develop
+    $ pip install imagecat[all]
+
+Then, you’ll be ready to obtain Imagecat’s source code and install it using
+“editable mode”. Editable mode is a feature provided by pip that links the
+Imagecat source code into the install directory instead of copying it ... that
+way you can edit the source code in your git sandbox, and you don’t have to
+keep re-installing it to test your changes::
+
+$ git clone https://github.com/shead-custom-design/imagecat.git
+$ cd imagecat
+$ pip install --editable .
 
 Versioning
 ----------
