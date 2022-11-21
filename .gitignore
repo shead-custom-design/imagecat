@@ -9,3 +9,4 @@ docs/_build
 features/failed
 notebooks/backup
 notebooks/test.png
+.DS_Store
