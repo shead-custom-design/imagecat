@@ -28,17 +28,12 @@ import numpy
 
 import imagecat.color
 import imagecat.data
+import imagecat.optional
+import imagecat.require
 
-try:
-    import Imath
-    import OpenEXR
-except: # pragma: no cover
-    pass
-
-try:
-    import PIL.Image
-except: # pragma: no cover
-    pass
+Imath = imagecat.optional.module("Imath")
+OpenEXR = imagecat.optional.module("OpenEXR")
+PIL = imagecat.optional.module("PIL.Image")
 
 
 log = logging.getLogger(__name__)
@@ -46,6 +41,7 @@ log = logging.getLogger(__name__)
 #####################################################################################33
 # Loaders
 
+@imagecat.require.loaded_module(["Imath", "OpenEXR"])
 def openexr_loader(task, path, layers):
     """Image loader plugin for OpenEXR (.exr) files.
 
@@ -53,9 +49,6 @@ def openexr_loader(task, path, layers):
 
     Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
     """
-    if "OpenEXR" not in sys.modules:
-        return None # pragma: no cover
-
     extension = os.path.splitext(path)[1].lower()
     if extension != ".exr":
         return None
@@ -123,6 +116,7 @@ def pickle_loader(task, path, layers):
     return image
 
 
+@imagecat.require.loaded_module("PIL.Image")
 def pil_loader(task, path, layers):
     """Image loader plugin that uses Pillow for file I/O.
 
@@ -130,9 +124,6 @@ def pil_loader(task, path, layers):
 
     Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
     """
-    if "PIL.Image" not in sys.modules:
-        return None # pragma: no cover
-
     if layers != "*":
         raise NotImplementedError("Layer matching not implemented.")
 
@@ -153,6 +144,7 @@ def pil_loader(task, path, layers):
 #####################################################################################33
 # Savers
 
+@imagecat.require.loaded_module(["Imath", "OpenEXR"])
 def openexr_saver(task, image, layers, path):
     """Image saver plugin for OpenEXR (.exr) files.
 
@@ -160,9 +152,6 @@ def openexr_saver(task, image, layers, path):
 
     Use :func:`imagecat.operator.save` to save images in an Imagecat workflow.
     """
-    if "OpenEXR" not in sys.modules:
-        return False # pragma: no cover
-
     extension = os.path.splitext(path)[1].lower()
     if extension != ".exr":
         return False
@@ -211,6 +200,7 @@ def pickle_saver(task, image, layers, path):
     return True
 
 
+@imagecat.require.loaded_module("PIL.Image")
 def pil_saver(task, image, layers, path):
     """Image saver plugin that uses Pillow for file I/O.
 
@@ -218,10 +208,13 @@ def pil_saver(task, image, layers, path):
 
     Use :func:`imagecat.operator.save` to save images in an Imagecat workflow.
     """
-    if "PIL.Image" not in sys.modules:
-        return False # pragma: no cover
-
+    # PIL can only save single-layer images.
     if len(layers) != 1:
+        return False
+
+    # See if PIL can save this file format.
+    base, extension = os.path.splitext(path)
+    if extension not in PIL.Image.registered_extensions().keys():
         return False
 
     pil_image = imagecat.data.to_pil(image.layers[layers[0]])
@@ -230,16 +223,24 @@ def pil_saver(task, image, layers, path):
 
 
 loaders = [
-    openexr_loader,
     pickle_loader,
-    pil_loader,
 ]
 """List of available loader plugins.  In-house plugins may be prepended to this list for use with :func:`imagecat.operator.load`."""
 
+if "OpenEXR" in sys.modules:
+    loaders.append(openexr_loader)
+
+if "PIL.Image" in sys.modules:
+    loaders.append(pil_loader)
+
 
 savers = [
-    openexr_saver,
     pickle_saver,
-    pil_saver,
 ]
 """List of available saver plugins.  In-house plugins may be prepended to this list for use with :func:`imagecat.operator.save`."""
+
+if "OpenEXR" in sys.modules:
+    savers.append(openexr_saver)
+
+if "PIL.Image" in sys.modules:
+    savers.append(pil_saver)

@@ -250,7 +250,7 @@ def save(graph, name, inputs):
     for saver in imagecat.io.savers:
         if saver(name, image, layer_names, path):
             return
-    raise RuntimeError(f"Task {task} could not save 'image' to disk.") # pragma: no cover
+    raise RuntimeError(f"Task {name} could not save 'image' to {path}.") # pragma: no cover
 
 
 import imagecat.operator.blur as blur
