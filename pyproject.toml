@@ -29,7 +29,7 @@ description = "Flexible, high-quality tools for procedural image editing."
 dynamic = ["version"]
 maintainers = [{name="Timothy M. Shead", email="tim@shead-custom-design"}]
 name = "imagecat"
-python_requires = ">=3.7"
+requires-python = ">=3.7"
 
 [project.optional-dependencies]
 all = [
