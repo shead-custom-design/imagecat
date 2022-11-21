@@ -7,6 +7,14 @@
 Release Notes
 =============
 
+Imagecat 0.7.0 - November 21, 2022
+----------------------------------
+
+* Make it easier to manage optional functionality.
+* Simplify creating images from numpy arrays.
+* Switch to pyproject.toml for packaging and flit for builds.
+* Cleanup and organize documentation.
+
 Imagecat 0.6.1 - October 21, 2021
 ---------------------------------
 
