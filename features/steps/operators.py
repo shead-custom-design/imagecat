@@ -63,11 +63,26 @@ def step_impl(context, task):
     context.graph.set_task(task, graphcat.constant(image))
 
 
+@given(u'a task {task} which outputs the bunny-crypto-material sample image')
+def step_impl(context, task):
+    task = eval(task)
+    path = os.path.join(os.path.join(root_dir, "docs", "user-guide", "bunny_CryptoMaterial.exr"))
+    context.execute_steps(f"Given a task {task!r} with operator load path {path!r}")
+
+
 @given(u'a task {task} with constant value {value}')
 def step_impl(context, task, value):
     task = eval(task)
     value = eval(value)
     imagecat.add_task(context.graph, task, graphcat.constant(value))
+
+
+@given(u'a task {task} with operator cryptomatte clown {clown} mattes {mattes}')
+def step_impl(context, task, clown, mattes):
+    task = eval(task)
+    clown = eval(clown)
+    mattes = eval(mattes)
+    imagecat.add_task(context.graph, task, imagecat.operator.cryptomatte.decoder, clown=clown, mattes=mattes)
 
 
 @then(u'the graph should contain task {task}')

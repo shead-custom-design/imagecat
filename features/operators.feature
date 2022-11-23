@@ -1,16 +1,5 @@
 Feature: Operators
 
-    Scenario Outline: Test Setup
-        Given an empty graph
-        And a task "/sample" which outputs the <sample> sample image
-        When retrieving the output image from task "/sample"
-        Then the image should match the <reference> reference image
-
-        Examples:
-            | sample    | reference         |
-            | chelsea   | chelsea           |
-
-
     Scenario Outline: File IO
         Given an empty graph
         And a task "/sample" which outputs the <sample> sample image
@@ -26,6 +15,28 @@ Feature: Operators
             | chelsea   | "chelsea.exr"     | chelsea-exr       |
             | chelsea   | "chelsea.icp"     | chelsea-icp       |
             | chelsea   | "chelsea.png"     | chelsea-png       |
+
+
+    Scenario: Notebook Display
+        Given an empty graph
+        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] role Role.RGB
+        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat"
+        And a task "/merge" with operator merge
+        And links [("/fill1", ("/merge", "image1"))]
+        And links [("/text", ("/merge", "image2"))]
+        When retrieving the output image from task "/merge"
+        Then displaying the image in a notebook should produce a visualization
+
+
+    Scenario Outline: Test Setup
+        Given an empty graph
+        And a task "/sample" which outputs the <sample> sample image
+        When retrieving the output image from task "/sample"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | sample    | reference         |
+            | chelsea   | chelsea           |
 
 
     Scenario: Unique Names
@@ -76,7 +87,7 @@ Feature: Operators
         Then the image should match the <reference> reference image
 
         Examples:
-            | pivot              | position                   | orientation | reference           |
+            | pivot            | position                 | orientation | reference           |
             | ("0.5w", "0.5h") | ("0.5w", "0.8h")         | 30          | composite           |
             | ("0w", "1h")     | ("0w", "1h")             | 0           | composite-tl        |
 
@@ -96,6 +107,19 @@ Feature: Operators
         Examples:
             | layers | reference         |
             | "A"    | delete            |
+
+
+    Scenario Outline: dot
+        Given an empty graph
+        And a task "/sample" which outputs the chelsea sample image
+        And a task "/dot" with operator dot inlayer <inlayer> outlayer <outlayer> outrole <outrole> matrix <matrix>
+        And links [("/sample", ("/dot", "image"))]
+        When retrieving the output image from task "/dot"
+        Then the image should match the <reference> reference image
+
+        Examples:
+            | inlayer   | outlayer | outrole                      | matrix                         | reference    |
+            | None      | "Y"      | imagecat.data.Role.LUMINANCE | [[0.33], [0.33], [0.33]]       | dot          |
 
 
     Scenario Outline: fill
@@ -167,19 +191,6 @@ Feature: Operators
             | {"A": "mask"}            | rename            |
 
 
-    Scenario Outline: dot
-        Given an empty graph
-        And a task "/sample" which outputs the chelsea sample image
-        And a task "/dot" with operator dot inlayer <inlayer> outlayer <outlayer> outrole <outrole> matrix <matrix>
-        And links [("/sample", ("/dot", "image"))]
-        When retrieving the output image from task "/dot"
-        Then the image should match the <reference> reference image
-
-        Examples:
-            | inlayer   | outlayer | outrole                      | matrix                         | reference    |
-            | None      | "Y"      | imagecat.data.Role.LUMINANCE | [[0.33], [0.33], [0.33]]       | dot          |
-
-
     Scenario Outline: resize
         Given an empty graph
         And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat"
@@ -218,16 +229,5 @@ Feature: Operators
             | layer  | res         | role           | seed | reference         |
             | "C"    | (128, 128)  | Role.RGB       | 1234 | uniform-color     |
             | "Y"    | (128, 128)  | Role.LUMINANCE | 1234 | uniform-gray      |
-
-
-    Scenario: Notebook Display
-        Given an empty graph
-        And a task "/fill1" with operator fill layer "C" res (128, 128) values [0.1, 0.2, 0.3] role Role.RGB
-        And a task "/text" with operator text anchor "mm" fontsize "0.33h" layer "A" position ("0.5w", "0.5h") res (256, 128) string "Imagecat"
-        And a task "/merge" with operator merge
-        And links [("/fill1", ("/merge", "image1"))]
-        And links [("/text", ("/merge", "image2"))]
-        When retrieving the output image from task "/merge"
-        Then displaying the image in a notebook should produce a visualization
 
 

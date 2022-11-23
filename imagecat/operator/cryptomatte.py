@@ -100,9 +100,9 @@ def decoder(graph, name, inputs):
     if cryptomatte is not None:
         cryptomatte_names = [cryptomatte_name for cryptomatte_name in cryptomatte_names if cryptomatte_name == cryptomatte]
     if not cryptomatte_names:
-        raise RuntimeError("No matching Cryptomattes were found.")
+        raise RuntimeError("No matching Cryptomattes were found.") # pragma: no cover
     if len(cryptomatte_names) > 1:
-        raise ValueError("A specific Cryptomatte must be chosen.")
+        raise ValueError("A specific Cryptomatte must be chosen.") # pragma: no cover
     cryptomatte_name = cryptomatte_names[0]
 
     # Identify and sort the layers containing Cryptomatte data.
@@ -124,7 +124,7 @@ def decoder(graph, name, inputs):
     cryptomatte_layers = sorted(cryptomatte_layers, key=layer_key)
 
     if not cryptomatte_layers:
-        raise RuntimeError("No matching Cryptomatte layers were found.")
+        raise RuntimeError("No matching Cryptomatte layers were found.") # pragma: no cover
 
     # Extract a clown matte.
     if clown:
