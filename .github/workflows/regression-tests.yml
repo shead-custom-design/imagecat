@@ -41,3 +41,4 @@ jobs:
       with:
         name: failed
         path: features/failed
+        if-no-files-found: ignore
