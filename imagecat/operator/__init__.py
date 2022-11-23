@@ -180,7 +180,7 @@ def remap(graph, name, inputs):
         role = spec.get("role", None)
         layers[name] = imagecat.data.Layer(data=data, role=role)
 
-    output = imagecat.data.Image(layers=layers)
+    output = imagecat.data.Image(layers=layers, metadata=image.metadata)
     imagecat.operator.util.log_result(log, name, "remap", output, mapping=mapping)
     return output
 
