@@ -478,7 +478,7 @@ def to_pil(layer):
         raise ValueError("Input must be an instance of imagecat.layer.Layer.") # pragma: no cover
 
     data = layer.data
-    if layer.role in [Role.RGB, Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE, Role.RED, Role.GREEN, Role.BLUE]:
+    if layer.role in [Role.RGB, Role.REDGREEN, Role.GREENBLUE, Role.REDBLUE, Role.RED, Role.GREEN, Role.BLUE, Role.LUMINANCE]:
         data = imagecat.color.linear_to_srgb(data)
         if layer.role != Role.RGB:
             black = numpy.zeros(data.shape[:2] + (1,))
@@ -494,6 +494,8 @@ def to_pil(layer):
                 data = numpy.dstack((black, data[:,:,0], black))
             elif layer.role == Role.BLUE:
                 data = numpy.dstack((black, black, data[:,:,0]))
+            elif layer.role == Role.LUMINANCE:
+                data = numpy.dstack((data[:,:,0], data[:,:,0], data[:,:,0]))
         data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
         return PIL.Image.fromarray(data)
 
@@ -502,7 +504,7 @@ def to_pil(layer):
         data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
         return PIL.Image.fromarray(data)
 
-    elif layer.role in [Role.LUMINANCE, Role.DEPTH]:
+    elif layer.role in [Role.DEPTH]:
         data = data[:,:,0]
         data = (numpy.clip(data, 0, 1) * 255.0).astype(numpy.ubyte)
         return PIL.Image.fromarray(data)
