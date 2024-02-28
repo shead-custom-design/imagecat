@@ -28,6 +28,7 @@ import numpy
 
 import imagecat.color
 import imagecat.data
+import imagecat.operator.util
 import imagecat.optional
 import imagecat.require
 
@@ -42,19 +43,18 @@ log = logging.getLogger(__name__)
 # Loaders
 
 @imagecat.require.loaded_module(["Imath", "OpenEXR"])
-def openexr_loader(task, path, layers):
+def openexr_loader(graph, name, inputs):
     """Image loader plugin for OpenEXR (.exr) files.
 
     Implemented using https://www.excamera.com/sphinx/articles-openexr.html
 
     Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
     """
+    path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
+
     extension = os.path.splitext(path)[1].lower()
     if extension != ".exr":
         return None
-
-    if layers != "*":
-        raise NotImplementedError("Layer matching not implemented.")
 
     reader = OpenEXR.InputFile(path)
     header = reader.header()
@@ -93,7 +93,7 @@ def openexr_loader(task, path, layers):
     return imagecat.data.Image(layers=layers, metadata=metadata)
 
 
-def pickle_loader(task, path, layers):
+def pickle_loader(graph, name, inputs):
     """Image loader plugin for Imagecat Pickle (.icp) files.
 
     The .icp format serializes an Imagecat image as a gzip2-compressed Python
@@ -102,12 +102,11 @@ def pickle_loader(task, path, layers):
 
     Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
     """
+    path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
+
     extension = os.path.splitext(path)[1].lower()
     if extension != ".icp":
         return None
-
-    if layers != "*":
-        raise NotImplementedError("Layer matching not implemented.")
 
     with bz2.open(path, "rb") as stream:
         image = pickle.load(stream)
@@ -117,27 +116,32 @@ def pickle_loader(task, path, layers):
 
 
 @imagecat.require.loaded_module("PIL.Image")
-def pil_loader(task, path, layers):
+def pil_loader(graph, name, inputs):
     """Image loader plugin that uses Pillow for file I/O.
 
     Loads any file format supported by Pillow, https://pillow.readthedocs.io.
 
     Use :func:`imagecat.operator.load` to load images in an Imagecat workflow.
     """
-    if layers != "*":
-        raise NotImplementedError("Layer matching not implemented.")
+    path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
 
     pil_image = PIL.Image.open(path)
     log.debug(pil_image.info)
 
     image = imagecat.data.Image()
     if pil_image.mode == "L":
-        image.layers["Y"] = imagecat.data.Layer(data=numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0, role=imagecat.data.Role.LUMINANCE)
+        data = numpy.array(pil_image, dtype=numpy.float16)[:,:,None] / 255.0
+        image.layers["Y"] = imagecat.data.Layer(data=data, role=imagecat.data.Role.LUMINANCE)
     if pil_image.mode == "RGB":
-        image.layers["C"] = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16) / 255.0), role=imagecat.data.Role.RGB)
+        data = numpy.array(pil_image, dtype=numpy.float16) / 255.0
+        data = imagecat.color.srgb_to_linear(data)
+        image.layers["C"] = imagecat.data.Layer(data=data, role=imagecat.data.Role.RGB)
     if pil_image.mode == "RGBA":
-        image.layers["C"] = imagecat.data.Layer(data=imagecat.color.srgb_to_linear(numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0), role=imagecat.data.Role.RGB)
-        image.layers["A"] = imagecat.data.Layer(data=numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0)
+        data = numpy.array(pil_image, dtype=numpy.float16)[:,:,0:3] / 255.0
+        data = imagecat.color.srgb_to_linear(data)
+        image.layers["C"] = imagecat.data.Layer(data=data, role=imagecat.data.Role.RGB)
+        data = numpy.array(pil_image, dtype=numpy.float16)[:,:,3:4] / 255.0
+        image.layers["A"] = imagecat.data.Layer(data=data)
     return image
 
 

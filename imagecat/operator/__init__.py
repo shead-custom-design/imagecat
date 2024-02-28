@@ -87,13 +87,10 @@ def load(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         Image loaded from the file.
     """
-    layers = imagecat.operator.util.optional_input(name, inputs, "layers", type=str, default="*")
-    path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
-
     for loader in imagecat.io.loaders:
-        output = loader(name, path, layers)
+        output = loader(graph, name, inputs)
         if output is not None:
-            imagecat.operator.util.log_result(log, name, "load", output, layers=layers, path=path)
+            imagecat.operator.util.log_result(log, name, "load", output)
             return output
     raise RuntimeError(f"Task {task} could not load {path} from disk.") # pragma: no cover
 
