@@ -87,12 +87,17 @@ def load(graph, name, inputs):
     image: :class:`imagecat.data.Image`
         Image loaded from the file.
     """
+    path = inputs.getone("path")
+
     for loader in imagecat.io.loaders:
-        output = loader(graph, name, inputs)
-        if output is not None:
-            imagecat.operator.util.log_result(log, name, "load", output)
-            return output
-    raise RuntimeError(f"Task {task} could not load {path} from disk.") # pragma: no cover
+        try:
+            output = loader(graph, name, inputs)
+            if output is not None:
+                imagecat.operator.util.log_result(log, name, "load", output)
+                return output
+        except Exception as e:
+            imagecat.operator.util.log_result(log, name, "load", str(e))
+    raise RuntimeError(f"Task {name} could not load {path} from disk.") # pragma: no cover
 
 
 def merge(graph, name, inputs):

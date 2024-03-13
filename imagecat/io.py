@@ -125,7 +125,12 @@ def pil_loader(graph, name, inputs):
     """
     path = imagecat.operator.util.require_input(name, inputs, "path", type=str)
 
-    pil_image = PIL.Image.open(path)
+    try:
+        pil_image = PIL.Image.open(path)
+    except Exception as e:
+        log.warning(f"pil_loader exception: {e}")
+        return None
+
     log.debug(pil_image.info)
 
     image = imagecat.data.Image()
